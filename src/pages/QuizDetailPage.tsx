@@ -8,8 +8,10 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
-  ArrowLeft, Loader2, Play, CheckCircle, Unlock,
+  ArrowLeft, Loader2, Play, CheckCircle, Unlock, Download, Upload,
 } from 'lucide-react';
+import { exportQuizToExcel } from '@/lib/excelUtils';
+import { ImportExcelDialog } from '@/components/ImportExcelDialog';
 
 interface QuizData {
   id: string;
@@ -76,6 +78,22 @@ export default function QuizDetailPage() {
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
+  const [importOpen, setImportOpen] = useState(false);
+
+  // For import dialog: all org teams & categories
+  const [allOrgTeams, setAllOrgTeams] = useState<{ id: string; name: string }[]>([]);
+  const [allOrgCategories, setAllOrgCategories] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    if (!currentOrg) return;
+    Promise.all([
+      supabase.from('teams').select('id, name').eq('organization_id', currentOrg.id).eq('is_deleted', false),
+      supabase.from('categories').select('id, name').eq('organization_id', currentOrg.id).eq('is_deleted', false),
+    ]).then(([tRes, cRes]) => {
+      setAllOrgTeams((tRes.data as any) || []);
+      setAllOrgCategories((cRes.data as any) || []);
+    });
+  }, [currentOrg?.id]);
 
   const fetchAll = useCallback(async () => {
     if (!quizId || !currentOrg) return;
@@ -159,6 +177,39 @@ export default function QuizDetailPage() {
   };
 
   const rankedTeams = [...teams].sort((a, b) => getTeamTotal(b.id) - getTeamTotal(a.id));
+
+  const handleExport = () => {
+    if (!quiz) return;
+    const exportData = {
+      quizName: quiz.name,
+      quizDate: quiz.date,
+      categories: categories.map(c => (c.category as any)?.name || c.category_id),
+      rows: rankedTeams.map((team, idx) => {
+        const teamName = (team.team as any)?.name || '';
+        const rowScores: Record<string, number> = {};
+        const rowHelps: Record<string, string[]> = {};
+        for (const cat of categories) {
+          const catName = (cat.category as any)?.name || cat.category_id;
+          const score = getScore(team.id, cat.id);
+          rowScores[catName] = score?.points ?? 0;
+          const helps: string[] = [];
+          for (const ht of helpTypes) {
+            if (getHelpUsage(team.id, cat.id, ht.id)) helps.push(ht.name);
+          }
+          rowHelps[catName] = helps;
+        }
+        return {
+          teamName,
+          teamAlias: team.alias,
+          scores: rowScores,
+          helpUsages: rowHelps,
+          total: getTeamTotal(team.id),
+          rank: idx + 1,
+        };
+      }),
+    };
+    exportQuizToExcel(exportData);
+  };
 
   const updateQuizStatus = async (status: 'draft' | 'live' | 'finished') => {
     if (!quizId) return;
@@ -246,25 +297,31 @@ export default function QuizDetailPage() {
             </Button>
             <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{quiz.name}</h1>
           </div>
-          {canEdit && (
-            <div className="flex items-center gap-2">
-              {quiz.status === 'draft' && (
-                <Button onClick={() => updateQuizStatus('live')} className="gap-2">
-                  <Play className="h-4 w-4" /> {t('scoring.goLive')}
-                </Button>
-              )}
-              {quiz.status === 'live' && (
-                <Button onClick={() => updateQuizStatus('finished')} className="gap-2">
-                  <CheckCircle className="h-4 w-4" /> {t('scoring.finish')}
-                </Button>
-              )}
-              {quiz.status === 'finished' && (
-                <Button onClick={() => updateQuizStatus('live')} variant="outline" className="gap-2">
-                  <Unlock className="h-4 w-4" /> {t('scoring.reopen')}
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} className="gap-1">
+              <Download className="h-4 w-4" /> {t('excel.export')}
+            </Button>
+            {canEdit && (
+              <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="gap-1">
+                <Upload className="h-4 w-4" /> {t('excel.import')}
+              </Button>
+            )}
+            {canEdit && quiz.status === 'draft' && (
+              <Button onClick={() => updateQuizStatus('live')} className="gap-2">
+                <Play className="h-4 w-4" /> {t('scoring.goLive')}
+              </Button>
+            )}
+            {canEdit && quiz.status === 'live' && (
+              <Button onClick={() => updateQuizStatus('finished')} className="gap-2">
+                <CheckCircle className="h-4 w-4" /> {t('scoring.finish')}
+              </Button>
+            )}
+            {canEdit && quiz.status === 'finished' && (
+              <Button onClick={() => updateQuizStatus('live')} variant="outline" className="gap-2">
+                <Unlock className="h-4 w-4" /> {t('scoring.reopen')}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Scoring Table */}
@@ -412,6 +469,19 @@ export default function QuizDetailPage() {
           })}
         </div>
       </div>
+
+      {canEdit && currentOrg && (
+        <ImportExcelDialog
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          quizId={quizId!}
+          organizationId={currentOrg.id}
+          existingTeams={allOrgTeams}
+          existingCategories={allOrgCategories}
+          helpTypes={helpTypes}
+          onImportComplete={fetchAll}
+        />
+      )}
     </DashboardLayout>
   );
 }

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Zap, Crown, Shield, Upload, Palette } from 'lucide-react';
+import { Loader2, Zap, Crown, Shield, Upload, Palette, Sun, Moon } from 'lucide-react';
 
 interface HelpType {
   id: string;
@@ -38,6 +38,7 @@ export default function SettingsPage() {
   const [jokerEnabled, setJokerEnabled] = useState(false);
   const [doubleChanceEnabled, setDoubleChanceEnabled] = useState(false);
   const [helpLoading, setHelpLoading] = useState(true);
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
 
   const isOwner = currentRole === 'owner';
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
@@ -328,6 +329,43 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
+
+        {/* Theme toggle (Owner only) */}
+        {isOwner && (
+          <div className="rounded-xl border border-border bg-card p-6 space-y-5">
+            <div className="flex items-center gap-2">
+              {isDark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+              <h2 className="font-display font-semibold">{t('settings.theme')}</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">{t('settings.themeDescription')}</p>
+            <div className="flex items-center gap-4">
+              <Button
+                variant={!isDark ? 'default' : 'outline'}
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  document.documentElement.classList.remove('dark');
+                  localStorage.setItem('quizory-theme', 'light');
+                  setIsDark(false);
+                }}
+              >
+                <Sun className="h-4 w-4" /> {t('settings.lightTheme')}
+              </Button>
+              <Button
+                variant={isDark ? 'default' : 'outline'}
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  document.documentElement.classList.add('dark');
+                  localStorage.setItem('quizory-theme', 'dark');
+                  setIsDark(true);
+                }}
+              >
+                <Moon className="h-4 w-4" /> {t('settings.darkTheme')}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

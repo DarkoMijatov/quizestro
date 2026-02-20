@@ -136,5 +136,36 @@
     "note": "Možete kasnije promeniti naziv u podešavanjima."
   },
   "footer": { "tagline": "Platforma za organizovanje kvizova", "rights": "Sva prava zadržana." },
+  "excel": {
+    "export": "Excel", "import": "Uvezi",
+    "importTitle": "Uvezi rezultate iz Excela",
+    "importDescription": "Izaberite Excel fajl sa rezultatima kviza. Format mora biti isti kao kod izvoza.",
+    "selectFile": "Izaberite fajl",
+    "importError": "Greška pri uvozu",
+    "importSuccess": "Rezultati uspešno uvezeni!",
+    "newCategories": "Nove kategorije (biće kreirane):",
+    "unknownTeams": "Nepoznati timovi:",
+    "resolution": "Akcija",
+    "createNewTeam": "Kreiraj novi tim",
+    "aliasOfExisting": "Alijas postojećeg tima",
+    "selectTeam": "Izaberite tim",
+    "confirmImport": "Potvrdi uvoz",
+    "willBeCreated": "biće automatski kreirana"
+  },
+  "settings": {
+    "title": "Podešavanja", "orgName": "Naziv organizacije",
+    "defaultCategories": "Podrazumevani broj kategorija po kvizu",
+    "defaultQuestionsPerCategory": "Podrazumevani broj pitanja po kategoriji",
+    "saved": "Podešavanja sačuvana uspešno!",
+    "subscription": "Pretplata", "orgSettings": "Podešavanja organizacije",
+    "trialDaysLeft": "Još {{days}} dana probnog perioda",
+    "freeDescription": "Ograničen plan — nadogradite za više mogućnosti",
+    "maxOrgs": "Organizacija", "quizzesTotal": "Kvizova ukupno", "maxMembers": "Član",
+    "branding": "Brending", "logo": "Logo organizacije", "uploadLogo": "Otpremite logo",
+    "primaryColor": "Primarna boja", "secondaryColor": "Sekundarna boja",
+    "helpTypes": "Tipovi pomoći", "helpTypesDescription": "Uključite ili isključite pomoći za vaše kvizove.",
+    "jokerDescription": "Duplira poene za jednu kategoriju.", "doubleChanceDescription": "Omogućava dva odgovora po pitanju u jednoj kategoriji.",
+    "theme": "Tema", "darkTheme": "Tamna tema", "lightTheme": "Svetla tema", "themeDescription": "Izaberite temu za aplikaciju."
+  },
   "language": { "sr": "Srpski", "en": "English" }
 }

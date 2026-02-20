@@ -136,5 +136,36 @@
     "note": "You can change the name later in settings."
   },
   "footer": { "tagline": "The quiz management platform", "rights": "All rights reserved." },
+  "excel": {
+    "export": "Excel", "import": "Import",
+    "importTitle": "Import results from Excel",
+    "importDescription": "Select an Excel file with quiz results. Format must match the export format.",
+    "selectFile": "Select file",
+    "importError": "Import error",
+    "importSuccess": "Results imported successfully!",
+    "newCategories": "New categories (will be created):",
+    "unknownTeams": "Unknown teams:",
+    "resolution": "Action",
+    "createNewTeam": "Create new team",
+    "aliasOfExisting": "Alias of existing team",
+    "selectTeam": "Select team",
+    "confirmImport": "Confirm import",
+    "willBeCreated": "will be created automatically"
+  },
+  "settings": {
+    "title": "Settings", "orgName": "Organization name",
+    "defaultCategories": "Default categories per quiz",
+    "defaultQuestionsPerCategory": "Default questions per category",
+    "saved": "Settings saved successfully!",
+    "subscription": "Subscription", "orgSettings": "Organization Settings",
+    "trialDaysLeft": "{{days}} days left in trial",
+    "freeDescription": "Limited plan — upgrade for more features",
+    "maxOrgs": "Organizations", "quizzesTotal": "Quizzes total", "maxMembers": "Member",
+    "branding": "Branding", "logo": "Organization logo", "uploadLogo": "Upload logo",
+    "primaryColor": "Primary color", "secondaryColor": "Secondary color",
+    "helpTypes": "Help Types", "helpTypesDescription": "Enable or disable helps for your quizzes.",
+    "jokerDescription": "Doubles points for one category.", "doubleChanceDescription": "Allows two answers per question in one category.",
+    "theme": "Theme", "darkTheme": "Dark theme", "lightTheme": "Light theme", "themeDescription": "Choose the application theme."
+  },
   "language": { "sr": "Srpski", "en": "English" }
 }
