@@ -1,0 +1,135 @@
+{
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "login": "Login",
+    "register": "Sign Up",
+    "dashboard": "Dashboard",
+    "logout": "Logout"
+  },
+  "hero": {
+    "badge": "Pub Quiz Platform",
+    "title": "Run your quizzes like a pro",
+    "subtitle": "All-in-one platform for managing pub quiz events, teams, scoring, and leagues.",
+    "cta": "Get started free",
+    "ctaSecondary": "See demo"
+  },
+  "features": {
+    "title": "Everything you need",
+    "subtitle": "Powerful tools for every aspect of your quiz night",
+    "liveScoring": {
+      "title": "Live Scoring",
+      "description": "Enter results in real-time with automatic ranking and calculations."
+    },
+    "teams": {
+      "title": "Team Management",
+      "description": "Track teams with aliases, history, and detailed statistics."
+    },
+    "leagues": {
+      "title": "Leagues & Seasons",
+      "description": "Create leagues with automatic aggregate leaderboards."
+    },
+    "stats": {
+      "title": "Analytics",
+      "description": "Detailed analytics by category, team, and time period."
+    },
+    "helps": {
+      "title": "Joker & Helps",
+      "description": "Configurable helps with automatic score application."
+    },
+    "export": {
+      "title": "Export & Share",
+      "description": "PDF, Excel exports and public leaderboards for projectors."
+    }
+  },
+  "pricing": {
+    "title": "Simple pricing",
+    "subtitle": "Start free, upgrade when ready",
+    "free": {
+      "name": "Free",
+      "price": "0",
+      "currency": "$",
+      "period": "/month",
+      "features": [
+        "1 organization",
+        "Owner only",
+        "Up to 10 quizzes/month",
+        "Basic scoring",
+        "Team management"
+      ],
+      "cta": "Get started free"
+    },
+    "premium": {
+      "name": "Premium",
+      "price": "29",
+      "currency": "$",
+      "period": "/month",
+      "popular": "Most popular",
+      "features": [
+        "Unlimited organizations",
+        "Up to 3 admins",
+        "Unlimited quizzes",
+        "Leagues & seasons",
+        "Question bank",
+        "Custom branding",
+        "Public leaderboards",
+        "Priority support"
+      ],
+      "cta": "Start free trial"
+    },
+    "trial": "14-day free Premium trial"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Sign Up",
+    "email": "Email address",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "fullName": "Full name",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginCta": "Sign in",
+    "registerCta": "Create account",
+    "resetPassword": "Reset password",
+    "resetCta": "Send reset link",
+    "resetSuccess": "Check your email for the password reset link.",
+    "backToLogin": "Back to login"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "quizzes": "Quizzes",
+    "teams": "Teams",
+    "leagues": "Leagues",
+    "categories": "Categories",
+    "members": "Members",
+    "settings": "Settings",
+    "questionBank": "Question Bank",
+    "stats": "Analytics",
+    "organization": "Organization",
+    "recentQuizzes": "Recent Quizzes",
+    "noQuizzes": "No quizzes yet. Create your first one!",
+    "createQuiz": "New Quiz"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "loading": "Loading...",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish"
+  },
+  "footer": {
+    "tagline": "The quiz management platform",
+    "rights": "All rights reserved."
+  },
+  "language": {
+    "sr": "Srpski",
+    "en": "English"
+  }
+}
