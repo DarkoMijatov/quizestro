@@ -58,7 +58,7 @@
     "quizHistory": "Korišćena u kvizovima", "noHistory": "Ova kategorija još nije korišćena ni u jednom kvizu."
   },
   "quiz": {
-    "createTitle": "Novi kviz", "step1": "Detalji", "step2": "Kategorije", "step3": "Timovi", "step4": "Pregled",
+    "createTitle": "Novi kviz", "step0": "Metod", "step1": "Detalji", "step2": "Kategorije", "step3": "Timovi", "step4": "Pregled",
     "name": "Naziv kviza", "namePlaceholder": "npr. Kviz veče #42", "date": "Datum",
     "location": "Lokacija", "locationPlaceholder": "npr. Kafana Kod Mace",
     "league": "Liga (opciono)", "selectLeague": "Izaberite ligu", "noLeague": "Bez lige",
@@ -67,7 +67,15 @@
     "reviewTeams": "Timovi", "creating": "Kreiranje kviza...", "created": "Kviz uspešno kreiran!",
     "minCategories": "Izaberite bar jednu kategoriju", "minTeams": "Izaberite bar dva tima",
     "noCategoriesToSelect": "Nema kategorija. Prvo kreirajte kategorije.",
-    "noTeamsToSelect": "Nema timova. Prvo kreirajte timove."
+    "noTeamsToSelect": "Nema timova. Prvo kreirajte timove.",
+    "chooseMethod": "Kako želite da kreirate kviz?",
+    "manualCreate": "Ručno kreiranje",
+    "manualCreateDesc": "Izaberite kategorije i timove korak po korak.",
+    "importFromExcel": "Uvoz iz Excela",
+    "importFromExcelDesc": "Uvezite rezultate iz pripremljenog Excel fajla.",
+    "downloadTemplate": "Preuzmite šablon za uvoz",
+    "importDetailsDesc": "Unesite osnovne podatke o kvizu pre uvoza rezultata.",
+    "continueToImport": "Nastavi sa uvozom"
   },
   "scoring": {
     "team": "Tim", "total": "Ukupno", "points": "bodova", "notFound": "Kviz nije pronađen.",

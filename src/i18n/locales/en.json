@@ -58,7 +58,7 @@
     "quizHistory": "Used in quizzes", "noHistory": "This category hasn't been used in any quizzes yet."
   },
   "quiz": {
-    "createTitle": "New Quiz", "step1": "Details", "step2": "Categories", "step3": "Teams", "step4": "Review",
+    "createTitle": "New Quiz", "step0": "Method", "step1": "Details", "step2": "Categories", "step3": "Teams", "step4": "Review",
     "name": "Quiz name", "namePlaceholder": "e.g. Quiz Night #42", "date": "Date",
     "location": "Location", "locationPlaceholder": "e.g. The Tipsy Scholar",
     "league": "League (optional)", "selectLeague": "Select a league", "noLeague": "No league",
@@ -67,7 +67,15 @@
     "reviewTeams": "Teams", "creating": "Creating quiz...", "created": "Quiz created successfully!",
     "minCategories": "Select at least one category", "minTeams": "Select at least two teams",
     "noCategoriesToSelect": "No categories found. Create categories first.",
-    "noTeamsToSelect": "No teams found. Create teams first."
+    "noTeamsToSelect": "No teams found. Create teams first.",
+    "chooseMethod": "How do you want to create the quiz?",
+    "manualCreate": "Manual creation",
+    "manualCreateDesc": "Select categories and teams step by step.",
+    "importFromExcel": "Import from Excel",
+    "importFromExcelDesc": "Import results from a prepared Excel file.",
+    "downloadTemplate": "Download import template",
+    "importDetailsDesc": "Enter basic quiz details before importing results.",
+    "continueToImport": "Continue to import"
   },
   "scoring": {
     "team": "Team", "total": "Total", "points": "points", "notFound": "Quiz not found.",
