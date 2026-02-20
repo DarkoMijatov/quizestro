@@ -19,7 +19,7 @@
   },
   "pricing": {
     "title": "Jednostavne cene", "subtitle": "Započnite besplatno, nadogradite kada budete spremni",
-    "free": { "name": "Besplatno", "price": "0", "currency": "RSD", "period": "/mesečno", "features": ["1 organizacija","Samo vlasnik","Do 10 kvizova mesečno","Osnovno bodovanje","Upravljanje timovima"], "cta": "Započnite besplatno" },
+    "free": { "name": "Besplatno", "price": "0", "currency": "RSD", "period": "/mesečno", "features": ["1 organizacija","Samo vlasnik","Do 10 kvizova ukupno","Osnovno bodovanje","Upravljanje timovima"], "cta": "Započnite besplatno" },
     "premium": { "name": "Premium", "price": "2.990", "currency": "RSD", "period": "/mesečno", "popular": "Najpopularnije", "features": ["Neograničene organizacije","Do 3 admina","Neograničeni kvizovi","Lige i sezone","Banka pitanja","Prilagođeni brending","Javne rang liste","Prioritetna podrška"], "cta": "Započnite probni period" },
     "trial": "14 dana besplatno Premium probnog perioda"
   },
@@ -93,11 +93,12 @@
   },
   "members": {
     "title": "Članovi", "noMembers": "Nema pronađenih članova.", "unknown": "Nepoznat korisnik",
-    "roleUpdated": "Uloga ažurirana.", "removed": "Član uklonjen.",
+    "roleUpdated": "Uloga ažurirana.", "removed": "Član uklonjen.", "nameUpdated": "Ime ažurirano.",
     "removeConfirm": "Da li ste sigurni da želite da uklonite ovog člana?",
     "memberCount": "članova", "invite": "Pozovite", "inviteTitle": "Pozovite novog člana",
     "inviteDescription": "Podelite link za registraciju sa novim članom.",
-    "inviteLink": "Link za pozivnicu", "inviteNote": "Članovi će se registrovati i automatski biti dodati u organizaciju."
+    "inviteLink": "Link za pozivnicu", "inviteNote": "Članovi će se registrovati i automatski biti dodati u organizaciju.",
+    "editName": "Izmeni ime", "editNameDescription": "Promenite ime i prezime člana."
   },
   "settings": {
     "title": "Podešavanja", "orgName": "Naziv organizacije",
@@ -107,13 +108,19 @@
     "subscription": "Pretplata", "orgSettings": "Podešavanja organizacije",
     "trialDaysLeft": "Još {{days}} dana probnog perioda",
     "freeDescription": "Ograničen plan — nadogradite za više mogućnosti",
-    "maxOrgs": "Organizacija", "quizzesPerMonth": "Kvizova/mesec", "maxMembers": "Član"
+    "maxOrgs": "Organizacija", "quizzesTotal": "Kvizova ukupno", "maxMembers": "Član",
+    "branding": "Brending", "logo": "Logo organizacije", "uploadLogo": "Otpremite logo",
+    "primaryColor": "Primarna boja", "secondaryColor": "Sekundarna boja",
+    "helpTypes": "Tipovi pomoći", "helpTypesDescription": "Uključite ili isključite pomoći za vaše kvizove.",
+    "jokerDescription": "Eliminiše jedan netačan odgovor.", "doubleChanceDescription": "Duplira poene za jednu kategoriju."
   },
   "freemium": {
     "freeplan": "Besplatni plan", "upgrade": "Nadogradite",
-    "quizzesUsed": "{{used}} / {{limit}} kvizova ovog meseca",
+    "quizzesUsed": "{{used}} / {{limit}} kvizova ukupno",
     "memberLimit": "Besplatni plan dozvoljava samo 1 člana",
-    "upgradeForMore": "Nadogradite na Premium za do 3 admina i više članova"
+    "upgradeForMore": "Nadogradite na Premium za do 3 admina i više članova",
+    "premiumFeature": "Premium funkcionalnost",
+    "premiumDescription": "Ova funkcionalnost je dostupna samo na Premium planu. Nadogradite za pristup ligama, banci pitanja i više."
   },
   "common": {
     "save": "Sačuvajte", "cancel": "Otkažite", "delete": "Obrišite", "edit": "Izmenite",

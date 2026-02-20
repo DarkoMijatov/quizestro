@@ -230,7 +230,9 @@ export type Database = {
           default_categories_count: number | null
           default_questions_per_category: number | null
           id: string
+          logo_url: string | null
           name: string
+          secondary_color: string | null
           slug: string | null
           subscription_tier: string
           trial_ends_at: string | null
@@ -242,7 +244,9 @@ export type Database = {
           default_categories_count?: number | null
           default_questions_per_category?: number | null
           id?: string
+          logo_url?: string | null
           name: string
+          secondary_color?: string | null
           slug?: string | null
           subscription_tier?: string
           trial_ends_at?: string | null
@@ -254,7 +258,9 @@ export type Database = {
           default_categories_count?: number | null
           default_questions_per_category?: number | null
           id?: string
+          logo_url?: string | null
           name?: string
+          secondary_color?: string | null
           slug?: string | null
           subscription_tier?: string
           trial_ends_at?: string | null

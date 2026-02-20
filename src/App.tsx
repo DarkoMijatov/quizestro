@@ -7,6 +7,7 @@ import '@/i18n';
 import { AuthProvider } from '@/hooks/useAuth';
 import { ProtectedRoute, PublicOnlyRoute } from '@/components/ProtectedRoute';
 import { RequireOrganization } from '@/components/RequireOrganization';
+import { RequirePremium } from '@/components/RequirePremium';
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -34,6 +35,10 @@ const OrgRoute = ({ children }: { children: React.ReactNode }) => (
   <RequireOrganization>{children}</RequireOrganization>
 );
 
+const PremiumRoute = ({ children }: { children: React.ReactNode }) => (
+  <RequireOrganization><RequirePremium>{children}</RequirePremium></RequireOrganization>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -56,8 +61,8 @@ const App = () => (
             <Route path="/dashboard/quizzes" element={<OrgRoute><QuizzesPage /></OrgRoute>} />
             <Route path="/dashboard/quizzes/new" element={<OrgRoute><CreateQuizPage /></OrgRoute>} />
             <Route path="/dashboard/quizzes/:id" element={<OrgRoute><QuizDetailPage /></OrgRoute>} />
-            <Route path="/dashboard/leagues" element={<OrgRoute><LeaguesPage /></OrgRoute>} />
-            <Route path="/dashboard/questions" element={<OrgRoute><QuestionBankPage /></OrgRoute>} />
+            <Route path="/dashboard/leagues" element={<PremiumRoute><LeaguesPage /></PremiumRoute>} />
+            <Route path="/dashboard/questions" element={<PremiumRoute><QuestionBankPage /></PremiumRoute>} />
             <Route path="/dashboard/stats" element={<OrgRoute><StatsPage /></OrgRoute>} />
             <Route path="/dashboard/members" element={<OrgRoute><MembersPage /></OrgRoute>} />
             <Route path="/dashboard/settings" element={<OrgRoute><SettingsPage /></OrgRoute>} />

@@ -8,6 +8,8 @@ export interface Organization {
   slug: string | null;
   subscription_tier: string;
   branding_color: string | null;
+  secondary_color: string | null;
+  logo_url: string | null;
   default_categories_count: number;
   default_questions_per_category: number;
   trial_ends_at: string | null;

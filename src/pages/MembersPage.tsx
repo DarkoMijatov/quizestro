@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, UserPlus, Trash2, Users, Crown, Shield, User, Copy, Check, Zap } from 'lucide-react';
+import { Loader2, UserPlus, Trash2, Users, Crown, Shield, User, Copy, Check, Zap, Pencil } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -38,6 +39,7 @@ const roleBadgeStyles: Record<string, string> = {
 export default function MembersPage() {
   const { t } = useTranslation();
   const { currentOrg, currentRole } = useOrganizations();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const [members, setMembers] = useState<MemberRow[]>([]);
@@ -46,8 +48,12 @@ export default function MembersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Edit name
+  const [editingMember, setEditingMember] = useState<MemberRow | null>(null);
+  const [editName, setEditName] = useState('');
+
   const isOwner = currentRole === 'owner';
-  const canInvite = currentRole === 'owner' || currentRole === 'admin';
+  const isAdminOrOwner = currentRole === 'owner' || currentRole === 'admin';
   const isFree = currentOrg?.subscription_tier === 'free';
 
   const fetchMembers = async () => {
@@ -103,6 +109,24 @@ export default function MembersPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleEditName = (member: MemberRow) => {
+    setEditingMember(member);
+    setEditName(member.profile?.full_name || '');
+  };
+
+  const handleSaveName = async () => {
+    if (!editingMember) return;
+    await supabase.from('profiles').update({ full_name: editName.trim() }).eq('user_id', editingMember.user_id);
+    toast({ title: '✓', description: t('members.nameUpdated') });
+    setEditingMember(null);
+    fetchMembers();
+  };
+
+  // Users can only edit their own name, owners can edit anyone
+  const canEditName = (member: MemberRow) => {
+    return isOwner || member.user_id === user?.id;
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -113,7 +137,7 @@ export default function MembersPage() {
               {members.length} {t('members.memberCount')}
             </p>
           </div>
-          {canInvite && (
+          {isOwner && (
             <Button onClick={() => setInviteOpen(true)} className="gap-2" disabled={isFree && members.length >= 1}>
               <UserPlus className="h-4 w-4" />
               {t('members.invite')}
@@ -155,7 +179,14 @@ export default function MembersPage() {
                       {(member.profile?.full_name || '?')[0]?.toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium">{member.profile?.full_name || t('members.unknown')}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{member.profile?.full_name || t('members.unknown')}</p>
+                        {canEditName(member) && (
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditName(member)}>
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                       <Badge variant="outline" className={`mt-0.5 ${roleBadgeStyles[member.role]}`}>
                         <RoleIcon className="h-3 w-3 mr-1" />
                         {member.role}
@@ -182,6 +213,26 @@ export default function MembersPage() {
           </div>
         )}
       </div>
+
+      {/* Edit name dialog */}
+      <Dialog open={!!editingMember} onOpenChange={(o) => !o && setEditingMember(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('members.editName')}</DialogTitle>
+            <DialogDescription>{t('members.editNameDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t('auth.fullName')}</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingMember(null)}>{t('common.cancel')}</Button>
+            <Button onClick={handleSaveName} disabled={!editName.trim()}>{t('common.save')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Invite dialog */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
