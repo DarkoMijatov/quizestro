@@ -3,9 +3,11 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Trophy, Users, FolderOpen, Award, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useOrganizations } from '@/hooks/useOrganizations';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
+  const { currentOrg, currentRole } = useOrganizations();
 
   const stats = [
     { label: t('dashboard.quizzes'), value: '0', icon: Trophy, color: 'text-primary' },
@@ -20,7 +22,9 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl md:text-3xl font-bold">{t('dashboard.welcome')} 👋</h1>
-            <p className="text-muted-foreground mt-1">{t('dashboard.title')}</p>
+            <p className="text-muted-foreground mt-1">
+              {currentOrg?.name} · <span className="capitalize">{currentRole}</span>
+            </p>
           </div>
           <Link to="/dashboard/quizzes/new">
             <Button className="gap-2">

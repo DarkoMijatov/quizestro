@@ -2,13 +2,19 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { Button } from '@/components/ui/button';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import {
   Trophy, LayoutDashboard, Users, FolderOpen, Award,
-  BarChart3, Settings, LogOut, BookOpen, UserPlus, ChevronLeft, ChevronRight,
+  BarChart3, Settings, LogOut, BookOpen, UserPlus, ChevronLeft, ChevronRight, Building2, ChevronsUpDown,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const navItems = [
   { key: 'dashboard.title', icon: LayoutDashboard, path: '/dashboard' },
@@ -27,6 +33,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+  const { currentOrg, organizations, switchOrg, currentRole } = useOrganizations();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -37,12 +44,39 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <aside className={cn(
-        "flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300",
+        "hidden md:flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}>
-        <div className="flex items-center gap-2 p-4 border-b border-sidebar-border">
-          <Trophy className="h-6 w-6 text-sidebar-primary shrink-0" />
-          {!collapsed && <span className="font-display font-bold text-sidebar-foreground">Quizory</span>}
+        {/* Org switcher */}
+        <div className="p-3 border-b border-sidebar-border">
+          {!collapsed ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="w-full flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-sidebar-accent transition-colors text-left">
+                <Building2 className="h-4 w-4 text-sidebar-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-sidebar-foreground truncate">{currentOrg?.name}</p>
+                  <p className="text-xs text-sidebar-foreground/60 capitalize">{currentRole}</p>
+                </div>
+                <ChevronsUpDown className="h-3.5 w-3.5 text-sidebar-foreground/50 shrink-0" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {organizations.map((org) => (
+                  <DropdownMenuItem
+                    key={org.id}
+                    onClick={() => switchOrg(org.id)}
+                    className={currentOrg?.id === org.id ? 'bg-accent' : ''}
+                  >
+                    <Building2 className="h-4 w-4 mr-2" />
+                    {org.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex justify-center py-2">
+              <Building2 className="h-5 w-5 text-sidebar-primary" />
+            </div>
+          )}
         </div>
 
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
@@ -84,6 +118,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main */}
       <main className="flex-1 overflow-y-auto">
+        {/* Mobile header */}
+        <div className="md:hidden flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary" />
+            <span className="font-display font-bold text-sm">{currentOrg?.name}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher variant="ghost" />
+          </div>
+        </div>
         <div className="p-6 md:p-8">
           {children}
         </div>
