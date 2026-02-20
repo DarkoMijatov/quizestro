@@ -4,7 +4,6 @@ interface ExportRow {
   teamName: string;
   teamAlias: string | null;
   scores: Record<string, number>; // categoryName -> points
-  helpUsages: Record<string, string[]>; // categoryName -> ['Joker', 'Double Chance']
   total: number;
   rank: number;
 }
@@ -21,7 +20,6 @@ export function exportQuizToExcel(data: ExportData) {
 
   // Build header row
   const headers = ['#', 'Tim', 'Alijas', ...data.categories, 'Ukupno'];
-  const helpHeaders = ['', '', '', ...data.categories.map(() => 'Pomoći'), ''];
 
   const wsData: (string | number)[][] = [];
   // Quiz info
@@ -29,7 +27,6 @@ export function exportQuizToExcel(data: ExportData) {
   wsData.push(['Datum:', data.quizDate]);
   wsData.push([]);
   wsData.push(headers);
-  wsData.push(helpHeaders);
 
   for (const row of data.rows) {
     const scoreRow: (string | number)[] = [
@@ -42,14 +39,6 @@ export function exportQuizToExcel(data: ExportData) {
     }
     scoreRow.push(row.total);
     wsData.push(scoreRow);
-
-    // Help row
-    const helpRow: (string | number)[] = ['', '', ''];
-    for (const cat of data.categories) {
-      helpRow.push((row.helpUsages[cat] || []).join(', '));
-    }
-    helpRow.push('');
-    wsData.push(helpRow);
   }
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -67,11 +56,27 @@ export function exportQuizToExcel(data: ExportData) {
   XLSX.writeFile(wb, `${data.quizName.replace(/[^a-zA-Z0-9\u0400-\u04FF\u0100-\u024F ]/g, '_')}.xlsx`);
 }
 
+export function generateImportTemplate() {
+  const wb = XLSX.utils.book_new();
+  const wsData: (string | number)[][] = [];
+  wsData.push(['Kviz:', 'Naziv kviza']);
+  wsData.push(['Datum:', '2026-01-01']);
+  wsData.push([]);
+  wsData.push(['#', 'Tim', 'Alijas', 'Kategorija 1', 'Kategorija 2', 'Kategorija 3', 'Ukupno']);
+  wsData.push([1, 'Naziv tima 1', 'Alijas 1', 10, 8, 12, 30]);
+  wsData.push([2, 'Naziv tima 2', '', 7, 9, 6, 22]);
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{ wch: 4 }, { wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 10 }];
+  XLSX.utils.book_append_sheet(wb, ws, 'Template');
+  XLSX.writeFile(wb, 'quiz_import_template.xlsx');
+}
+
 export interface ImportedRow {
   teamName: string;
   teamAlias: string;
-  scores: Record<string, number>; // categoryName -> points
-  helpUsages: Record<string, string[]>; // categoryName -> help names
+  scores: Record<string, number>;
+  helpUsages: Record<string, string[]>;
 }
 
 export interface ImportResult {
@@ -113,11 +118,10 @@ export function parseQuizExcel(file: File): Promise<ImportResult> {
         }
 
         const categories = headers.slice(aliasIdx + 1, totalIdx);
-        const helpRowIdx = headerIdx + 1; // help headers row
 
         const importedRows: ImportedRow[] = [];
-        // Data starts after help headers row, every 2 rows = 1 team (score row + help row)
-        let i = helpRowIdx + 1;
+        // Data starts right after header row, one row per team
+        let i = headerIdx + 1;
         while (i < rows.length) {
           const scoreRow = rows[i];
           if (!scoreRow || scoreRow.length === 0 || String(scoreRow[0]).trim() === '') {
@@ -139,21 +143,10 @@ export function parseQuizExcel(file: File): Promise<ImportResult> {
             rowScores[categories[c]] = Number(scoreRow[aliasIdx + 1 + c]) || 0;
           }
 
-          // Next row should be help row
-          const helpRow = rows[i + 1];
-          const rowHelps: Record<string, string[]> = {};
-          if (helpRow && String(helpRow[0] || '').trim() === '') {
-            for (let c = 0; c < categories.length; c++) {
-              const helpStr = String(helpRow[aliasIdx + 1 + c] || '').trim();
-              rowHelps[categories[c]] = helpStr ? helpStr.split(',').map(s => s.trim()).filter(Boolean) : [];
-            }
-            i += 2;
-          } else {
-            i += 1;
-          }
+          i++;
 
           if (teamName) {
-            importedRows.push({ teamName, teamAlias, scores: rowScores, helpUsages: rowHelps });
+            importedRows.push({ teamName, teamAlias, scores: rowScores, helpUsages: {} });
           }
         }
 
