@@ -15,7 +15,9 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import DashboardPage from "./pages/DashboardPage";
 import TeamsPage from "./pages/TeamsPage";
+import TeamDetailPage from "./pages/TeamDetailPage";
 import CategoriesPage from "./pages/CategoriesPage";
+import CategoryDetailPage from "./pages/CategoryDetailPage";
 import QuizzesPage from "./pages/QuizzesPage";
 import CreateQuizPage from "./pages/CreateQuizPage";
 import QuizDetailPage from "./pages/QuizDetailPage";
@@ -48,7 +50,9 @@ const App = () => (
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
             <Route path="/dashboard" element={<OrgRoute><DashboardPage /></OrgRoute>} />
             <Route path="/dashboard/teams" element={<OrgRoute><TeamsPage /></OrgRoute>} />
+            <Route path="/dashboard/teams/:id" element={<OrgRoute><TeamDetailPage /></OrgRoute>} />
             <Route path="/dashboard/categories" element={<OrgRoute><CategoriesPage /></OrgRoute>} />
+            <Route path="/dashboard/categories/:id" element={<OrgRoute><CategoryDetailPage /></OrgRoute>} />
             <Route path="/dashboard/quizzes" element={<OrgRoute><QuizzesPage /></OrgRoute>} />
             <Route path="/dashboard/quizzes/new" element={<OrgRoute><CreateQuizPage /></OrgRoute>} />
             <Route path="/dashboard/quizzes/:id" element={<OrgRoute><QuizDetailPage /></OrgRoute>} />

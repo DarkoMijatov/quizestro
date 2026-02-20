@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
@@ -33,6 +34,7 @@ interface TeamAlias {
 
 export default function TeamsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { currentOrg, currentRole } = useOrganizations();
   const { toast } = useToast();
 
@@ -204,7 +206,7 @@ export default function TeamsPage() {
         ) : (
           <div className="grid gap-3">
             {filteredTeams.map((team) => (
-              <div key={team.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors">
+              <div key={team.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/teams/${team.id}`)}>
                 <div className="min-w-0">
                   <p className="font-medium truncate">{team.name}</p>
                   {(aliases[team.id] || []).length > 0 && (
