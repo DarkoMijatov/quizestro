@@ -1,22 +1,15 @@
 {
   "nav": {
-    "features": "Funkcionalnosti",
-    "pricing": "Cene",
-    "login": "Prijava",
-    "register": "Registracija",
-    "dashboard": "Kontrolna tabla",
-    "logout": "Odjava"
+    "features": "Funkcionalnosti", "pricing": "Cene", "login": "Prijava", "register": "Registracija",
+    "dashboard": "Kontrolna tabla", "logout": "Odjava"
   },
   "hero": {
-    "badge": "Platforma za pub kvizove",
-    "title": "Organizujte kvizove kao profesionalci",
+    "badge": "Platforma za pub kvizove", "title": "Organizujte kvizove kao profesionalci",
     "subtitle": "Sve-u-jednom platforma za upravljanje pub kviz događajima, timovima, bodovanjem i ligama.",
-    "cta": "Započnite besplatno",
-    "ctaSecondary": "Pogledajte demo"
+    "cta": "Započnite besplatno", "ctaSecondary": "Pogledajte demo"
   },
   "features": {
-    "title": "Sve što vam treba",
-    "subtitle": "Moćni alati za svaki aspekt vašeg kviza",
+    "title": "Sve što vam treba", "subtitle": "Moćni alati za svaki aspekt vašeg kviza",
     "liveScoring": { "title": "Bodovanje uživo", "description": "Unosite rezultate u realnom vremenu sa automatskim rangiranjem i kalkulacijom." },
     "teams": { "title": "Upravljanje timovima", "description": "Pratite timove sa alijasima, istorijom i statistikom." },
     "leagues": { "title": "Lige i sezone", "description": "Kreirajte lige sa automatskim agregatnim rang listama." },
@@ -25,8 +18,7 @@
     "export": { "title": "Izvoz i deljenje", "description": "PDF, Excel izvoz i javne rang liste za projektore." }
   },
   "pricing": {
-    "title": "Jednostavne cene",
-    "subtitle": "Započnite besplatno, nadogradite kada budete spremni",
+    "title": "Jednostavne cene", "subtitle": "Započnite besplatno, nadogradite kada budete spremni",
     "free": { "name": "Besplatno", "price": "0", "currency": "RSD", "period": "/mesečno", "features": ["1 organizacija","Samo vlasnik","Do 10 kvizova mesečno","Osnovno bodovanje","Upravljanje timovima"], "cta": "Započnite besplatno" },
     "premium": { "name": "Premium", "price": "2.990", "currency": "RSD", "period": "/mesečno", "popular": "Najpopularnije", "features": ["Neograničene organizacije","Do 3 admina","Neograničeni kvizovi","Lige i sezone","Banka pitanja","Prilagođeni brending","Javne rang liste","Prioritetna podrška"], "cta": "Započnite probni period" },
     "trial": "14 dana besplatno Premium probnog perioda"
@@ -45,56 +37,59 @@
     "recentQuizzes": "Nedavni kvizovi", "noQuizzes": "Još nema kvizova. Kreirajte prvi!", "createQuiz": "Novi kviz"
   },
   "teams": {
-    "title": "Timovi",
-    "addTeam": "Dodaj tim",
-    "teamName": "Naziv tima",
-    "teamNamePlaceholder": "npr. Kvizleri",
-    "aliases": "Alijasi",
-    "addAlias": "Dodaj alijas",
-    "aliasPlaceholder": "npr. Kvizleri 2.0",
-    "noTeams": "Još nema timova. Dodajte prvi!",
+    "title": "Timovi", "addTeam": "Dodaj tim", "teamName": "Naziv tima",
+    "teamNamePlaceholder": "npr. Kvizleri", "aliases": "Alijasi", "addAlias": "Dodaj alijas",
+    "aliasPlaceholder": "npr. Kvizleri 2.0", "noTeams": "Još nema timova. Dodajte prvi!",
     "deleteConfirm": "Da li ste sigurni da želite da obrišete ovaj tim?",
-    "created": "Tim kreiran uspešno!",
-    "updated": "Tim ažuriran uspešno!",
-    "deleted": "Tim obrisan uspešno!"
+    "created": "Tim kreiran uspešno!", "updated": "Tim ažuriran uspešno!", "deleted": "Tim obrisan uspešno!"
   },
   "categories": {
-    "title": "Kategorije",
-    "addCategory": "Dodaj kategoriju",
-    "categoryName": "Naziv kategorije",
-    "categoryNamePlaceholder": "npr. Istorija",
-    "noCategories": "Još nema kategorija. Dodajte prvu!",
+    "title": "Kategorije", "addCategory": "Dodaj kategoriju", "categoryName": "Naziv kategorije",
+    "categoryNamePlaceholder": "npr. Istorija", "noCategories": "Još nema kategorija. Dodajte prvu!",
     "deleteConfirm": "Da li ste sigurni da želite da obrišete ovu kategoriju?",
-    "created": "Kategorija kreirana uspešno!",
-    "updated": "Kategorija ažurirana uspešno!",
-    "deleted": "Kategorija obrisana uspešno!"
+    "created": "Kategorija kreirana uspešno!", "updated": "Kategorija ažurirana uspešno!", "deleted": "Kategorija obrisana uspešno!"
   },
   "quiz": {
-    "createTitle": "Novi kviz",
-    "step1": "Detalji",
-    "step2": "Kategorije",
-    "step3": "Timovi",
-    "step4": "Pregled",
-    "name": "Naziv kviza",
-    "namePlaceholder": "npr. Kviz veče #42",
-    "date": "Datum",
-    "location": "Lokacija",
-    "locationPlaceholder": "npr. Kafana Kod Mace",
-    "league": "Liga (opciono)",
-    "selectLeague": "Izaberite ligu",
-    "noLeague": "Bez lige",
-    "selectCategories": "Izaberite kategorije za ovaj kviz",
-    "selectTeams": "Izaberite timove koji učestvuju",
-    "teamAlias": "Alijas za ovaj kviz",
-    "reviewTitle": "Pregledajte kviz",
-    "reviewCategories": "Kategorije",
-    "reviewTeams": "Timovi",
-    "creating": "Kreiranje kviza...",
-    "created": "Kviz uspešno kreiran!",
-    "minCategories": "Izaberite bar jednu kategoriju",
-    "minTeams": "Izaberite bar dva tima",
+    "createTitle": "Novi kviz", "step1": "Detalji", "step2": "Kategorije", "step3": "Timovi", "step4": "Pregled",
+    "name": "Naziv kviza", "namePlaceholder": "npr. Kviz veče #42", "date": "Datum",
+    "location": "Lokacija", "locationPlaceholder": "npr. Kafana Kod Mace",
+    "league": "Liga (opciono)", "selectLeague": "Izaberite ligu", "noLeague": "Bez lige",
+    "selectCategories": "Izaberite kategorije za ovaj kviz", "selectTeams": "Izaberite timove koji učestvuju",
+    "teamAlias": "Alijas za ovaj kviz", "reviewTitle": "Pregledajte kviz", "reviewCategories": "Kategorije",
+    "reviewTeams": "Timovi", "creating": "Kreiranje kviza...", "created": "Kviz uspešno kreiran!",
+    "minCategories": "Izaberite bar jednu kategoriju", "minTeams": "Izaberite bar dva tima",
     "noCategoriesToSelect": "Nema kategorija. Prvo kreirajte kategorije.",
     "noTeamsToSelect": "Nema timova. Prvo kreirajte timove."
+  },
+  "scoring": {
+    "team": "Tim", "total": "Ukupno", "points": "bodova", "notFound": "Kviz nije pronađen.",
+    "goLive": "Pokreni", "finish": "Završi kviz", "reopen": "Ponovo otvori",
+    "statusUpdated": "Status kviza ažuriran.", "helpAlreadyUsed": "Ovaj tim je već iskoristio ovu pomoć."
+  },
+  "leagues": {
+    "title": "Lige", "addLeague": "Dodaj ligu", "leagueName": "Naziv lige",
+    "leagueNamePlaceholder": "npr. Prolećna sezona 2026", "season": "Sezona",
+    "seasonPlaceholder": "npr. Proleće 2026", "active": "Aktivna", "inactive": "Neaktivna",
+    "noLeagues": "Još nema liga. Dodajte prvu!",
+    "deleteConfirm": "Da li ste sigurni da želite da obrišete ovu ligu?",
+    "created": "Liga kreirana uspešno!", "updated": "Liga ažurirana uspešno!", "deleted": "Liga obrisana uspešno!"
+  },
+  "questionBank": {
+    "title": "Banka pitanja", "comingSoon": "Banka pitanja stiže uskoro. Ostanite u toku!"
+  },
+  "stats": {
+    "title": "Statistike", "moreComingSoon": "Detaljnije statistike stižu uskoro."
+  },
+  "members": {
+    "title": "Članovi", "noMembers": "Nema pronađenih članova.", "unknown": "Nepoznat korisnik",
+    "roleUpdated": "Uloga ažurirana.", "removed": "Član uklonjen.",
+    "removeConfirm": "Da li ste sigurni da želite da uklonite ovog člana?"
+  },
+  "settings": {
+    "title": "Podešavanja", "orgName": "Naziv organizacije",
+    "defaultCategories": "Podrazumevani broj kategorija po kvizu",
+    "defaultQuestionsPerCategory": "Podrazumevani broj pitanja po kategoriji",
+    "saved": "Podešavanja sačuvana uspešno!"
   },
   "common": {
     "save": "Sačuvajte", "cancel": "Otkažite", "delete": "Obrišite", "edit": "Izmenite",

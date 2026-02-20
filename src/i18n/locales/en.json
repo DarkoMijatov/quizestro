@@ -37,56 +37,59 @@
     "recentQuizzes": "Recent Quizzes", "noQuizzes": "No quizzes yet. Create your first one!", "createQuiz": "New Quiz"
   },
   "teams": {
-    "title": "Teams",
-    "addTeam": "Add team",
-    "teamName": "Team name",
-    "teamNamePlaceholder": "e.g. The Quizzards",
-    "aliases": "Aliases",
-    "addAlias": "Add alias",
-    "aliasPlaceholder": "e.g. Quizzards 2.0",
-    "noTeams": "No teams yet. Add your first one!",
+    "title": "Teams", "addTeam": "Add team", "teamName": "Team name",
+    "teamNamePlaceholder": "e.g. The Quizzards", "aliases": "Aliases", "addAlias": "Add alias",
+    "aliasPlaceholder": "e.g. Quizzards 2.0", "noTeams": "No teams yet. Add your first one!",
     "deleteConfirm": "Are you sure you want to delete this team?",
-    "created": "Team created successfully!",
-    "updated": "Team updated successfully!",
-    "deleted": "Team deleted successfully!"
+    "created": "Team created successfully!", "updated": "Team updated successfully!", "deleted": "Team deleted successfully!"
   },
   "categories": {
-    "title": "Categories",
-    "addCategory": "Add category",
-    "categoryName": "Category name",
-    "categoryNamePlaceholder": "e.g. History",
-    "noCategories": "No categories yet. Add your first one!",
+    "title": "Categories", "addCategory": "Add category", "categoryName": "Category name",
+    "categoryNamePlaceholder": "e.g. History", "noCategories": "No categories yet. Add your first one!",
     "deleteConfirm": "Are you sure you want to delete this category?",
-    "created": "Category created successfully!",
-    "updated": "Category updated successfully!",
-    "deleted": "Category deleted successfully!"
+    "created": "Category created successfully!", "updated": "Category updated successfully!", "deleted": "Category deleted successfully!"
   },
   "quiz": {
-    "createTitle": "New Quiz",
-    "step1": "Details",
-    "step2": "Categories",
-    "step3": "Teams",
-    "step4": "Review",
-    "name": "Quiz name",
-    "namePlaceholder": "e.g. Quiz Night #42",
-    "date": "Date",
-    "location": "Location",
-    "locationPlaceholder": "e.g. The Tipsy Scholar",
-    "league": "League (optional)",
-    "selectLeague": "Select a league",
-    "noLeague": "No league",
-    "selectCategories": "Select categories for this quiz",
-    "selectTeams": "Select participating teams",
-    "teamAlias": "Alias for this quiz",
-    "reviewTitle": "Review quiz",
-    "reviewCategories": "Categories",
-    "reviewTeams": "Teams",
-    "creating": "Creating quiz...",
-    "created": "Quiz created successfully!",
-    "minCategories": "Select at least one category",
-    "minTeams": "Select at least two teams",
+    "createTitle": "New Quiz", "step1": "Details", "step2": "Categories", "step3": "Teams", "step4": "Review",
+    "name": "Quiz name", "namePlaceholder": "e.g. Quiz Night #42", "date": "Date",
+    "location": "Location", "locationPlaceholder": "e.g. The Tipsy Scholar",
+    "league": "League (optional)", "selectLeague": "Select a league", "noLeague": "No league",
+    "selectCategories": "Select categories for this quiz", "selectTeams": "Select participating teams",
+    "teamAlias": "Alias for this quiz", "reviewTitle": "Review quiz", "reviewCategories": "Categories",
+    "reviewTeams": "Teams", "creating": "Creating quiz...", "created": "Quiz created successfully!",
+    "minCategories": "Select at least one category", "minTeams": "Select at least two teams",
     "noCategoriesToSelect": "No categories found. Create categories first.",
     "noTeamsToSelect": "No teams found. Create teams first."
+  },
+  "scoring": {
+    "team": "Team", "total": "Total", "points": "points", "notFound": "Quiz not found.",
+    "goLive": "Go Live", "finish": "Finish Quiz", "reopen": "Reopen",
+    "statusUpdated": "Quiz status updated.", "helpAlreadyUsed": "This help has already been used by this team."
+  },
+  "leagues": {
+    "title": "Leagues", "addLeague": "Add league", "leagueName": "League name",
+    "leagueNamePlaceholder": "e.g. Spring Season 2026", "season": "Season",
+    "seasonPlaceholder": "e.g. Spring 2026", "active": "Active", "inactive": "Inactive",
+    "noLeagues": "No leagues yet. Add your first one!",
+    "deleteConfirm": "Are you sure you want to delete this league?",
+    "created": "League created successfully!", "updated": "League updated successfully!", "deleted": "League deleted successfully!"
+  },
+  "questionBank": {
+    "title": "Question Bank", "comingSoon": "Question bank is coming soon. Stay tuned!"
+  },
+  "stats": {
+    "title": "Analytics", "moreComingSoon": "More detailed analytics coming soon."
+  },
+  "members": {
+    "title": "Members", "noMembers": "No members found.", "unknown": "Unknown user",
+    "roleUpdated": "Role updated.", "removed": "Member removed.",
+    "removeConfirm": "Are you sure you want to remove this member?"
+  },
+  "settings": {
+    "title": "Settings", "orgName": "Organization name",
+    "defaultCategories": "Default categories per quiz",
+    "defaultQuestionsPerCategory": "Default questions per category",
+    "saved": "Settings saved successfully!"
   },
   "common": {
     "save": "Save", "cancel": "Cancel", "delete": "Delete", "edit": "Edit",
