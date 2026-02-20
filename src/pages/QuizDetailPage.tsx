@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,13 +6,10 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
   ArrowLeft, Loader2, Play, CheckCircle, Unlock,
 } from 'lucide-react';
-import { format } from 'date-fns';
 
 interface QuizData {
   id: string;
@@ -61,12 +58,6 @@ interface HelpUsage {
   quiz_category_id: string;
 }
 
-const statusConfig = {
-  draft: { color: 'bg-muted text-muted-foreground', icon: null },
-  live: { color: 'bg-primary/10 text-primary border-primary/30', icon: Play },
-  finished: { color: 'bg-accent text-accent-foreground', icon: CheckCircle },
-};
-
 export default function QuizDetailPage() {
   const { t } = useTranslation();
   const { id: quizId } = useParams<{ id: string }>();
@@ -81,7 +72,8 @@ export default function QuizDetailPage() {
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
   const [helpUsages, setHelpUsages] = useState<HelpUsage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [savingScores, setSavingScores] = useState<Set<string>>(new Set());
+
+  const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
 
@@ -122,18 +114,11 @@ export default function QuizDetailPage() {
     helpUsages.some((h) => h.quiz_team_id === teamId && h.help_type_id === helpTypeId);
 
   const updateScore = async (scoreId: string, field: 'points' | 'bonus_points', value: number) => {
-    setSavingScores((prev) => new Set(prev).add(scoreId));
     const update: any = { [field]: value };
     await supabase.from('scores').update(update).eq('id', scoreId);
-
     setScores((prev) =>
       prev.map((s) => (s.id === scoreId ? { ...s, [field]: value } : s))
     );
-    setSavingScores((prev) => {
-      const next = new Set(prev);
-      next.delete(scoreId);
-      return next;
-    });
   };
 
   const toggleHelp = async (teamId: string, catId: string, helpType: HelpType) => {
@@ -192,6 +177,38 @@ export default function QuizDetailPage() {
     toast({ title: '✓', description: t('scoring.statusUpdated') });
   };
 
+  // Keyboard navigation: arrow keys move between score inputs
+  const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>, rowIdx: number, colIdx: number) => {
+    let targetRow = rowIdx;
+    let targetCol = colIdx;
+
+    if (e.key === 'ArrowDown') { targetRow = Math.min(rowIdx + 1, rankedTeams.length - 1); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { targetRow = Math.max(rowIdx - 1, 0); e.preventDefault(); }
+    else if (e.key === 'ArrowRight' || e.key === 'Tab') {
+      if (colIdx < categories.length - 1) { targetCol = colIdx + 1; e.preventDefault(); }
+      else if (rowIdx < rankedTeams.length - 1) { targetRow = rowIdx + 1; targetCol = 0; e.preventDefault(); }
+    }
+    else if (e.key === 'ArrowLeft') {
+      if (colIdx > 0) { targetCol = colIdx - 1; e.preventDefault(); }
+      else if (rowIdx > 0) { targetRow = rowIdx - 1; targetCol = categories.length - 1; e.preventDefault(); }
+    }
+    else return;
+
+    const key = `${targetRow}-${targetCol}`;
+    const el = inputRefs.current.get(key);
+    if (el) { el.focus(); el.select(); }
+  };
+
+  const setInputRef = (rowIdx: number, colIdx: number, el: HTMLInputElement | null) => {
+    const key = `${rowIdx}-${colIdx}`;
+    if (el) inputRefs.current.set(key, el);
+    else inputRefs.current.delete(key);
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -216,17 +233,18 @@ export default function QuizDetailPage() {
   }
 
   const isFinished = quiz.status === 'finished';
+  const colCount = categories.length;
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard/quizzes')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="font-display text-2xl md:text-3xl font-bold">{quiz.name}</h1>
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{quiz.name}</h1>
           </div>
           {canEdit && (
             <div className="flex items-center gap-2">
@@ -249,27 +267,30 @@ export default function QuizDetailPage() {
           )}
         </div>
 
-          {/* Scoring Card */}
-        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-          {/* Column Headers */}
-          <div className="grid border-b border-border bg-muted/30" style={{
-            gridTemplateColumns: `minmax(140px, 1.2fr) ${categories.map(() => 'minmax(80px, 1fr)').join(' ')} minmax(70px, 0.5fr)`,
-          }}>
-            <div className="p-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {/* Scoring Table */}
+        <div className="rounded-xl border-2 border-foreground/20 bg-card shadow-md overflow-hidden">
+          {/* Header row */}
+          <div
+            className="grid border-b-2 border-foreground/20 bg-muted"
+            style={{
+              gridTemplateColumns: `minmax(120px, 1.5fr) ${categories.map(() => '1fr').join(' ')} minmax(60px, 0.6fr)`,
+            }}
+          >
+            <div className="p-2 text-sm font-bold uppercase tracking-wide text-foreground">
               {t('scoring.team')}
             </div>
             {categories.map((cat) => (
-              <div key={cat.id} className="p-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center border-l border-border truncate">
+              <div key={cat.id} className="p-2 text-sm font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20 truncate">
                 {(cat.category as any)?.name || cat.category_id}
               </div>
             ))}
-            <div className="p-3 text-xs font-semibold uppercase tracking-wider text-primary text-center border-l border-border">
-              {t('scoring.total')}
+            <div className="p-2 text-sm font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20">
+              Σ
             </div>
           </div>
 
-          {/* Team Rows */}
-          {rankedTeams.map((team, idx) => {
+          {/* Team rows */}
+          {rankedTeams.map((team, rowIdx) => {
             const total = getTeamTotal(team.id);
             const teamName = team.alias || (team.team as any)?.name || '';
             const originalName = (team.team as any)?.name || '';
@@ -278,85 +299,103 @@ export default function QuizDetailPage() {
               <div
                 key={team.id}
                 className={cn(
-                  'grid border-b border-border last:border-0 transition-colors',
-                  idx === 0 && 'bg-primary/[0.02]',
+                  'grid border-b-2 border-foreground/20 last:border-0',
+                  rowIdx === 0 && 'bg-primary/[0.04]',
                 )}
                 style={{
-                  gridTemplateColumns: `minmax(140px, 1.2fr) ${categories.map(() => 'minmax(80px, 1fr)').join(' ')} minmax(70px, 0.5fr)`,
+                  gridTemplateColumns: `minmax(120px, 1.5fr) ${categories.map(() => '1fr').join(' ')} minmax(60px, 0.6fr)`,
                 }}
               >
                 {/* Rank + Team */}
-                <div className="p-3 flex items-center gap-2">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground">
-                    {idx + 1}
+                <div className="p-2 flex items-center gap-2">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center text-base font-black text-foreground">
+                    {rowIdx + 1}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-semibold text-sm truncate">{teamName}</p>
+                    <p className="font-bold text-sm text-foreground truncate">{teamName}</p>
                     {team.alias && originalName && (
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wide truncate">{originalName}</p>
                     )}
                   </div>
                 </div>
 
-                {/* Category Scores */}
-                {categories.map((cat) => {
+                {/* Category scores */}
+                {categories.map((cat, colIdx) => {
                   const score = getScore(team.id, cat.id);
                   const hasJoker = jokerType && getHelpUsage(team.id, cat.id, jokerType.id);
+                  const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
+
+                  // Disable help if team already used it in another category
+                  const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
+                  const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
 
                   return (
-                    <div key={cat.id} className={cn('p-2 flex flex-col items-center justify-center gap-1 border-l border-border', hasJoker && 'bg-primary/[0.04]')}>
+                    <div
+                      key={cat.id}
+                      className={cn(
+                        'p-1 flex flex-col items-center justify-center gap-0.5 border-l-2 border-foreground/20',
+                        hasJoker && 'bg-primary/[0.08]',
+                      )}
+                    >
                       {canEdit && !isFinished ? (
                         <>
-                          <Input
+                          <input
+                            ref={(el) => setInputRef(rowIdx, colIdx, el)}
                             type="number"
                             min={0}
                             step={0.5}
                             value={score?.points ?? 0}
                             onChange={(e) => score && updateScore(score.id, 'points', Number(e.target.value) || 0)}
-                            className="h-12 w-full text-center text-xl font-bold border-muted"
+                            onFocus={(e) => e.target.select()}
+                            onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
+                            tabIndex={rowIdx * colCount + colIdx + 1}
+                            className="h-14 w-full text-center text-3xl font-black text-foreground bg-transparent border-2 border-foreground/15 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
                           />
-                          {/* Help buttons */}
-                          <div className="flex items-center gap-1">
+                          {/* Help initials */}
+                          <div className="flex items-center gap-0.5">
                             {jokerType && (
                               <button
                                 onClick={() => toggleHelp(team.id, cat.id, jokerType)}
+                                disabled={!!jokerDisabledElsewhere}
+                                tabIndex={-1}
                                 className={cn(
-                                  'px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors',
+                                  'w-6 h-5 rounded text-[9px] font-black border transition-colors',
                                   hasJoker
                                     ? 'bg-primary text-primary-foreground border-primary'
-                                    : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-primary',
+                                    : jokerDisabledElsewhere
+                                      ? 'bg-muted text-muted-foreground/40 border-border cursor-not-allowed'
+                                      : 'bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary',
                                 )}
-                                disabled={!hasJoker && hasTeamUsedHelp(team.id, jokerType.id)}
                               >
-                                {jokerType.name}
+                                {getInitials(jokerType.name)}
                               </button>
                             )}
-                            {markerType && (() => {
-                              const hasMarker = getHelpUsage(team.id, cat.id, markerType.id);
-                              return (
-                                <button
-                                  onClick={() => toggleHelp(team.id, cat.id, markerType)}
-                                  className={cn(
-                                    'px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors',
-                                    hasMarker
-                                      ? 'bg-accent text-accent-foreground border-accent'
-                                      : 'bg-background text-muted-foreground border-border hover:border-accent hover:text-accent-foreground',
-                                  )}
-                                  disabled={!hasMarker && hasTeamUsedHelp(team.id, markerType.id)}
-                                >
-                                  {markerType.name}
-                                </button>
-                              );
-                            })()}
+                            {markerType && (
+                              <button
+                                onClick={() => toggleHelp(team.id, cat.id, markerType)}
+                                disabled={!!markerDisabledElsewhere}
+                                tabIndex={-1}
+                                className={cn(
+                                  'w-6 h-5 rounded text-[9px] font-black border transition-colors',
+                                  hasMarker
+                                    ? 'bg-accent text-accent-foreground border-accent'
+                                    : markerDisabledElsewhere
+                                      ? 'bg-muted text-muted-foreground/40 border-border cursor-not-allowed'
+                                      : 'bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground',
+                                )}
+                              >
+                                {getInitials(markerType.name)}
+                              </button>
+                            )}
                           </div>
                         </>
                       ) : (
                         <div className="flex flex-col items-center gap-0.5">
-                          <p className="text-xl font-bold">
+                          <p className="text-3xl font-black text-foreground">
                             {score?.points ?? 0}
                           </p>
                           {hasJoker && (
-                            <span className="text-[10px] text-primary font-medium">×2</span>
+                            <span className="text-[10px] text-primary font-black">×2</span>
                           )}
                         </div>
                       )}
@@ -365,8 +404,8 @@ export default function QuizDetailPage() {
                 })}
 
                 {/* Total */}
-                <div className="p-2 flex items-center justify-center border-l border-border">
-                  <span className="text-2xl font-bold text-primary">{total % 1 === 0 ? total : total.toFixed(1)}</span>
+                <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
+                  <span className="text-3xl font-black text-primary">{total % 1 === 0 ? total : total.toFixed(1)}</span>
                 </div>
               </div>
             );
