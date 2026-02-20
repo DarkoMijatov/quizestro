@@ -18,6 +18,12 @@ import TeamsPage from "./pages/TeamsPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import QuizzesPage from "./pages/QuizzesPage";
 import CreateQuizPage from "./pages/CreateQuizPage";
+import QuizDetailPage from "./pages/QuizDetailPage";
+import LeaguesPage from "./pages/LeaguesPage";
+import QuestionBankPage from "./pages/QuestionBankPage";
+import StatsPage from "./pages/StatsPage";
+import MembersPage from "./pages/MembersPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +51,12 @@ const App = () => (
             <Route path="/dashboard/categories" element={<OrgRoute><CategoriesPage /></OrgRoute>} />
             <Route path="/dashboard/quizzes" element={<OrgRoute><QuizzesPage /></OrgRoute>} />
             <Route path="/dashboard/quizzes/new" element={<OrgRoute><CreateQuizPage /></OrgRoute>} />
+            <Route path="/dashboard/quizzes/:id" element={<OrgRoute><QuizDetailPage /></OrgRoute>} />
+            <Route path="/dashboard/leagues" element={<OrgRoute><LeaguesPage /></OrgRoute>} />
+            <Route path="/dashboard/questions" element={<OrgRoute><QuestionBankPage /></OrgRoute>} />
+            <Route path="/dashboard/stats" element={<OrgRoute><StatsPage /></OrgRoute>} />
+            <Route path="/dashboard/members" element={<OrgRoute><MembersPage /></OrgRoute>} />
+            <Route path="/dashboard/settings" element={<OrgRoute><SettingsPage /></OrgRoute>} />
             <Route path="/dashboard/*" element={<OrgRoute><DashboardPage /></OrgRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
