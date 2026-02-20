@@ -80,6 +80,8 @@ export function useOrganizations() {
   };
 
   useEffect(() => {
+    // Reset loading immediately when user changes to prevent premature redirect
+    setLoading(true);
     fetchOrgs();
   }, [user]);
 
