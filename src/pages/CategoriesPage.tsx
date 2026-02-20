@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
@@ -26,6 +27,7 @@ interface Category {
 
 export default function CategoriesPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { currentOrg, currentRole } = useOrganizations();
   const { toast } = useToast();
 
@@ -117,7 +119,7 @@ export default function CategoriesPage() {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filtered.map((cat) => (
-              <div key={cat.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors">
+              <div key={cat.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/categories/${cat.id}`)}>
                 <div className="flex items-center gap-3">
                   <FolderOpen className="h-5 w-5 text-primary shrink-0" />
                   <p className="font-medium">{cat.name}</p>
