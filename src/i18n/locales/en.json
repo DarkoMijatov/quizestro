@@ -112,7 +112,7 @@
     "branding": "Branding", "logo": "Organization logo", "uploadLogo": "Upload logo",
     "primaryColor": "Primary color", "secondaryColor": "Secondary color",
     "helpTypes": "Help Types", "helpTypesDescription": "Enable or disable helps for your quizzes.",
-    "jokerDescription": "Eliminates one wrong answer.", "doubleChanceDescription": "Doubles points for one category."
+    "jokerDescription": "Doubles points for one category.", "doubleChanceDescription": "Allows two answers per question in one category."
   },
   "freemium": {
     "freeplan": "Free Plan", "upgrade": "Upgrade",

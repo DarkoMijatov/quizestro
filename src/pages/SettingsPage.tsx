@@ -76,12 +76,12 @@ export default function SettingsPage() {
   const toggleHelp = async (name: string, enabled: boolean) => {
     if (!currentOrg) return;
     if (enabled) {
-      const effect = name.toLowerCase() === 'joker' ? 'marker' : 'double';
+      const effect = name.toLowerCase() === 'joker' ? 'double' : 'second_chance';
       await supabase.from('help_types').insert({
         name,
         effect,
         organization_id: currentOrg.id,
-        description: name.toLowerCase() === 'joker' ? 'Eliminates one wrong answer' : 'Doubles points for a category',
+        description: name.toLowerCase() === 'joker' ? 'Duplira poene za jednu kategoriju' : 'Omogućava dva odgovora po pitanju u jednoj kategoriji',
       });
     } else {
       const help = helpTypes.find(h => h.name.toLowerCase() === name.toLowerCase());

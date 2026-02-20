@@ -112,7 +112,7 @@
     "branding": "Brending", "logo": "Logo organizacije", "uploadLogo": "Otpremite logo",
     "primaryColor": "Primarna boja", "secondaryColor": "Sekundarna boja",
     "helpTypes": "Tipovi pomoći", "helpTypesDescription": "Uključite ili isključite pomoći za vaše kvizove.",
-    "jokerDescription": "Eliminiše jedan netačan odgovor.", "doubleChanceDescription": "Duplira poene za jednu kategoriju."
+    "jokerDescription": "Duplira poene za jednu kategoriju.", "doubleChanceDescription": "Omogućava dva odgovora po pitanju u jednoj kategoriji."
   },
   "freemium": {
     "freeplan": "Besplatni plan", "upgrade": "Nadogradite",
