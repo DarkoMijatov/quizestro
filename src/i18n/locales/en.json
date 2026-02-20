@@ -124,6 +124,15 @@
     "next": "Next",
     "finish": "Finish"
   },
+  "onboarding": {
+    "title": "Create your organization",
+    "subtitle": "Your organization is where you manage quizzes, teams, and leagues.",
+    "orgName": "Organization name",
+    "orgNamePlaceholder": "e.g. Quiz Nights London",
+    "cta": "Create organization",
+    "success": "Organization created successfully!",
+    "note": "You can change the name later in settings."
+  },
   "footer": {
     "tagline": "The quiz management platform",
     "rights": "All rights reserved."

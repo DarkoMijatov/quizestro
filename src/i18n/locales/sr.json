@@ -124,6 +124,15 @@
     "next": "Dalje",
     "finish": "Završite"
   },
+  "onboarding": {
+    "title": "Kreirajte organizaciju",
+    "subtitle": "Vaša organizacija je prostor gde upravljate kvizovima, timovima i ligama.",
+    "orgName": "Naziv organizacije",
+    "orgNamePlaceholder": "npr. Kviz Večeri Beograd",
+    "cta": "Kreirajte organizaciju",
+    "success": "Organizacija je uspešno kreirana!",
+    "note": "Možete kasnije promeniti naziv u podešavanjima."
+  },
   "footer": {
     "tagline": "Platforma za organizovanje kvizova",
     "rights": "Sva prava zadržana."
