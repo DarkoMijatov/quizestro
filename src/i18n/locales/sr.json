@@ -17,128 +17,98 @@
   "features": {
     "title": "Sve što vam treba",
     "subtitle": "Moćni alati za svaki aspekt vašeg kviza",
-    "liveScoring": {
-      "title": "Bodovanje uživo",
-      "description": "Unosite rezultate u realnom vremenu sa automatskim rangiranjem i kalkulacijom."
-    },
-    "teams": {
-      "title": "Upravljanje timovima",
-      "description": "Pratite timove sa alijasima, istorijom i statistikom."
-    },
-    "leagues": {
-      "title": "Lige i sezone",
-      "description": "Kreirajte lige sa automatskim agregatnim rang listama."
-    },
-    "stats": {
-      "title": "Statistike",
-      "description": "Detaljne analitike po kategoriji, timu i periodu."
-    },
-    "helps": {
-      "title": "Džoker i pomoći",
-      "description": "Konfigurisane pomoći sa automatskom primenom na bodove."
-    },
-    "export": {
-      "title": "Izvoz i deljenje",
-      "description": "PDF, Excel izvoz i javne rang liste za projektore."
-    }
+    "liveScoring": { "title": "Bodovanje uživo", "description": "Unosite rezultate u realnom vremenu sa automatskim rangiranjem i kalkulacijom." },
+    "teams": { "title": "Upravljanje timovima", "description": "Pratite timove sa alijasima, istorijom i statistikom." },
+    "leagues": { "title": "Lige i sezone", "description": "Kreirajte lige sa automatskim agregatnim rang listama." },
+    "stats": { "title": "Statistike", "description": "Detaljne analitike po kategoriji, timu i periodu." },
+    "helps": { "title": "Džoker i pomoći", "description": "Konfigurisane pomoći sa automatskom primenom na bodove." },
+    "export": { "title": "Izvoz i deljenje", "description": "PDF, Excel izvoz i javne rang liste za projektore." }
   },
   "pricing": {
     "title": "Jednostavne cene",
     "subtitle": "Započnite besplatno, nadogradite kada budete spremni",
-    "free": {
-      "name": "Besplatno",
-      "price": "0",
-      "currency": "RSD",
-      "period": "/mesečno",
-      "features": [
-        "1 organizacija",
-        "Samo vlasnik",
-        "Do 10 kvizova mesečno",
-        "Osnovno bodovanje",
-        "Upravljanje timovima"
-      ],
-      "cta": "Započnite besplatno"
-    },
-    "premium": {
-      "name": "Premium",
-      "price": "2.990",
-      "currency": "RSD",
-      "period": "/mesečno",
-      "popular": "Najpopularnije",
-      "features": [
-        "Neograničene organizacije",
-        "Do 3 admina",
-        "Neograničeni kvizovi",
-        "Lige i sezone",
-        "Banka pitanja",
-        "Prilagođeni brending",
-        "Javne rang liste",
-        "Prioritetna podrška"
-      ],
-      "cta": "Započnite probni period"
-    },
+    "free": { "name": "Besplatno", "price": "0", "currency": "RSD", "period": "/mesečno", "features": ["1 organizacija","Samo vlasnik","Do 10 kvizova mesečno","Osnovno bodovanje","Upravljanje timovima"], "cta": "Započnite besplatno" },
+    "premium": { "name": "Premium", "price": "2.990", "currency": "RSD", "period": "/mesečno", "popular": "Najpopularnije", "features": ["Neograničene organizacije","Do 3 admina","Neograničeni kvizovi","Lige i sezone","Banka pitanja","Prilagođeni brending","Javne rang liste","Prioritetna podrška"], "cta": "Započnite probni period" },
     "trial": "14 dana besplatno Premium probnog perioda"
   },
   "auth": {
-    "login": "Prijava",
-    "register": "Registracija",
-    "email": "Email adresa",
-    "password": "Lozinka",
-    "confirmPassword": "Potvrdite lozinku",
-    "fullName": "Puno ime",
-    "forgotPassword": "Zaboravili ste lozinku?",
-    "noAccount": "Nemate nalog?",
-    "hasAccount": "Već imate nalog?",
-    "loginCta": "Prijavite se",
-    "registerCta": "Registrujte se",
-    "resetPassword": "Resetujte lozinku",
-    "resetCta": "Pošaljite link",
-    "resetSuccess": "Proverite vaš email za link za resetovanje lozinke.",
-    "backToLogin": "Nazad na prijavu"
+    "login": "Prijava", "register": "Registracija", "email": "Email adresa", "password": "Lozinka",
+    "confirmPassword": "Potvrdite lozinku", "fullName": "Puno ime", "forgotPassword": "Zaboravili ste lozinku?",
+    "noAccount": "Nemate nalog?", "hasAccount": "Već imate nalog?", "loginCta": "Prijavite se",
+    "registerCta": "Registrujte se", "resetPassword": "Resetujte lozinku", "resetCta": "Pošaljite link",
+    "resetSuccess": "Proverite vaš email za link za resetovanje lozinke.", "backToLogin": "Nazad na prijavu"
   },
   "dashboard": {
-    "title": "Kontrolna tabla",
-    "welcome": "Dobrodošli nazad",
-    "quizzes": "Kvizovi",
-    "teams": "Timovi",
-    "leagues": "Lige",
-    "categories": "Kategorije",
-    "members": "Članovi",
-    "settings": "Podešavanja",
-    "questionBank": "Banka pitanja",
-    "stats": "Statistike",
-    "organization": "Organizacija",
-    "recentQuizzes": "Nedavni kvizovi",
-    "noQuizzes": "Još nema kvizova. Kreirajte prvi!",
-    "createQuiz": "Novi kviz"
+    "title": "Kontrolna tabla", "welcome": "Dobrodošli nazad", "quizzes": "Kvizovi", "teams": "Timovi",
+    "leagues": "Lige", "categories": "Kategorije", "members": "Članovi", "settings": "Podešavanja",
+    "questionBank": "Banka pitanja", "stats": "Statistike", "organization": "Organizacija",
+    "recentQuizzes": "Nedavni kvizovi", "noQuizzes": "Još nema kvizova. Kreirajte prvi!", "createQuiz": "Novi kviz"
+  },
+  "teams": {
+    "title": "Timovi",
+    "addTeam": "Dodaj tim",
+    "teamName": "Naziv tima",
+    "teamNamePlaceholder": "npr. Kvizleri",
+    "aliases": "Alijasi",
+    "addAlias": "Dodaj alijas",
+    "aliasPlaceholder": "npr. Kvizleri 2.0",
+    "noTeams": "Još nema timova. Dodajte prvi!",
+    "deleteConfirm": "Da li ste sigurni da želite da obrišete ovaj tim?",
+    "created": "Tim kreiran uspešno!",
+    "updated": "Tim ažuriran uspešno!",
+    "deleted": "Tim obrisan uspešno!"
+  },
+  "categories": {
+    "title": "Kategorije",
+    "addCategory": "Dodaj kategoriju",
+    "categoryName": "Naziv kategorije",
+    "categoryNamePlaceholder": "npr. Istorija",
+    "noCategories": "Još nema kategorija. Dodajte prvu!",
+    "deleteConfirm": "Da li ste sigurni da želite da obrišete ovu kategoriju?",
+    "created": "Kategorija kreirana uspešno!",
+    "updated": "Kategorija ažurirana uspešno!",
+    "deleted": "Kategorija obrisana uspešno!"
+  },
+  "quiz": {
+    "createTitle": "Novi kviz",
+    "step1": "Detalji",
+    "step2": "Kategorije",
+    "step3": "Timovi",
+    "step4": "Pregled",
+    "name": "Naziv kviza",
+    "namePlaceholder": "npr. Kviz veče #42",
+    "date": "Datum",
+    "location": "Lokacija",
+    "locationPlaceholder": "npr. Kafana Kod Mace",
+    "league": "Liga (opciono)",
+    "selectLeague": "Izaberite ligu",
+    "noLeague": "Bez lige",
+    "selectCategories": "Izaberite kategorije za ovaj kviz",
+    "selectTeams": "Izaberite timove koji učestvuju",
+    "teamAlias": "Alijas za ovaj kviz",
+    "reviewTitle": "Pregledajte kviz",
+    "reviewCategories": "Kategorije",
+    "reviewTeams": "Timovi",
+    "creating": "Kreiranje kviza...",
+    "created": "Kviz uspešno kreiran!",
+    "minCategories": "Izaberite bar jednu kategoriju",
+    "minTeams": "Izaberite bar dva tima",
+    "noCategoriesToSelect": "Nema kategorija. Prvo kreirajte kategorije.",
+    "noTeamsToSelect": "Nema timova. Prvo kreirajte timove."
   },
   "common": {
-    "save": "Sačuvajte",
-    "cancel": "Otkažite",
-    "delete": "Obrišite",
-    "edit": "Izmenite",
-    "create": "Kreirajte",
-    "search": "Pretražite",
-    "loading": "Učitavanje...",
-    "back": "Nazad",
-    "next": "Dalje",
-    "finish": "Završite"
+    "save": "Sačuvajte", "cancel": "Otkažite", "delete": "Obrišite", "edit": "Izmenite",
+    "create": "Kreirajte", "search": "Pretražite", "loading": "Učitavanje...",
+    "back": "Nazad", "next": "Dalje", "finish": "Završite", "close": "Zatvorite",
+    "confirm": "Potvrdite", "noResults": "Nema rezultata"
   },
   "onboarding": {
     "title": "Kreirajte organizaciju",
     "subtitle": "Vaša organizacija je prostor gde upravljate kvizovima, timovima i ligama.",
-    "orgName": "Naziv organizacije",
-    "orgNamePlaceholder": "npr. Kviz Večeri Beograd",
-    "cta": "Kreirajte organizaciju",
-    "success": "Organizacija je uspešno kreirana!",
+    "orgName": "Naziv organizacije", "orgNamePlaceholder": "npr. Kviz Večeri Beograd",
+    "cta": "Kreirajte organizaciju", "success": "Organizacija je uspešno kreirana!",
     "note": "Možete kasnije promeniti naziv u podešavanjima."
   },
-  "footer": {
-    "tagline": "Platforma za organizovanje kvizova",
-    "rights": "Sva prava zadržana."
-  },
-  "language": {
-    "sr": "Srpski",
-    "en": "English"
-  }
+  "footer": { "tagline": "Platforma za organizovanje kvizova", "rights": "Sva prava zadržana." },
+  "language": { "sr": "Srpski", "en": "English" }
 }
