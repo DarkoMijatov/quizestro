@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
-  ArrowLeft, Loader2, Trophy, Star, Zap, Lock, Unlock, Play, CheckCircle,
+  ArrowLeft, Loader2, Play, CheckCircle, Unlock,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -181,7 +181,6 @@ export default function QuizDetailPage() {
     setQuiz((prev) => prev ? { ...prev, status } : prev);
 
     if (status === 'finished') {
-      // Update ranks and totals
       for (let i = 0; i < rankedTeams.length; i++) {
         const team = rankedTeams[i];
         await supabase.from('quiz_teams').update({
@@ -216,25 +215,18 @@ export default function QuizDetailPage() {
     );
   }
 
+  const isFinished = quiz.status === 'finished';
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/quizzes')} className="gap-1 mb-2">
-              <ArrowLeft className="h-4 w-4" /> {t('common.back')}
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard/quizzes')}>
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div className="flex items-center gap-3">
-              <h1 className="font-display text-2xl font-bold">{quiz.name}</h1>
-              <Badge variant="outline" className={statusConfig[quiz.status].color}>
-                {quiz.status}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {format(new Date(quiz.date), 'PPP')}
-              {quiz.location && ` · ${quiz.location}`}
-            </p>
+            <h1 className="font-display text-2xl md:text-3xl font-bold">{quiz.name}</h1>
           </div>
           {canEdit && (
             <div className="flex items-center gap-2">
@@ -244,7 +236,7 @@ export default function QuizDetailPage() {
                 </Button>
               )}
               {quiz.status === 'live' && (
-                <Button onClick={() => updateQuizStatus('finished')} variant="secondary" className="gap-2">
+                <Button onClick={() => updateQuizStatus('finished')} className="gap-2">
                   <CheckCircle className="h-4 w-4" /> {t('scoring.finish')}
                 </Button>
               )}
@@ -257,135 +249,141 @@ export default function QuizDetailPage() {
           )}
         </div>
 
-        {/* Scoring Table */}
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/50 border-b border-border">
-                  <th className="text-left p-3 font-semibold sticky left-0 bg-muted/50 min-w-[140px] z-10">
-                    #
-                  </th>
-                  <th className="text-left p-3 font-semibold sticky left-10 bg-muted/50 min-w-[160px] z-10">
-                    {t('scoring.team')}
-                  </th>
-                  {categories.map((cat) => (
-                    <th key={cat.id} className="text-center p-3 font-semibold min-w-[120px]">
-                      {(cat.category as any)?.name || cat.category_id}
-                    </th>
-                  ))}
-                  <th className="text-center p-3 font-semibold min-w-[90px] bg-primary/5">
-                    {t('scoring.total')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rankedTeams.map((team, idx) => {
-                  const total = getTeamTotal(team.id);
-                  const teamName = team.alias || (team.team as any)?.name || '';
-                  return (
-                    <tr key={team.id} className={cn('border-b border-border last:border-0', idx === 0 && 'bg-primary/[0.02]')}>
-                      <td className="p-3 sticky left-0 bg-card font-bold text-muted-foreground z-10">
-                        {idx + 1}
-                      </td>
-                      <td className="p-3 sticky left-10 bg-card z-10">
-                        <div className="flex items-center gap-2">
-                          {idx === 0 && <Trophy className="h-4 w-4 text-yellow-500" />}
-                          <span className="font-medium">{teamName}</span>
-                        </div>
-                      </td>
-                      {categories.map((cat) => {
-                        const score = getScore(team.id, cat.id);
-                        const hasJoker = jokerType && getHelpUsage(team.id, cat.id, jokerType.id);
-                        const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
-                        const isFinished = quiz.status === 'finished';
+        {/* Scoring Card */}
+        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          {/* Column Headers */}
+          <div className="grid border-b border-border bg-muted/30" style={{
+            gridTemplateColumns: `minmax(200px, 1.5fr) ${categories.map(() => '1fr').join(' ')} minmax(100px, 0.6fr)`,
+          }}>
+            <div className="p-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t('scoring.team')}
+            </div>
+            {categories.map((cat) => (
+              <div key={cat.id} className="p-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center border-l border-border">
+                {(cat.category as any)?.name || cat.category_id}
+              </div>
+            ))}
+            <div className="p-4 text-xs font-semibold uppercase tracking-wider text-primary text-center border-l border-border">
+              {t('scoring.total')}
+            </div>
+          </div>
 
-                        return (
-                          <td key={cat.id} className={cn('p-2 text-center', hasJoker && 'bg-yellow-500/5')}>
-                            {canEdit && !isFinished ? (
-                              <div className="space-y-1">
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  value={score?.points ?? 0}
-                                  onChange={(e) => score && updateScore(score.id, 'points', Number(e.target.value) || 0)}
-                                  className="h-8 w-16 mx-auto text-center text-sm"
-                                />
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  value={score?.bonus_points ?? 0}
-                                  onChange={(e) => score && updateScore(score.id, 'bonus_points', Number(e.target.value) || 0)}
-                                  className="h-7 w-16 mx-auto text-center text-xs text-muted-foreground"
-                                  placeholder="bonus"
-                                />
-                                <div className="flex items-center justify-center gap-1">
-                                  {jokerType && (
-                                    <button
-                                      onClick={() => toggleHelp(team.id, cat.id, jokerType)}
-                                      className={cn(
-                                        'p-1 rounded transition-colors',
-                                        hasJoker ? 'bg-yellow-500 text-white' : 'text-muted-foreground hover:text-yellow-500'
-                                      )}
-                                      title="Joker (x2)"
-                                      disabled={!hasJoker && hasTeamUsedHelp(team.id, jokerType.id)}
-                                    >
-                                      <Star className="h-3.5 w-3.5" />
-                                    </button>
-                                  )}
-                                  {markerType && (
-                                    <button
-                                      onClick={() => toggleHelp(team.id, cat.id, markerType)}
-                                      className={cn(
-                                        'p-1 rounded transition-colors',
-                                        hasMarker ? 'bg-blue-500 text-white' : 'text-muted-foreground hover:text-blue-500'
-                                      )}
-                                      title="Double Chance"
-                                      disabled={!hasMarker && hasTeamUsedHelp(team.id, markerType.id)}
-                                    >
-                                      <Zap className="h-3.5 w-3.5" />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="space-y-0.5">
-                                <p className="font-medium">
-                                  {(score?.points ?? 0) + (score?.bonus_points ?? 0)}
-                                  {hasJoker && <span className="text-yellow-500 text-xs ml-1">×2</span>}
-                                </p>
-                                <div className="flex items-center justify-center gap-0.5">
-                                  {hasJoker && <Star className="h-3 w-3 text-yellow-500" />}
-                                  {hasMarker && <Zap className="h-3 w-3 text-blue-500" />}
-                                </div>
-                              </div>
+          {/* Team Rows */}
+          {rankedTeams.map((team, idx) => {
+            const total = getTeamTotal(team.id);
+            const teamName = team.alias || (team.team as any)?.name || '';
+            const originalName = (team.team as any)?.name || '';
+
+            return (
+              <div
+                key={team.id}
+                className={cn(
+                  'grid border-b border-border last:border-0 transition-colors',
+                  idx === 0 && 'bg-primary/[0.02]',
+                )}
+                style={{
+                  gridTemplateColumns: `minmax(200px, 1.5fr) ${categories.map(() => '1fr').join(' ')} minmax(100px, 0.6fr)`,
+                }}
+              >
+                {/* Rank + Team */}
+                <div className="p-4 flex items-center gap-3">
+                  <div className="flex-shrink-0 w-9 h-9 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground">
+                    {idx + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-base truncate">{teamName}</p>
+                    {team.alias && originalName && (
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide truncate">{originalName}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Category Scores */}
+                {categories.map((cat) => {
+                  const score = getScore(team.id, cat.id);
+                  const hasJoker = jokerType && getHelpUsage(team.id, cat.id, jokerType.id);
+
+                  return (
+                    <div key={cat.id} className={cn('p-3 flex flex-col items-center justify-center gap-2 border-l border-border', hasJoker && 'bg-primary/[0.04]')}>
+                      {canEdit && !isFinished ? (
+                        <>
+                          <div className="flex items-center gap-1.5">
+                            <Input
+                              type="number"
+                              min={0}
+                              step={0.5}
+                              value={score?.points ?? 0}
+                              onChange={(e) => score && updateScore(score.id, 'points', Number(e.target.value) || 0)}
+                              className="h-11 w-16 text-center text-lg font-bold border-muted"
+                            />
+                            <span className="text-muted-foreground text-lg font-light">+</span>
+                            <Input
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={score?.bonus_points ?? 0}
+                              onChange={(e) => score && updateScore(score.id, 'bonus_points', Number(e.target.value) || 0)}
+                              className="h-11 w-14 text-center text-lg font-bold border-muted"
+                            />
+                          </div>
+                          {/* Help buttons */}
+                          <div className="flex items-center gap-1.5">
+                            {jokerType && (
+                              <button
+                                onClick={() => toggleHelp(team.id, cat.id, jokerType)}
+                                className={cn(
+                                  'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
+                                  hasJoker
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-primary',
+                                )}
+                                disabled={!hasJoker && hasTeamUsedHelp(team.id, jokerType.id)}
+                              >
+                                {jokerType.name}
+                              </button>
                             )}
-                          </td>
-                        );
-                      })}
-                      <td className="p-3 text-center bg-primary/5">
-                        <span className="font-bold text-lg">{total}</span>
-                      </td>
-                    </tr>
+                            {markerType && (() => {
+                              const hasMarker = getHelpUsage(team.id, cat.id, markerType.id);
+                              return (
+                                <button
+                                  onClick={() => toggleHelp(team.id, cat.id, markerType)}
+                                  className={cn(
+                                    'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
+                                    hasMarker
+                                      ? 'bg-accent text-accent-foreground border-accent'
+                                      : 'bg-background text-muted-foreground border-border hover:border-accent hover:text-accent-foreground',
+                                  )}
+                                  disabled={!hasMarker && hasTeamUsedHelp(team.id, markerType.id)}
+                                >
+                                  {markerType.name}
+                                </button>
+                              );
+                            })()}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1">
+                          <p className="text-lg font-bold">
+                            {score?.points ?? 0}
+                            <span className="text-muted-foreground font-light mx-1">+</span>
+                            {score?.bonus_points ?? 0}
+                          </p>
+                          {hasJoker && (
+                            <span className="text-xs text-primary font-medium">×2</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-          {jokerType && (
-            <span className="flex items-center gap-1">
-              <Star className="h-3.5 w-3.5 text-yellow-500" /> Joker (×2 {t('scoring.points')})
-            </span>
-          )}
-          {markerType && (
-            <span className="flex items-center gap-1">
-              <Zap className="h-3.5 w-3.5 text-blue-500" /> Double Chance
-            </span>
-          )}
+                {/* Total */}
+                <div className="p-3 flex items-center justify-center border-l border-border">
+                  <span className="text-3xl font-bold text-primary">{total % 1 === 0 ? total : total.toFixed(1)}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </DashboardLayout>
