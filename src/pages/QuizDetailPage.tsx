@@ -249,21 +249,21 @@ export default function QuizDetailPage() {
           )}
         </div>
 
-        {/* Scoring Card */}
+          {/* Scoring Card */}
         <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
           {/* Column Headers */}
           <div className="grid border-b border-border bg-muted/30" style={{
-            gridTemplateColumns: `minmax(200px, 1.5fr) ${categories.map(() => '1fr').join(' ')} minmax(100px, 0.6fr)`,
+            gridTemplateColumns: `minmax(140px, 1.2fr) ${categories.map(() => 'minmax(80px, 1fr)').join(' ')} minmax(70px, 0.5fr)`,
           }}>
-            <div className="p-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="p-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {t('scoring.team')}
             </div>
             {categories.map((cat) => (
-              <div key={cat.id} className="p-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center border-l border-border">
+              <div key={cat.id} className="p-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center border-l border-border truncate">
                 {(cat.category as any)?.name || cat.category_id}
               </div>
             ))}
-            <div className="p-4 text-xs font-semibold uppercase tracking-wider text-primary text-center border-l border-border">
+            <div className="p-3 text-xs font-semibold uppercase tracking-wider text-primary text-center border-l border-border">
               {t('scoring.total')}
             </div>
           </div>
@@ -282,18 +282,18 @@ export default function QuizDetailPage() {
                   idx === 0 && 'bg-primary/[0.02]',
                 )}
                 style={{
-                  gridTemplateColumns: `minmax(200px, 1.5fr) ${categories.map(() => '1fr').join(' ')} minmax(100px, 0.6fr)`,
+                  gridTemplateColumns: `minmax(140px, 1.2fr) ${categories.map(() => 'minmax(80px, 1fr)').join(' ')} minmax(70px, 0.5fr)`,
                 }}
               >
                 {/* Rank + Team */}
-                <div className="p-4 flex items-center gap-3">
-                  <div className="flex-shrink-0 w-9 h-9 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground">
+                <div className="p-3 flex items-center gap-2">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground">
                     {idx + 1}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-semibold text-base truncate">{teamName}</p>
+                    <p className="font-semibold text-sm truncate">{teamName}</p>
                     {team.alias && originalName && (
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide truncate">{originalName}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide truncate">{originalName}</p>
                     )}
                   </div>
                 </div>
@@ -304,35 +304,24 @@ export default function QuizDetailPage() {
                   const hasJoker = jokerType && getHelpUsage(team.id, cat.id, jokerType.id);
 
                   return (
-                    <div key={cat.id} className={cn('p-3 flex flex-col items-center justify-center gap-2 border-l border-border', hasJoker && 'bg-primary/[0.04]')}>
+                    <div key={cat.id} className={cn('p-2 flex flex-col items-center justify-center gap-1 border-l border-border', hasJoker && 'bg-primary/[0.04]')}>
                       {canEdit && !isFinished ? (
                         <>
-                          <div className="flex items-center gap-1.5">
-                            <Input
-                              type="number"
-                              min={0}
-                              step={0.5}
-                              value={score?.points ?? 0}
-                              onChange={(e) => score && updateScore(score.id, 'points', Number(e.target.value) || 0)}
-                              className="h-11 w-16 text-center text-lg font-bold border-muted"
-                            />
-                            <span className="text-muted-foreground text-lg font-light">+</span>
-                            <Input
-                              type="number"
-                              min={0}
-                              step={1}
-                              value={score?.bonus_points ?? 0}
-                              onChange={(e) => score && updateScore(score.id, 'bonus_points', Number(e.target.value) || 0)}
-                              className="h-11 w-14 text-center text-lg font-bold border-muted"
-                            />
-                          </div>
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.5}
+                            value={score?.points ?? 0}
+                            onChange={(e) => score && updateScore(score.id, 'points', Number(e.target.value) || 0)}
+                            className="h-12 w-full text-center text-xl font-bold border-muted"
+                          />
                           {/* Help buttons */}
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1">
                             {jokerType && (
                               <button
                                 onClick={() => toggleHelp(team.id, cat.id, jokerType)}
                                 className={cn(
-                                  'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
+                                  'px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors',
                                   hasJoker
                                     ? 'bg-primary text-primary-foreground border-primary'
                                     : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-primary',
@@ -348,7 +337,7 @@ export default function QuizDetailPage() {
                                 <button
                                   onClick={() => toggleHelp(team.id, cat.id, markerType)}
                                   className={cn(
-                                    'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
+                                    'px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors',
                                     hasMarker
                                       ? 'bg-accent text-accent-foreground border-accent'
                                       : 'bg-background text-muted-foreground border-border hover:border-accent hover:text-accent-foreground',
@@ -362,14 +351,12 @@ export default function QuizDetailPage() {
                           </div>
                         </>
                       ) : (
-                        <div className="flex flex-col items-center gap-1">
-                          <p className="text-lg font-bold">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <p className="text-xl font-bold">
                             {score?.points ?? 0}
-                            <span className="text-muted-foreground font-light mx-1">+</span>
-                            {score?.bonus_points ?? 0}
                           </p>
                           {hasJoker && (
-                            <span className="text-xs text-primary font-medium">×2</span>
+                            <span className="text-[10px] text-primary font-medium">×2</span>
                           )}
                         </div>
                       )}
@@ -378,8 +365,8 @@ export default function QuizDetailPage() {
                 })}
 
                 {/* Total */}
-                <div className="p-3 flex items-center justify-center border-l border-border">
-                  <span className="text-3xl font-bold text-primary">{total % 1 === 0 ? total : total.toFixed(1)}</span>
+                <div className="p-2 flex items-center justify-center border-l border-border">
+                  <span className="text-2xl font-bold text-primary">{total % 1 === 0 ? total : total.toFixed(1)}</span>
                 </div>
               </div>
             );
