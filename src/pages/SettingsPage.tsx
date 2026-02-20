@@ -7,7 +7,8 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Settings } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Zap, Crown, Shield } from 'lucide-react';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -20,6 +21,9 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
 
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
+  const isFree = currentOrg?.subscription_tier === 'free';
+  const isPremium = currentOrg?.subscription_tier === 'premium';
+  const isTrial = currentOrg?.subscription_tier === 'trial';
 
   const handleSave = async () => {
     if (!currentOrg || !orgName.trim()) return;
@@ -34,25 +38,95 @@ export default function SettingsPage() {
     setSaving(false);
   };
 
+  const trialDaysLeft = currentOrg?.trial_ends_at
+    ? Math.max(0, Math.ceil((new Date(currentOrg.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
   return (
     <DashboardLayout>
-      <div className="space-y-6 max-w-lg">
+      <div className="space-y-6 max-w-2xl">
         <h1 className="font-display text-2xl font-bold">{t('settings.title')}</h1>
 
+        {/* Subscription card */}
+        <div className="rounded-xl border-2 border-primary/20 bg-card p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {isPremium ? (
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Crown className="h-5 w-5 text-primary" />
+                </div>
+              ) : isTrial ? (
+                <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
+                  <Shield className="h-5 w-5 text-accent-foreground" />
+                </div>
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                  <Zap className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold">{t('settings.subscription')}</p>
+                  <Badge variant={isPremium ? 'default' : 'secondary'}>
+                    {isPremium ? 'Premium' : isTrial ? 'Trial' : 'Free'}
+                  </Badge>
+                </div>
+                {isTrial && trialDaysLeft > 0 && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t('settings.trialDaysLeft', { days: trialDaysLeft })}
+                  </p>
+                )}
+                {isFree && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t('settings.freeDescription')}
+                  </p>
+                )}
+              </div>
+            </div>
+            {!isPremium && (
+              <Button size="sm" className="gap-1">
+                <Zap className="h-3 w-3" />
+                {t('freemium.upgrade')}
+              </Button>
+            )}
+          </div>
+
+          {isFree && (
+            <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-lg font-bold">1</p>
+                <p className="text-xs text-muted-foreground">{t('settings.maxOrgs')}</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-lg font-bold">10</p>
+                <p className="text-xs text-muted-foreground">{t('settings.quizzesPerMonth')}</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-lg font-bold">1</p>
+                <p className="text-xs text-muted-foreground">{t('settings.maxMembers')}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Organization settings */}
         <div className="rounded-xl border border-border bg-card p-6 space-y-5">
+          <h2 className="font-display font-semibold">{t('settings.orgSettings')}</h2>
+
           <div className="space-y-2">
             <Label>{t('settings.orgName')}</Label>
             <Input value={orgName} onChange={(e) => setOrgName(e.target.value)} disabled={!canEdit} />
           </div>
 
-          <div className="space-y-2">
-            <Label>{t('settings.defaultCategories')}</Label>
-            <Input type="number" min={1} max={20} value={defaultCats} onChange={(e) => setDefaultCats(Number(e.target.value))} disabled={!canEdit} />
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t('settings.defaultQuestionsPerCategory')}</Label>
-            <Input type="number" min={1} max={50} value={defaultQpc} onChange={(e) => setDefaultQpc(Number(e.target.value))} disabled={!canEdit} />
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{t('settings.defaultCategories')}</Label>
+              <Input type="number" min={1} max={20} value={defaultCats} onChange={(e) => setDefaultCats(Number(e.target.value))} disabled={!canEdit} />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('settings.defaultQuestionsPerCategory')}</Label>
+              <Input type="number" min={1} max={50} value={defaultQpc} onChange={(e) => setDefaultQpc(Number(e.target.value))} disabled={!canEdit} />
+            </div>
           </div>
 
           {canEdit && (

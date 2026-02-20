@@ -78,24 +78,40 @@
     "title": "Question Bank", "comingSoon": "Question bank is coming soon. Stay tuned!"
   },
   "stats": {
-    "title": "Analytics", "moreComingSoon": "More detailed analytics coming soon."
+    "title": "Analytics", "moreComingSoon": "More detailed analytics coming soon.",
+    "quizzesByMonth": "Quizzes by Month", "categoryUsage": "Category Usage",
+    "topTeams": "Top Teams", "quizzesPlayed": "Played", "avgPoints": "Avg Points",
+    "noData": "Not enough data to display."
   },
   "members": {
     "title": "Members", "noMembers": "No members found.", "unknown": "Unknown user",
     "roleUpdated": "Role updated.", "removed": "Member removed.",
-    "removeConfirm": "Are you sure you want to remove this member?"
+    "removeConfirm": "Are you sure you want to remove this member?",
+    "memberCount": "members", "invite": "Invite", "inviteTitle": "Invite a new member",
+    "inviteDescription": "Share this registration link with the new member.",
+    "inviteLink": "Invite link", "inviteNote": "Members will register and be automatically added to the organization."
   },
   "settings": {
     "title": "Settings", "orgName": "Organization name",
     "defaultCategories": "Default categories per quiz",
     "defaultQuestionsPerCategory": "Default questions per category",
-    "saved": "Settings saved successfully!"
+    "saved": "Settings saved successfully!",
+    "subscription": "Subscription", "orgSettings": "Organization Settings",
+    "trialDaysLeft": "{{days}} days left in trial",
+    "freeDescription": "Limited plan — upgrade for more features",
+    "maxOrgs": "Organizations", "quizzesPerMonth": "Quizzes/mo", "maxMembers": "Member"
+  },
+  "freemium": {
+    "freeplan": "Free Plan", "upgrade": "Upgrade",
+    "quizzesUsed": "{{used}} / {{limit}} quizzes this month",
+    "memberLimit": "Free plan allows only 1 member",
+    "upgradeForMore": "Upgrade to Premium for up to 3 admins and more members"
   },
   "common": {
     "save": "Save", "cancel": "Cancel", "delete": "Delete", "edit": "Edit",
     "create": "Create", "search": "Search", "loading": "Loading...",
     "back": "Back", "next": "Next", "finish": "Finish", "close": "Close",
-    "confirm": "Confirm", "noResults": "No results"
+    "confirm": "Confirm", "noResults": "No results", "viewAll": "View all"
   },
   "onboarding": {
     "title": "Create your organization",

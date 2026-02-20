@@ -78,24 +78,40 @@
     "title": "Banka pitanja", "comingSoon": "Banka pitanja stiže uskoro. Ostanite u toku!"
   },
   "stats": {
-    "title": "Statistike", "moreComingSoon": "Detaljnije statistike stižu uskoro."
+    "title": "Statistike", "moreComingSoon": "Detaljnije statistike stižu uskoro.",
+    "quizzesByMonth": "Kvizovi po mesecima", "categoryUsage": "Korišćenost kategorija",
+    "topTeams": "Najbolji timovi", "quizzesPlayed": "Odigranih", "avgPoints": "Prosek bodova",
+    "noData": "Nema dovoljno podataka za prikaz."
   },
   "members": {
     "title": "Članovi", "noMembers": "Nema pronađenih članova.", "unknown": "Nepoznat korisnik",
     "roleUpdated": "Uloga ažurirana.", "removed": "Član uklonjen.",
-    "removeConfirm": "Da li ste sigurni da želite da uklonite ovog člana?"
+    "removeConfirm": "Da li ste sigurni da želite da uklonite ovog člana?",
+    "memberCount": "članova", "invite": "Pozovite", "inviteTitle": "Pozovite novog člana",
+    "inviteDescription": "Podelite link za registraciju sa novim članom.",
+    "inviteLink": "Link za pozivnicu", "inviteNote": "Članovi će se registrovati i automatski biti dodati u organizaciju."
   },
   "settings": {
     "title": "Podešavanja", "orgName": "Naziv organizacije",
     "defaultCategories": "Podrazumevani broj kategorija po kvizu",
     "defaultQuestionsPerCategory": "Podrazumevani broj pitanja po kategoriji",
-    "saved": "Podešavanja sačuvana uspešno!"
+    "saved": "Podešavanja sačuvana uspešno!",
+    "subscription": "Pretplata", "orgSettings": "Podešavanja organizacije",
+    "trialDaysLeft": "Još {{days}} dana probnog perioda",
+    "freeDescription": "Ograničen plan — nadogradite za više mogućnosti",
+    "maxOrgs": "Organizacija", "quizzesPerMonth": "Kvizova/mesec", "maxMembers": "Član"
+  },
+  "freemium": {
+    "freeplan": "Besplatni plan", "upgrade": "Nadogradite",
+    "quizzesUsed": "{{used}} / {{limit}} kvizova ovog meseca",
+    "memberLimit": "Besplatni plan dozvoljava samo 1 člana",
+    "upgradeForMore": "Nadogradite na Premium za do 3 admina i više članova"
   },
   "common": {
     "save": "Sačuvajte", "cancel": "Otkažite", "delete": "Obrišite", "edit": "Izmenite",
     "create": "Kreirajte", "search": "Pretražite", "loading": "Učitavanje...",
     "back": "Nazad", "next": "Dalje", "finish": "Završite", "close": "Zatvorite",
-    "confirm": "Potvrdite", "noResults": "Nema rezultata"
+    "confirm": "Potvrdite", "noResults": "Nema rezultata", "viewAll": "Pogledajte sve"
   },
   "onboarding": {
     "title": "Kreirajte organizaciju",
