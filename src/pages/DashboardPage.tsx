@@ -29,27 +29,22 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ quizzes: 0, teams: 0, categories: 0, leagues: 0 });
   const [recentQuizzes, setRecentQuizzes] = useState<RecentQuiz[]>([]);
-  const [monthlyQuizCount, setMonthlyQuizCount] = useState(0);
+  const [totalQuizCount, setTotalQuizCount] = useState(0);
 
   const isFree = currentOrg?.subscription_tier === 'free';
-  const MONTHLY_LIMIT = 10;
+  const TOTAL_LIMIT = 10;
 
   useEffect(() => {
     if (!currentOrg) return;
     const load = async () => {
       setLoading(true);
 
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
-      const [q, tm, c, l, recent, monthly] = await Promise.all([
+      const [q, tm, c, l, recent] = await Promise.all([
         supabase.from('quizzes').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id),
         supabase.from('teams').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id).eq('is_deleted', false),
         supabase.from('categories').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id).eq('is_deleted', false),
         supabase.from('leagues').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id),
         supabase.from('quizzes').select('id, name, date, location, status').eq('organization_id', currentOrg.id).order('date', { ascending: false }).limit(5),
-        supabase.from('quizzes').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id).gte('created_at', startOfMonth.toISOString()),
       ]);
 
       setCounts({
@@ -59,7 +54,7 @@ export default function DashboardPage() {
         leagues: l.count || 0,
       });
       setRecentQuizzes((recent.data as RecentQuiz[]) || []);
-      setMonthlyQuizCount(monthly.count || 0);
+      setTotalQuizCount(q.count || 0);
       setLoading(false);
     };
     load();
@@ -100,7 +95,7 @@ export default function DashboardPage() {
               <div>
                 <p className="font-semibold text-sm">{t('freemium.freeplan')}</p>
                 <p className="text-xs text-muted-foreground">
-                  {t('freemium.quizzesUsed', { used: monthlyQuizCount, limit: MONTHLY_LIMIT })}
+                  {t('freemium.quizzesUsed', { used: totalQuizCount, limit: TOTAL_LIMIT })}
                 </p>
               </div>
             </div>
@@ -108,7 +103,7 @@ export default function DashboardPage() {
               <div className="w-24 h-2 rounded-full bg-muted overflow-hidden">
                 <div
                   className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${Math.min((monthlyQuizCount / MONTHLY_LIMIT) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((totalQuizCount / TOTAL_LIMIT) * 100, 100)}%` }}
                 />
               </div>
               <Button size="sm" variant="outline" className="gap-1 shrink-0">

@@ -19,7 +19,7 @@
   },
   "pricing": {
     "title": "Simple pricing", "subtitle": "Start free, upgrade when ready",
-    "free": { "name": "Free", "price": "0", "currency": "$", "period": "/month", "features": ["1 organization","Owner only","Up to 10 quizzes/month","Basic scoring","Team management"], "cta": "Get started free" },
+    "free": { "name": "Free", "price": "0", "currency": "$", "period": "/month", "features": ["1 organization","Owner only","Up to 10 quizzes total","Basic scoring","Team management"], "cta": "Get started free" },
     "premium": { "name": "Premium", "price": "29", "currency": "$", "period": "/month", "popular": "Most popular", "features": ["Unlimited organizations","Up to 3 admins","Unlimited quizzes","Leagues & seasons","Question bank","Custom branding","Public leaderboards","Priority support"], "cta": "Start free trial" },
     "trial": "14-day free Premium trial"
   },
@@ -93,11 +93,12 @@
   },
   "members": {
     "title": "Members", "noMembers": "No members found.", "unknown": "Unknown user",
-    "roleUpdated": "Role updated.", "removed": "Member removed.",
+    "roleUpdated": "Role updated.", "removed": "Member removed.", "nameUpdated": "Name updated.",
     "removeConfirm": "Are you sure you want to remove this member?",
     "memberCount": "members", "invite": "Invite", "inviteTitle": "Invite a new member",
     "inviteDescription": "Share this registration link with the new member.",
-    "inviteLink": "Invite link", "inviteNote": "Members will register and be automatically added to the organization."
+    "inviteLink": "Invite link", "inviteNote": "Members will register and be automatically added to the organization.",
+    "editName": "Edit name", "editNameDescription": "Change the member's full name."
   },
   "settings": {
     "title": "Settings", "orgName": "Organization name",
@@ -107,13 +108,19 @@
     "subscription": "Subscription", "orgSettings": "Organization Settings",
     "trialDaysLeft": "{{days}} days left in trial",
     "freeDescription": "Limited plan — upgrade for more features",
-    "maxOrgs": "Organizations", "quizzesPerMonth": "Quizzes/mo", "maxMembers": "Member"
+    "maxOrgs": "Organizations", "quizzesTotal": "Quizzes total", "maxMembers": "Member",
+    "branding": "Branding", "logo": "Organization logo", "uploadLogo": "Upload logo",
+    "primaryColor": "Primary color", "secondaryColor": "Secondary color",
+    "helpTypes": "Help Types", "helpTypesDescription": "Enable or disable helps for your quizzes.",
+    "jokerDescription": "Eliminates one wrong answer.", "doubleChanceDescription": "Doubles points for one category."
   },
   "freemium": {
     "freeplan": "Free Plan", "upgrade": "Upgrade",
-    "quizzesUsed": "{{used}} / {{limit}} quizzes this month",
+    "quizzesUsed": "{{used}} / {{limit}} quizzes total",
     "memberLimit": "Free plan allows only 1 member",
-    "upgradeForMore": "Upgrade to Premium for up to 3 admins and more members"
+    "upgradeForMore": "Upgrade to Premium for up to 3 admins and more members",
+    "premiumFeature": "Premium Feature",
+    "premiumDescription": "This feature is only available on the Premium plan. Upgrade to access leagues, question bank, and more."
   },
   "common": {
     "save": "Save", "cancel": "Cancel", "delete": "Delete", "edit": "Edit",
