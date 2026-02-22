@@ -311,7 +311,7 @@ export default function QuizDetailPage() {
               {t('scoring.team')}
             </div>
             {categories.map((cat) => (
-              <div key={cat.id} className="p-2 text-sm font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20 truncate">
+              <div key={cat.id} className="p-2 text-xs font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20 break-words leading-tight">
                 {(cat.category as any)?.name || cat.category_id}
               </div>
             ))}
@@ -343,9 +343,9 @@ export default function QuizDetailPage() {
                     {rowIdx + 1}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-sm text-foreground truncate">{teamName}</p>
+                    <p className="font-bold text-sm text-foreground break-words leading-tight">{teamName}</p>
                     {team.alias && originalName && (
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide truncate">{originalName}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide break-words leading-tight">{originalName}</p>
                     )}
                   </div>
                 </div>
