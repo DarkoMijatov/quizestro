@@ -265,11 +265,15 @@ export default function QuizDetailPage() {
   const isFinished = quiz.status === 'finished';
   const colCount = categories.length;
 
+  // Dynamic sizing: scale fonts/padding based on team count to fit screen
+  const teamCount = rankedTeams.length;
+  const sizeClass = teamCount <= 6 ? 'size-lg' : teamCount <= 10 ? 'size-md' : teamCount <= 15 ? 'size-sm' : 'size-xs';
+
   return (
     <DashboardLayout>
-      <div className="space-y-4">
+      <div className="flex flex-col h-[calc(100vh-6rem)]">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard/quizzes')}>
               <ArrowLeft className="h-5 w-5" />
@@ -299,7 +303,7 @@ export default function QuizDetailPage() {
         </div>
 
         {/* Scoring Table */}
-        <div className="rounded-xl border-2 border-foreground/20 bg-card shadow-md overflow-hidden">
+        <div className="rounded-xl border-2 border-foreground/20 bg-card shadow-md overflow-hidden flex flex-col min-h-0 flex-1 mt-2">
           {/* Header row */}
           <div
             className="grid border-b-2 border-foreground/20 bg-muted"
@@ -307,20 +311,20 @@ export default function QuizDetailPage() {
               gridTemplateColumns: `minmax(120px, 1.5fr) ${categories.map(() => '1fr').join(' ')} minmax(60px, 0.6fr)`,
             }}
           >
-            <div className="p-2 text-sm font-bold uppercase tracking-wide text-foreground">
+            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}>
               {t('scoring.team')}
             </div>
             {categories.map((cat) => (
-              <div key={cat.id} className="p-2 text-xs font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20 break-words leading-tight">
+              <div key={cat.id} className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20 break-words leading-tight", sizeClass === 'size-xs' ? 'text-[9px]' : 'text-[10px]')}>
                 {(cat.category as any)?.name || cat.category_id}
               </div>
             ))}
-            <div className="p-2 text-sm font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20">
+            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}>
               Σ
             </div>
           </div>
 
-          {/* Team rows */}
+          <div className="flex-1 min-h-0 flex flex-col">
           {rankedTeams.map((team, rowIdx) => {
             const total = getTeamTotal(team.id);
             const teamName = team.alias || (team.team as any)?.name || '';
@@ -338,14 +342,20 @@ export default function QuizDetailPage() {
                 }}
               >
                 {/* Rank + Team */}
-                <div className="p-2 flex items-center gap-2">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center text-base font-black text-foreground">
+                <div className={cn("flex items-center gap-1.5", sizeClass === 'size-xs' ? 'p-0.5' : 'p-1')}>
+                  <div className={cn("flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
+                    sizeClass === 'size-lg' ? 'w-8 h-8 text-base' : sizeClass === 'size-md' ? 'w-7 h-7 text-sm' : sizeClass === 'size-sm' ? 'w-6 h-6 text-xs' : 'w-5 h-5 text-[10px]'
+                  )}>
                     {rowIdx + 1}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-sm text-foreground break-words leading-tight">{teamName}</p>
+                    <p className={cn("font-bold text-foreground break-words leading-tight",
+                      sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
+                    )}>{teamName}</p>
                     {team.alias && originalName && (
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide break-words leading-tight">{originalName}</p>
+                      <p className={cn("text-muted-foreground uppercase tracking-wide break-words leading-tight",
+                        sizeClass === 'size-lg' ? 'text-[10px]' : 'text-[8px]'
+                      )}>{originalName}</p>
                     )}
                   </div>
                 </div>
@@ -380,7 +390,9 @@ export default function QuizDetailPage() {
                             onFocus={(e) => e.target.select()}
                             onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                             tabIndex={rowIdx * colCount + colIdx + 1}
-                            className="h-14 w-full text-center text-3xl font-black text-foreground bg-transparent border-2 border-foreground/15 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                            className={cn("w-full text-center font-black text-foreground bg-transparent border-2 border-foreground/15 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors",
+                              sizeClass === 'size-lg' ? 'h-14 text-3xl' : sizeClass === 'size-md' ? 'h-10 text-2xl' : sizeClass === 'size-sm' ? 'h-8 text-xl' : 'h-6 text-base'
+                            )}
                           />
                           {/* Help initials */}
                           <div className="flex items-center gap-0.5">
@@ -422,7 +434,7 @@ export default function QuizDetailPage() {
                         </>
                       ) : (
                         <div className="flex flex-col items-center gap-0.5">
-                          <p className="text-3xl font-black text-foreground">
+                          <p className={cn("font-black text-foreground", sizeClass === 'size-lg' ? 'text-3xl' : sizeClass === 'size-md' ? 'text-2xl' : sizeClass === 'size-sm' ? 'text-xl' : 'text-base')}>
                             {score?.points ?? 0}
                           </p>
                           {hasJoker && (
@@ -436,11 +448,12 @@ export default function QuizDetailPage() {
 
                 {/* Total */}
                 <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
-                  <span className="text-3xl font-black text-primary">{total % 1 === 0 ? total : total.toFixed(1)}</span>
+                  <span className={cn("font-black text-primary", sizeClass === 'size-lg' ? 'text-3xl' : sizeClass === 'size-md' ? 'text-2xl' : sizeClass === 'size-sm' ? 'text-xl' : 'text-base')}>{total % 1 === 0 ? total : total.toFixed(1)}</span>
                 </div>
               </div>
             );
           })}
+          </div>
         </div>
       </div>
 
