@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { DataTable, Column } from '@/components/DataTable';
+import { DataTable, Column, FilterConfig } from '@/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -164,7 +164,7 @@ export default function QuizzesPage() {
         columns={columns}
         data={quizzes}
         loading={loading}
-        pageSize={10}
+        pageSize={15}
         defaultSortKey="date"
         defaultSortDir="desc"
         title={t('dashboard.quizzes')}
@@ -181,6 +181,22 @@ export default function QuizzesPage() {
           </Link>
         ) : undefined}
         searchFn={(row, q) => row.name.toLowerCase().includes(q) || (row.location || '').toLowerCase().includes(q) || (row.winner || '').toLowerCase().includes(q)}
+        filters={[
+          {
+            key: 'status',
+            label: t('filters.status'),
+            allLabel: t('filters.allStatuses'),
+            options: [
+              { value: 'draft', label: t('filters.draft') },
+              { value: 'live', label: t('filters.live') },
+              { value: 'finished', label: t('filters.finished') },
+            ],
+          },
+        ]}
+        filterFn={(row, filters) => {
+          if (filters.status && filters.status !== 'all' && row.status !== filters.status) return false;
+          return true;
+        }}
         onRowClick={(r) => navigate(`/dashboard/quizzes/${r.id}`)}
       />
 
