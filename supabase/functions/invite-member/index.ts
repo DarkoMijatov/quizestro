@@ -112,19 +112,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Send invite email via Supabase Auth
-      const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
-        email,
-        { redirectTo: `${req.headers.get("origin") || supabaseUrl}/login` }
-      );
-
-      if (inviteError) {
-        // If user was already invited but didn't complete registration, that's ok
-        if (!inviteError.message.includes("already been registered")) {
-          console.error("Invite email error:", inviteError);
-        }
-      }
-
       return new Response(JSON.stringify({ status: "invited", email }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
