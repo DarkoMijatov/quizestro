@@ -25,5 +25,13 @@ export function RequireOrganization({ children }: { children: React.ReactNode })
     return <Navigate to="/onboarding" replace />;
   }
 
+  // Multiple orgs, no saved preference → show org picker
+  if (organizations.length > 1) {
+    const savedOrgId = localStorage.getItem('quizory-current-org');
+    if (!savedOrgId || !organizations.some(o => o.id === savedOrgId)) {
+      return <Navigate to="/onboarding" replace />;
+    }
+  }
+
   return <>{children}</>;
 }

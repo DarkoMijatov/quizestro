@@ -82,6 +82,7 @@ export default function CreateQuizPage() {
   const [leaguePrefillApplied, setLeaguePrefillApplied] = useState(false);
   const [prefillCats, setPrefillCats] = useState<string[]>([]);
   const [prefillTeams, setPrefillTeams] = useState<TeamSelection[]>([]);
+  const [prefillLocation, setPrefillLocation] = useState('');
 
   useEffect(() => {
     if (!currentOrg) return;
@@ -121,7 +122,7 @@ export default function CreateQuizPage() {
     const fetchLastQuiz = async () => {
       const { data: lastQuizzes } = await supabase
         .from('quizzes')
-        .select('id')
+        .select('id, location')
         .eq('league_id', selectedLeague)
         .eq('organization_id', currentOrg.id)
         .order('date', { ascending: false })
@@ -131,7 +132,9 @@ export default function CreateQuizPage() {
         setLeaguePrefillAvailable(false);
         return;
       }
-      const lastQuizId = (lastQuizzes[0] as any).id;
+      const lastQuiz = lastQuizzes[0] as any;
+      const lastQuizId = lastQuiz.id;
+      const lastLocation = lastQuiz.location || '';
 
       const [catRes, teamRes] = await Promise.all([
         supabase.from('quiz_categories').select('category_id, sort_order').eq('quiz_id', lastQuizId).order('sort_order'),
@@ -144,6 +147,7 @@ export default function CreateQuizPage() {
       if (prevCats.length > 0 || prevTeams.length > 0) {
         setPrefillCats(prevCats);
         setPrefillTeams(prevTeams);
+        setPrefillLocation(lastLocation);
         setLeaguePrefillAvailable(true);
         setLeaguePrefillApplied(false);
       } else {
@@ -154,18 +158,16 @@ export default function CreateQuizPage() {
   }, [selectedLeague, currentOrg?.id]);
 
   const applyLeaguePrefill = () => {
-    // Only apply cats that still exist
     const validCats = prefillCats.filter(id => categories.some(c => c.id === id));
     setSelectedCats(validCats);
-    // Only apply teams that still exist
     const validTeams = prefillTeams.filter(t => teams.some(tm => tm.id === t.teamId));
-    // Fill in team names for aliases that are empty
     const teamsWithNames = validTeams.map(t => {
       if (t.alias) return t;
       const team = teams.find(tm => tm.id === t.teamId);
       return { ...t, alias: team?.name || '' };
     });
     setSelectedTeams(teamsWithNames);
+    if (prefillLocation && !location) setLocation(prefillLocation);
     setLeaguePrefillApplied(true);
   };
 

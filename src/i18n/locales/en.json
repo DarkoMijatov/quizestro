@@ -182,7 +182,10 @@
     "subtitle": "Your organization is where you manage quizzes, teams, and leagues.",
     "orgName": "Organization name", "orgNamePlaceholder": "e.g. Quiz Nights London",
     "cta": "Create organization", "success": "Organization created successfully!",
-    "note": "You can change the name later in settings."
+    "note": "You can change the name later in settings.",
+    "selectOrg": "Select organization",
+    "selectOrgSubtitle": "You belong to multiple organizations. Choose the one you want to work in.",
+    "createNew": "Create a new organization"
   },
   "footer": { "tagline": "The quiz management platform", "rights": "All rights reserved." },
   "excel": {
