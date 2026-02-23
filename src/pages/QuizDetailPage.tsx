@@ -11,6 +11,7 @@ import {
   ArrowLeft, Loader2, Play, CheckCircle, Unlock, Download, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { exportQuizToExcel } from '@/lib/excelUtils';
+import { QuizDraftManager } from '@/components/QuizDraftManager';
 
 interface QuizData {
   id: string;
@@ -297,7 +298,16 @@ export default function QuizDetailPage() {
             </Button>
             <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{quiz.name}</h1>
           </div>
-          <div className="flex items-center gap-2">
+           <div className="flex items-center gap-2">
+            {canReorder && (
+              <QuizDraftManager
+                quizId={quizId!}
+                organizationId={currentOrg!.id}
+                quizCategories={categories}
+                quizTeams={teams}
+                onChanged={fetchAll}
+              />
+            )}
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-1">
               <Download className="h-4 w-4" /> {t('excel.export')}
             </Button>
