@@ -66,13 +66,11 @@ export default function LeaguesPage() {
 
     const leagueIds = rawLeagues.map(l => l.id);
 
-    // Get quizzes for these leagues
     const { data: quizzes } = await supabase
       .from('quizzes')
       .select('id, league_id, status')
       .in('league_id', leagueIds);
 
-    // Count quizzes per league and get finished quiz IDs per league
     const quizCountMap: Record<string, number> = {};
     const finishedQuizIdsByLeague: Record<string, string[]> = {};
     for (const q of (quizzes || [])) {
@@ -84,7 +82,6 @@ export default function LeaguesPage() {
       }
     }
 
-    // Get all finished quiz IDs across all leagues
     const allFinishedIds = Object.values(finishedQuizIdsByLeague).flat();
 
     let leaderMap: Record<string, string> = {};
@@ -94,10 +91,8 @@ export default function LeaguesPage() {
         .select('team_id, quiz_id, total_points')
         .in('quiz_id', allFinishedIds);
 
-      // Aggregate total points per team per league
       const teamPointsByLeague: Record<string, Record<string, number>> = {};
       for (const qt of (qtData || [])) {
-        // Find which league this quiz belongs to
         for (const [lid, qids] of Object.entries(finishedQuizIdsByLeague)) {
           if (qids.includes((qt as any).quiz_id)) {
             if (!teamPointsByLeague[lid]) teamPointsByLeague[lid] = {};
@@ -108,7 +103,6 @@ export default function LeaguesPage() {
         }
       }
 
-      // Find leader per league
       const allTeamIds = new Set<string>();
       const leaderTeamIds: Record<string, string> = {};
       for (const [lid, teams] of Object.entries(teamPointsByLeague)) {
@@ -183,6 +177,20 @@ export default function LeaguesPage() {
     { key: 'leaderName', label: t('leagueDetail.leaderOrWinner'), sortable: true, render: (r) => (
       <span className="text-sm">{r.leaderName || '-'}</span>
     ), getValue: (r) => r.leaderName || '' },
+    ...(canEdit ? [{
+      key: 'actions' as string,
+      label: '',
+      render: (r: LeagueRow) => (
+        <div className="flex items-center gap-1 justify-end">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); openEdit(r); }}>
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setDeleteItem(r); }}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    }] : []),
   ];
 
   const filterConfigs: FilterConfig[] = [
@@ -216,12 +224,7 @@ export default function LeaguesPage() {
         onRowClick={(r) => navigate(`/dashboard/leagues/${r.id}`)}
         headerActions={
           canEdit ? (
-            <div className="flex items-center gap-2">
-              {canEdit && (
-                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); }}><Pencil className="h-4 w-4 opacity-0" /></Button>
-              )}
-              <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('leagues.addLeague')}</Button>
-            </div>
+            <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('leagues.addLeague')}</Button>
           ) : undefined
         }
       />

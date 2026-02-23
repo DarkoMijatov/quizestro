@@ -126,16 +126,21 @@
   },
   "leagueDetail": {
     "quizCount": "Broj kvizova", "leadingTeam": "Vodeća ekipa", "winnerTeam": "Pobednička ekipa",
-    "totalTeams": "Ukupno timova", "standings": "Rang lista", "leaderOrWinner": "Vodeća/Pobednička ekipa"
+    "totalTeams": "Ukupno timova", "standings": "Rang lista", "leaderOrWinner": "Vodeća/Pobednička ekipa",
+    "quizList": "Kvizovi u ligi", "noQuizzes": "Još nema kvizova u ovoj ligi."
   },
   "members": {
     "title": "Članovi", "noMembers": "Nema pronađenih članova.", "unknown": "Nepoznat korisnik",
     "roleUpdated": "Uloga ažurirana.", "removed": "Član uklonjen.", "nameUpdated": "Ime ažurirano.",
     "removeConfirm": "Da li ste sigurni da želite da uklonite ovog člana?",
     "memberCount": "članova", "invite": "Pozovite", "inviteTitle": "Pozovite novog člana",
-    "inviteDescription": "Podelite link za registraciju sa novim članom.",
-    "inviteLink": "Link za pozivnicu", "inviteNote": "Članovi će se registrovati i automatski biti dodati u organizaciju.",
-    "editName": "Izmeni ime", "editNameDescription": "Promenite ime i prezime člana."
+    "inviteDescription": "Unesite email adresu osobe koju želite da pozovete.",
+    "inviteNote": "Ako korisnik već postoji, biće automatski dodat. U suprotnom, biće pozvan da se registruje.",
+    "editName": "Izmeni ime", "editNameDescription": "Promenite ime i prezime člana.",
+    "role": "Uloga", "inviteEmailPlaceholder": "npr. ime@email.com",
+    "sendInvite": "Pošaljite pozivnicu", "alreadyMember": "Ovaj korisnik je već član organizacije.",
+    "addedExisting": "Korisnik je uspešno dodat u organizaciju!", "inviteSent": "Pozivnica je uspešno poslata!",
+    "pendingInvites": "Pozivnice na čekanju", "inviteCancelled": "Pozivnica je otkazana."
   },
   "settings": {
     "title": "Podešavanja", "orgName": "Naziv organizacije",
