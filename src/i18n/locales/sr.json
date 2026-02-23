@@ -106,8 +106,8 @@
   },
   "stats": {
     "title": "Statistike", "moreComingSoon": "Detaljnije statistike stižu uskoro.",
-    "quizzesByMonth": "Kvizovi po mesecima", "categoryUsage": "Korišćenost kategorija",
     "topTeams": "Najbolji timovi", "quizzesPlayed": "Odigranih", "avgPoints": "Prosek bodova",
+    "wins": "Pobede", "bestCategories": "Najbolje kategorije", "bestQuizzes": "Najbolji kvizovi",
     "noData": "Nema dovoljno podataka za prikaz."
   },
   "members": {

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,10 +14,16 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 export default function OnboardingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { organizations, loading: orgLoading, hasFetchedForCurrentUser } = useOrganizations();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [orgName, setOrgName] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // If user already has organizations, redirect to dashboard
+  if (hasFetchedForCurrentUser && organizations.length > 0) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
