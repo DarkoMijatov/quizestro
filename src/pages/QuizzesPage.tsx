@@ -1,21 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { DataTable, Column } from '@/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trophy, Loader2, MapPin, Calendar } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Plus, Trophy, Eye, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
-interface Quiz {
+interface QuizRow {
   id: string;
   name: string;
   date: string;
   location: string | null;
   status: 'draft' | 'live' | 'finished';
-  created_at: string;
+  teamCount: number;
+  winner: string | null;
+  avgPoints: number | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -26,82 +34,168 @@ const statusColors: Record<string, string> = {
 
 export default function QuizzesPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { currentOrg, currentRole } = useOrganizations();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const { toast } = useToast();
+  const [quizzes, setQuizzes] = useState<QuizRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteItem, setDeleteItem] = useState<QuizRow | null>(null);
 
   const canCreate = currentRole === 'owner' || currentRole === 'admin';
+  const canDelete = currentRole === 'owner' || currentRole === 'admin';
 
   useEffect(() => {
     if (!currentOrg) return;
-    const fetch = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      const { data } = await supabase
+
+      // Fetch quizzes
+      const { data: quizData } = await supabase
         .from('quizzes')
-        .select('*')
+        .select('id, name, date, location, status')
         .eq('organization_id', currentOrg.id)
-        .order('date', { ascending: false }) as { data: Quiz[] | null };
-      setQuizzes(data || []);
+        .order('date', { ascending: false });
+
+      const qList = (quizData || []) as any[];
+      if (qList.length === 0) { setQuizzes([]); setLoading(false); return; }
+
+      const quizIds = qList.map((q) => q.id);
+
+      // Fetch quiz_teams with team names for counts, winners
+      const { data: qtData } = await supabase
+        .from('quiz_teams')
+        .select('quiz_id, team_id, total_points, rank, teams(name)')
+        .in('quiz_id', quizIds);
+
+      const qtList = (qtData || []) as any[];
+
+      // Build aggregates per quiz
+      const aggMap = new Map<string, { teamCount: number; winner: string | null; totalPoints: number }>();
+      for (const qt of qtList) {
+        const agg = aggMap.get(qt.quiz_id) || { teamCount: 0, winner: null, totalPoints: 0 };
+        agg.teamCount++;
+        agg.totalPoints += Number(qt.total_points || 0);
+        if (qt.rank === 1) agg.winner = qt.teams?.name || null;
+        aggMap.set(qt.quiz_id, agg);
+      }
+
+      setQuizzes(qList.map((q) => {
+        const agg = aggMap.get(q.id);
+        return {
+          ...q,
+          teamCount: agg?.teamCount || 0,
+          winner: agg?.winner || null,
+          avgPoints: agg && agg.teamCount > 0 ? Math.round((agg.totalPoints / agg.teamCount) * 10) / 10 : null,
+        };
+      }));
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [currentOrg?.id]);
+
+  const handleDelete = async () => {
+    if (!deleteItem) return;
+    await supabase.from('quizzes').delete().eq('id', deleteItem.id);
+    toast({ title: '✓', description: t('quizzes.deleted') });
+    setDeleteItem(null);
+    setQuizzes((prev) => prev.filter((q) => q.id !== deleteItem.id));
+  };
+
+  const columns: Column<QuizRow>[] = useMemo(() => [
+    {
+      key: 'name', label: t('quiz.name'), sortable: true,
+      render: (r) => (
+        <div>
+          <p className="font-medium">{r.name}</p>
+          <Badge variant="outline" className={`mt-1 text-xs ${statusColors[r.status]}`}>{r.status}</Badge>
+        </div>
+      ),
+      getValue: (r) => r.name,
+    },
+    {
+      key: 'date', label: t('quiz.date'), sortable: true,
+      render: (r) => format(new Date(r.date), 'dd.MM.yyyy'),
+      getValue: (r) => r.date,
+    },
+    {
+      key: 'location', label: t('quiz.location'), sortable: true,
+      render: (r) => r.location || '—',
+      getValue: (r) => r.location,
+    },
+    {
+      key: 'teamCount', label: t('quizzes.teamCount'), sortable: true,
+      getValue: (r) => r.teamCount,
+    },
+    {
+      key: 'winner', label: t('quizzes.winner'), sortable: true,
+      render: (r) => r.winner || '—',
+      getValue: (r) => r.winner,
+    },
+    {
+      key: 'avgPoints', label: t('quizzes.avgPoints'), sortable: true,
+      render: (r) => r.avgPoints != null ? r.avgPoints : '—',
+      getValue: (r) => r.avgPoints,
+    },
+    {
+      key: 'actions', label: '',
+      render: (r) => (
+        <div className="flex items-center gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(`/dashboard/quizzes/${r.id}`)}>
+            <Eye className="h-4 w-4" />
+          </Button>
+          {canCreate && (
+            <Button variant="ghost" size="icon" onClick={() => navigate(`/dashboard/quizzes/${r.id}`)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {canDelete && (
+            <Button variant="ghost" size="icon" onClick={() => setDeleteItem(r)}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ], [t, canCreate, canDelete, navigate]);
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="font-display text-2xl font-bold">{t('dashboard.quizzes')}</h1>
-          {canCreate && (
-            <Link to="/dashboard/quizzes/new">
-              <Button className="gap-2"><Plus className="h-4 w-4" />{t('dashboard.createQuiz')}</Button>
-            </Link>
-          )}
-        </div>
+      <DataTable
+        columns={columns}
+        data={quizzes}
+        loading={loading}
+        pageSize={10}
+        defaultSortKey="date"
+        defaultSortDir="desc"
+        title={t('dashboard.quizzes')}
+        emptyIcon={<Trophy className="h-12 w-12 text-muted-foreground/30 mx-auto" />}
+        emptyMessage={t('dashboard.noQuizzes')}
+        emptyAction={canCreate ? (
+          <Link to="/dashboard/quizzes/new">
+            <Button className="gap-2"><Plus className="h-4 w-4" />{t('dashboard.createQuiz')}</Button>
+          </Link>
+        ) : undefined}
+        headerActions={canCreate ? (
+          <Link to="/dashboard/quizzes/new">
+            <Button className="gap-2"><Plus className="h-4 w-4" />{t('dashboard.createQuiz')}</Button>
+          </Link>
+        ) : undefined}
+        searchFn={(row, q) => row.name.toLowerCase().includes(q) || (row.location || '').toLowerCase().includes(q) || (row.winner || '').toLowerCase().includes(q)}
+        onRowClick={(r) => navigate(`/dashboard/quizzes/${r.id}`)}
+      />
 
-        {loading ? (
-          <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-        ) : quizzes.length === 0 ? (
-          <div className="rounded-xl border border-border bg-card p-12 text-center">
-            <Trophy className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground">{t('dashboard.noQuizzes')}</p>
-            {canCreate && (
-              <Link to="/dashboard/quizzes/new">
-                <Button className="mt-4 gap-2"><Plus className="h-4 w-4" />{t('dashboard.createQuiz')}</Button>
-              </Link>
-            )}
-          </div>
-        ) : (
-          <div className="grid gap-3">
-            {quizzes.map((quiz) => (
-              <Link key={quiz.id} to={`/dashboard/quizzes/${quiz.id}`}>
-                <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors cursor-pointer">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium truncate">{quiz.name}</p>
-                      <Badge variant="outline" className={statusColors[quiz.status]}>
-                        {quiz.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 mt-1.5 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {format(new Date(quiz.date), 'PPP')}
-                      </span>
-                      {quiz.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {quiz.location}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+      <AlertDialog open={!!deleteItem} onOpenChange={(o) => !o && setDeleteItem(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirm')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('quizzes.deleteConfirm')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>{t('common.delete')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
