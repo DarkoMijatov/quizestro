@@ -43,6 +43,9 @@
     "deleteConfirm": "Da li ste sigurni da želite da obrišete ovaj tim?",
     "created": "Tim kreiran uspešno!", "updated": "Tim ažuriran uspešno!", "deleted": "Tim obrisan uspešno!"
   },
+  "teamsTable": {
+    "participations": "Učešća", "wins": "Pobede", "avgPoints": "Prosek bodova"
+  },
   "teamDetail": {
     "quizzesPlayed": "Odigranih kvizova", "avgPoints": "Prosek bodova", "wins": "Pobeda",
     "bestRank": "Najbolji plasman", "quizHistory": "Istorija kvizova", "noHistory": "Ovaj tim još nije učestvovao ni u jednom kvizu."
@@ -53,9 +56,17 @@
     "deleteConfirm": "Da li ste sigurni da želite da obrišete ovu kategoriju?",
     "created": "Kategorija kreirana uspešno!", "updated": "Kategorija ažurirana uspešno!", "deleted": "Kategorija obrisana uspešno!"
   },
+  "categoriesTable": {
+    "avgPoints": "Prosek bodova", "isDefault": "Podrazumevana", "default": "Da"
+  },
   "categoryDetail": {
     "timesUsed": "Puta korišćena", "avgScore": "Prosek bodova", "highestAvg": "Najviši prosek",
     "quizHistory": "Korišćena u kvizovima", "noHistory": "Ova kategorija još nije korišćena ni u jednom kvizu."
+  },
+  "quizzes": {
+    "teamCount": "Broj ekipa", "winner": "Pobednik", "avgPoints": "Prosek bodova",
+    "deleteConfirm": "Da li ste sigurni da želite da obrišete ovaj kviz?",
+    "deleted": "Kviz obrisan uspešno!"
   },
   "quiz": {
     "createTitle": "Novi kviz", "step0": "Metod", "step1": "Detalji", "step2": "Kategorije", "step3": "Timovi", "step4": "Pregled",
@@ -120,7 +131,8 @@
     "branding": "Brending", "logo": "Logo organizacije", "uploadLogo": "Otpremite logo",
     "primaryColor": "Primarna boja", "secondaryColor": "Sekundarna boja",
     "helpTypes": "Tipovi pomoći", "helpTypesDescription": "Uključite ili isključite pomoći za vaše kvizove.",
-    "jokerDescription": "Duplira poene za jednu kategoriju.", "doubleChanceDescription": "Omogućava dva odgovora po pitanju u jednoj kategoriji."
+    "jokerDescription": "Duplira poene za jednu kategoriju.", "doubleChanceDescription": "Omogućava dva odgovora po pitanju u jednoj kategoriji.",
+    "theme": "Tema", "darkTheme": "Tamna tema", "lightTheme": "Svetla tema", "themeDescription": "Izaberite temu za aplikaciju."
   },
   "freemium": {
     "freeplan": "Besplatni plan", "upgrade": "Nadogradite",
@@ -134,7 +146,8 @@
     "save": "Sačuvajte", "cancel": "Otkažite", "delete": "Obrišite", "edit": "Izmenite",
     "create": "Kreirajte", "search": "Pretražite", "loading": "Učitavanje...",
     "back": "Nazad", "next": "Dalje", "finish": "Završite", "close": "Zatvorite",
-    "confirm": "Potvrdite", "noResults": "Nema rezultata", "viewAll": "Pogledajte sve"
+    "confirm": "Potvrdite", "noResults": "Nema rezultata", "viewAll": "Pogledajte sve",
+    "details": "Detalji"
   },
   "onboarding": {
     "title": "Kreirajte organizaciju",
@@ -159,21 +172,6 @@
     "selectTeam": "Izaberite tim",
     "confirmImport": "Potvrdi uvoz",
     "willBeCreated": "biće automatski kreirana"
-  },
-  "settings": {
-    "title": "Podešavanja", "orgName": "Naziv organizacije",
-    "defaultCategories": "Podrazumevani broj kategorija po kvizu",
-    "defaultQuestionsPerCategory": "Podrazumevani broj pitanja po kategoriji",
-    "saved": "Podešavanja sačuvana uspešno!",
-    "subscription": "Pretplata", "orgSettings": "Podešavanja organizacije",
-    "trialDaysLeft": "Još {{days}} dana probnog perioda",
-    "freeDescription": "Ograničen plan — nadogradite za više mogućnosti",
-    "maxOrgs": "Organizacija", "quizzesTotal": "Kvizova ukupno", "maxMembers": "Član",
-    "branding": "Brending", "logo": "Logo organizacije", "uploadLogo": "Otpremite logo",
-    "primaryColor": "Primarna boja", "secondaryColor": "Sekundarna boja",
-    "helpTypes": "Tipovi pomoći", "helpTypesDescription": "Uključite ili isključite pomoći za vaše kvizove.",
-    "jokerDescription": "Duplira poene za jednu kategoriju.", "doubleChanceDescription": "Omogućava dva odgovora po pitanju u jednoj kategoriji.",
-    "theme": "Tema", "darkTheme": "Tamna tema", "lightTheme": "Svetla tema", "themeDescription": "Izaberite temu za aplikaciju."
   },
   "language": { "sr": "Srpski", "en": "English" }
 }
