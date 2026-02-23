@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
@@ -14,6 +15,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, Trophy, Eye, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { sr } from 'date-fns/locale';
 
 interface QuizRow {
   id: string;
@@ -114,7 +116,12 @@ export default function QuizzesPage() {
     },
     {
       key: 'date', label: t('quiz.date'), sortable: true,
-      render: (r) => format(new Date(r.date), 'dd.MM.yyyy'),
+      render: (r) => {
+        const lang = i18n.language;
+        return lang === 'sr'
+          ? format(new Date(r.date), 'dd. MMMM yyyy.', { locale: sr })
+          : format(new Date(r.date), 'MMM dd, yyyy');
+      },
       getValue: (r) => r.date,
     },
     {
