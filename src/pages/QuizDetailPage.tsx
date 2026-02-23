@@ -275,7 +275,11 @@ export default function QuizDetailPage() {
     );
   }
 
+  const isDraft = quiz.status === 'draft';
+  const isLive = quiz.status === 'live';
   const isFinished = quiz.status === 'finished';
+  const canScore = canEdit && isLive;       // score editing only when live
+  const canReorder = canEdit && isDraft;    // reorder only in draft
   const colCount = categories.length;
 
   // Dynamic sizing: scale fonts/padding based on team count to fit screen
@@ -329,7 +333,7 @@ export default function QuizDetailPage() {
             </div>
             {categories.map((cat, catIdx) => (
               <div key={cat.id} className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center gap-0.5", sizeClass === 'size-xs' ? 'text-[9px]' : 'text-[10px]')}>
-                {canEdit && !isFinished && categories.length > 1 && (
+                {canReorder && categories.length > 1 && (
                   <div className="flex items-center gap-0.5">
                     <button onClick={() => swapCategories(catIdx, -1)} disabled={catIdx === 0} className="p-0 disabled:opacity-20 hover:text-primary transition-colors">
                       <ChevronLeft className="h-3 w-3" />
@@ -401,7 +405,7 @@ export default function QuizDetailPage() {
                         hasJoker && 'bg-primary/[0.08]',
                       )}
                     >
-                      {canEdit && !isFinished ? (
+                      {canScore ? (
                         <>
                           <input
                             ref={(el) => setInputRef(rowIdx, colIdx, el)}
