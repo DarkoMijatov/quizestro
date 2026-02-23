@@ -8,7 +8,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
-  ArrowLeft, Loader2, Play, CheckCircle, Unlock, Download,
+  ArrowLeft, Loader2, Play, CheckCircle, Unlock, Download, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { exportQuizToExcel } from '@/lib/excelUtils';
 
@@ -190,6 +190,19 @@ export default function QuizDetailPage() {
     exportQuizToExcel(exportData);
   };
 
+  const swapCategories = async (idx: number, dir: -1 | 1) => {
+    const newCats = [...categories];
+    const targetIdx = idx + dir;
+    if (targetIdx < 0 || targetIdx >= newCats.length) return;
+    [newCats[idx], newCats[targetIdx]] = [newCats[targetIdx], newCats[idx]];
+    // Update sort_order for both
+    const updates = newCats.map((c, i) => ({ id: c.id, sort_order: i }));
+    setCategories(newCats);
+    await Promise.all(
+      updates.map((u) => supabase.from('quiz_categories').update({ sort_order: u.sort_order }).eq('id', u.id))
+    );
+  };
+
   const updateQuizStatus = async (status: 'draft' | 'live' | 'finished') => {
     if (!quizId) return;
     await supabase.from('quizzes').update({ status }).eq('id', quizId);
@@ -314,8 +327,18 @@ export default function QuizDetailPage() {
             <div className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}>
               {t('scoring.team')}
             </div>
-            {categories.map((cat) => (
-              <div key={cat.id} className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20 break-words leading-tight", sizeClass === 'size-xs' ? 'text-[9px]' : 'text-[10px]')}>
+            {categories.map((cat, catIdx) => (
+              <div key={cat.id} className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center gap-0.5", sizeClass === 'size-xs' ? 'text-[9px]' : 'text-[10px]')}>
+                {canEdit && !isFinished && categories.length > 1 && (
+                  <div className="flex items-center gap-0.5">
+                    <button onClick={() => swapCategories(catIdx, -1)} disabled={catIdx === 0} className="p-0 disabled:opacity-20 hover:text-primary transition-colors">
+                      <ChevronLeft className="h-3 w-3" />
+                    </button>
+                    <button onClick={() => swapCategories(catIdx, 1)} disabled={catIdx === categories.length - 1} className="p-0 disabled:opacity-20 hover:text-primary transition-colors">
+                      <ChevronRight className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
                 {(cat.category as any)?.name || cat.category_id}
               </div>
             ))}
