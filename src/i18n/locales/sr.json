@@ -99,7 +99,12 @@
     "importFromExcelDesc": "Uvezite rezultate iz pripremljenog Excel fajla.",
     "downloadTemplate": "Preuzmite šablon za uvoz",
     "importDetailsDesc": "Unesite osnovne podatke o kvizu pre uvoza rezultata.",
-    "continueToImport": "Nastavi sa uvozom"
+    "continueToImport": "Nastavi sa uvozom",
+    "prefillTitle": "Koristite podešavanja iz prethodnog kviza?",
+    "prefillDescription": "Ova liga već ima kvizove. Možete preuzeti iste timove i kategorije iz poslednjeg kviza i izmeniti ih po želji.",
+    "prefillApply": "Preuzmi",
+    "prefillSkip": "Preskoči",
+    "prefillApplied": "Timovi i kategorije su preuzeti iz prethodnog kviza."
   },
   "scoring": {
     "team": "Tim", "total": "Ukupno", "points": "bodova", "notFound": "Kviz nije pronađen.",
