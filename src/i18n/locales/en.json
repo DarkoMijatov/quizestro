@@ -126,16 +126,21 @@
   },
   "leagueDetail": {
     "quizCount": "Quizzes", "leadingTeam": "Leading team", "winnerTeam": "Winner",
-    "totalTeams": "Total teams", "standings": "Standings", "leaderOrWinner": "Leader/Winner"
+    "totalTeams": "Total teams", "standings": "Standings", "leaderOrWinner": "Leader/Winner",
+    "quizList": "Quizzes in league", "noQuizzes": "No quizzes in this league yet."
   },
   "members": {
     "title": "Members", "noMembers": "No members found.", "unknown": "Unknown user",
     "roleUpdated": "Role updated.", "removed": "Member removed.", "nameUpdated": "Name updated.",
     "removeConfirm": "Are you sure you want to remove this member?",
     "memberCount": "members", "invite": "Invite", "inviteTitle": "Invite a new member",
-    "inviteDescription": "Share this registration link with the new member.",
-    "inviteLink": "Invite link", "inviteNote": "Members will register and be automatically added to the organization.",
-    "editName": "Edit name", "editNameDescription": "Change the member's full name."
+    "inviteDescription": "Enter the email address of the person you want to invite.",
+    "inviteNote": "If the user already exists, they'll be added automatically. Otherwise, they'll receive a registration invite.",
+    "editName": "Edit name", "editNameDescription": "Change the member's full name.",
+    "role": "Role", "inviteEmailPlaceholder": "e.g. name@email.com",
+    "sendInvite": "Send invite", "alreadyMember": "This user is already a member of the organization.",
+    "addedExisting": "User has been added to the organization!", "inviteSent": "Invitation sent successfully!",
+    "pendingInvites": "Pending invites", "inviteCancelled": "Invitation cancelled."
   },
   "settings": {
     "title": "Settings", "orgName": "Organization name",
