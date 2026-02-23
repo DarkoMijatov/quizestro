@@ -324,7 +324,7 @@ export default function QuizDetailPage() {
               gridTemplateColumns: `minmax(120px, 1.5fr) ${categories.map(() => '1fr').join(' ')} minmax(60px, 0.6fr)`,
             }}
           >
-            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}>
+            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground flex items-center justify-center text-center", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}>
               {t('scoring.team')}
             </div>
             {categories.map((cat, catIdx) => (
@@ -342,7 +342,7 @@ export default function QuizDetailPage() {
                 {(cat.category as any)?.name || cat.category_id}
               </div>
             ))}
-            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}>
+            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20 flex items-center justify-center", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}>
               Σ
             </div>
           </div>
