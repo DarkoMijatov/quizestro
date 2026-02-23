@@ -122,7 +122,11 @@
     "title": "Statistike", "moreComingSoon": "Detaljnije statistike stižu uskoro.",
     "topTeams": "Najbolji timovi", "quizzesPlayed": "Odigranih", "avgPoints": "Prosek bodova",
     "wins": "Pobede", "bestCategories": "Najbolje kategorije", "bestQuizzes": "Najbolji kvizovi",
-    "noData": "Nema dovoljno podataka za prikaz."
+    "noData": "Nema dovoljno podataka za prikaz.", "topLeagues": "Lige"
+  },
+  "leagueDetail": {
+    "quizCount": "Broj kvizova", "leadingTeam": "Vodeća ekipa", "winnerTeam": "Pobednička ekipa",
+    "totalTeams": "Ukupno timova", "standings": "Rang lista", "leaderOrWinner": "Vodeća/Pobednička ekipa"
   },
   "members": {
     "title": "Članovi", "noMembers": "Nema pronađenih članova.", "unknown": "Nepoznat korisnik",
