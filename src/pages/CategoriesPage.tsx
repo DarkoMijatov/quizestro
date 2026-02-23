@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { DataTable, Column } from '@/components/DataTable';
+import { DataTable, Column, FilterConfig } from '@/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -178,7 +178,7 @@ export default function CategoriesPage() {
         columns={columns}
         data={categories}
         loading={loading}
-        pageSize={10}
+        pageSize={15}
         defaultSortKey="name"
         defaultSortDir="asc"
         title={t('categories.title')}
@@ -187,6 +187,23 @@ export default function CategoriesPage() {
         emptyAction={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('categories.addCategory')}</Button> : undefined}
         headerActions={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('categories.addCategory')}</Button> : undefined}
         searchFn={(row, q) => row.name.toLowerCase().includes(q)}
+        filters={[
+          {
+            key: 'is_default',
+            label: t('filters.type'),
+            allLabel: t('filters.allTypes'),
+            options: [
+              { value: 'true', label: t('categoriesTable.default') },
+              { value: 'false', label: t('filters.custom') },
+            ],
+          },
+        ]}
+        filterFn={(row, filters) => {
+          if (filters.is_default && filters.is_default !== 'all') {
+            return row.is_default === (filters.is_default === 'true');
+          }
+          return true;
+        }}
         onRowClick={(r) => navigate(`/dashboard/categories/${r.id}`)}
       />
 

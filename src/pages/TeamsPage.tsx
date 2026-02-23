@@ -200,7 +200,7 @@ export default function TeamsPage() {
         columns={columns}
         data={teams}
         loading={loading}
-        pageSize={10}
+        pageSize={15}
         defaultSortKey="name"
         defaultSortDir="asc"
         title={t('teams.title')}

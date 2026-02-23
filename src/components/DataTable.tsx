@@ -9,7 +9,10 @@ import {
   Pagination, PaginationContent, PaginationItem, PaginationLink,
   PaginationNext, PaginationPrevious, PaginationEllipsis,
 } from '@/components/ui/pagination';
-import { Search, ArrowUp, ArrowDown, ArrowUpDown, Loader2 } from 'lucide-react';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import { Search, ArrowUp, ArrowDown, ArrowUpDown, Loader2, Filter } from 'lucide-react';
 
 export interface Column<T> {
   key: string;
@@ -17,6 +20,13 @@ export interface Column<T> {
   sortable?: boolean;
   render?: (row: T) => React.ReactNode;
   getValue?: (row: T) => string | number | boolean | null;
+}
+
+export interface FilterConfig {
+  key: string;
+  label: string;
+  options: { value: string; label: string }[];
+  allLabel?: string;
 }
 
 interface DataTableProps<T> {
@@ -28,6 +38,8 @@ interface DataTableProps<T> {
   defaultSortDir?: 'asc' | 'desc';
   searchPlaceholder?: string;
   searchFn?: (row: T, query: string) => boolean;
+  filters?: FilterConfig[];
+  filterFn?: (row: T, filters: Record<string, string>) => boolean;
   emptyIcon?: React.ReactNode;
   emptyMessage?: string;
   emptyAction?: React.ReactNode;
@@ -40,11 +52,13 @@ export function DataTable<T>({
   columns,
   data,
   loading,
-  pageSize = 10,
+  pageSize = 15,
   defaultSortKey,
   defaultSortDir = 'desc',
   searchPlaceholder,
   searchFn,
+  filters,
+  filterFn,
   emptyIcon,
   emptyMessage,
   emptyAction,
@@ -57,18 +71,33 @@ export function DataTable<T>({
   const [sortKey, setSortKey] = useState(defaultSortKey || '');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(defaultSortDir);
   const [page, setPage] = useState(1);
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return data;
-    const q = search.toLowerCase();
-    if (searchFn) return data.filter((row) => searchFn(row, q));
-    return data.filter((row) =>
-      columns.some((col) => {
-        const val = col.getValue ? col.getValue(row) : (row as any)[col.key];
-        return val != null && String(val).toLowerCase().includes(q);
-      })
-    );
-  }, [data, search, searchFn, columns]);
+    let result = data;
+
+    // Apply filters
+    if (filters && filterFn && Object.keys(activeFilters).some(k => activeFilters[k] !== '' && activeFilters[k] !== 'all')) {
+      result = result.filter((row) => filterFn(row, activeFilters));
+    }
+
+    // Apply search
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      if (searchFn) {
+        result = result.filter((row) => searchFn(row, q));
+      } else {
+        result = result.filter((row) =>
+          columns.some((col) => {
+            const val = col.getValue ? col.getValue(row) : (row as any)[col.key];
+            return val != null && String(val).toLowerCase().includes(q);
+          })
+        );
+      }
+    }
+
+    return result;
+  }, [data, search, searchFn, columns, activeFilters, filters, filterFn]);
 
   const sorted = useMemo(() => {
     if (!sortKey) return filtered;
@@ -97,6 +126,11 @@ export function DataTable<T>({
       setSortKey(key);
       setSortDir('desc');
     }
+    setPage(1);
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    setActiveFilters((prev) => ({ ...prev, [key]: value }));
     setPage(1);
   };
 
@@ -154,14 +188,34 @@ export function DataTable<T>({
         </div>
       )}
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={searchPlaceholder || t('common.search')}
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="pl-9"
-        />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative max-w-sm flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={searchPlaceholder || t('common.search')}
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="pl-9"
+          />
+        </div>
+        {filters && filters.map((filter) => (
+          <Select
+            key={filter.key}
+            value={activeFilters[filter.key] || 'all'}
+            onValueChange={(v) => handleFilterChange(filter.key, v)}
+          >
+            <SelectTrigger className="w-[160px]">
+              <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue placeholder={filter.label} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{filter.allLabel || t('filters.all')}</SelectItem>
+              {filter.options.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ))}
       </div>
 
       {loading ? (

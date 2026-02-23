@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 
 const languages = [
   { code: 'sr', label: 'Srpski', flag: '🇷🇸' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'en', label: 'English', flag: 'EN' },
 ];
 
 export function LanguageSwitcher({ variant = 'default' }: { variant?: 'default' | 'ghost' }) {

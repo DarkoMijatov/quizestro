@@ -173,5 +173,16 @@
     "confirmImport": "Confirm import",
     "willBeCreated": "will be created automatically"
   },
-  "language": { "sr": "Srpski", "en": "English" }
+  "language": { "sr": "Srpski", "en": "English" },
+  "filters": {
+    "all": "All",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "draft": "Draft",
+    "live": "Live",
+    "finished": "Finished",
+    "type": "Type",
+    "allTypes": "All types",
+    "custom": "Custom"
+  }
 }

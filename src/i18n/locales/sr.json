@@ -173,5 +173,16 @@
     "confirmImport": "Potvrdi uvoz",
     "willBeCreated": "biće automatski kreirana"
   },
-  "language": { "sr": "Srpski", "en": "English" }
+  "language": { "sr": "Srpski", "en": "English" },
+  "filters": {
+    "all": "Sve",
+    "status": "Status",
+    "allStatuses": "Svi statusi",
+    "draft": "Nacrt",
+    "live": "Uživo",
+    "finished": "Završen",
+    "type": "Tip",
+    "allTypes": "Svi tipovi",
+    "custom": "Prilagođena"
+  }
 }
