@@ -57,7 +57,7 @@
     "created": "Category created successfully!", "updated": "Category updated successfully!", "deleted": "Category deleted successfully!"
   },
   "categoriesTable": {
-    "avgPoints": "Avg Points", "isDefault": "Default", "default": "Yes"
+    "avgPoints": "Avg Points", "isDefault": "Default", "default": "Yes", "notDefault": "No"
   },
   "categoryDetail": {
     "timesUsed": "Times used", "avgScore": "Avg score", "highestAvg": "Highest avg",
@@ -73,7 +73,20 @@
     "name": "Quiz name", "namePlaceholder": "e.g. Quiz Night #42", "date": "Date",
     "location": "Location", "locationPlaceholder": "e.g. The Tipsy Scholar",
     "league": "League (optional)", "selectLeague": "Select a league", "noLeague": "No league",
-    "selectCategories": "Select categories for this quiz", "selectTeams": "Select participating teams",
+    "selectCategories": "Select categories for this quiz",
+    "availableCategories": "Available",
+    "selectedCategories": "Selected",
+    "searchCategories": "Search categories...",
+    "createCategoryPrompt": "No results. Create \"{{name}}\"?",
+    "categoryAdded": "Category added",
+    "selectTeams": "Select participating teams",
+    "availableTeams": "Available",
+    "selectedTeams": "Selected",
+    "searchTeams": "Search teams...",
+    "createTeamPrompt": "Create new team \"{{name}}\"",
+    "addAliasPrompt": "Add \"{{name}}\" as alias to existing team",
+    "selectTeamForAlias": "Select team for alias",
+    "teamAdded": "Team added",
     "teamAlias": "Alias for this quiz", "reviewTitle": "Review quiz", "reviewCategories": "Categories",
     "reviewTeams": "Teams", "creating": "Creating quiz...", "created": "Quiz created successfully!",
     "minCategories": "Select at least one category", "minTeams": "Select at least two teams",

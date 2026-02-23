@@ -57,7 +57,7 @@
     "created": "Kategorija kreirana uspešno!", "updated": "Kategorija ažurirana uspešno!", "deleted": "Kategorija obrisana uspešno!"
   },
   "categoriesTable": {
-    "avgPoints": "Prosek bodova", "isDefault": "Podrazumevana", "default": "Da"
+    "avgPoints": "Prosek bodova", "isDefault": "Podrazumevana", "default": "Da", "notDefault": "Ne"
   },
   "categoryDetail": {
     "timesUsed": "Puta korišćena", "avgScore": "Prosek bodova", "highestAvg": "Najviši prosek",
@@ -73,7 +73,20 @@
     "name": "Naziv kviza", "namePlaceholder": "npr. Kviz veče #42", "date": "Datum",
     "location": "Lokacija", "locationPlaceholder": "npr. Kafana Kod Mace",
     "league": "Liga (opciono)", "selectLeague": "Izaberite ligu", "noLeague": "Bez lige",
-    "selectCategories": "Izaberite kategorije za ovaj kviz", "selectTeams": "Izaberite timove koji učestvuju",
+    "selectCategories": "Izaberite kategorije za ovaj kviz",
+    "availableCategories": "Dostupne",
+    "selectedCategories": "Izabrane",
+    "searchCategories": "Pretražite kategorije...",
+    "createCategoryPrompt": "Nema rezultata. Kreirajte \"{{name}}\"?",
+    "categoryAdded": "Kategorija dodata",
+    "selectTeams": "Izaberite timove koji učestvuju",
+    "availableTeams": "Dostupni",
+    "selectedTeams": "Izabrani",
+    "searchTeams": "Pretražite timove...",
+    "createTeamPrompt": "Kreiraj novi tim \"{{name}}\"",
+    "addAliasPrompt": "Dodaj \"{{name}}\" kao alijas postojećem timu",
+    "selectTeamForAlias": "Izaberite tim za alijas",
+    "teamAdded": "Tim dodat",
     "teamAlias": "Alijas za ovaj kviz", "reviewTitle": "Pregledajte kviz", "reviewCategories": "Kategorije",
     "reviewTeams": "Timovi", "creating": "Kreiranje kviza...", "created": "Kviz uspešno kreiran!",
     "minCategories": "Izaberite bar jednu kategoriju", "minTeams": "Izaberite bar dva tima",

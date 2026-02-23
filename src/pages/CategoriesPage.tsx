@@ -147,7 +147,7 @@ export default function CategoriesPage() {
       key: 'is_default', label: t('categoriesTable.isDefault'), sortable: true,
       render: (r) => r.is_default
         ? <Badge variant="default" className="text-xs">{t('categoriesTable.default')}</Badge>
-        : <span className="text-muted-foreground text-xs">—</span>,
+        : <span className="text-muted-foreground text-xs">{t('categoriesTable.notDefault')}</span>,
       getValue: (r) => r.is_default ? 1 : 0,
     },
     {
