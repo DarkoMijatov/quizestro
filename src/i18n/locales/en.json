@@ -104,7 +104,8 @@
   "scoring": {
     "team": "Team", "total": "Total", "points": "points", "notFound": "Quiz not found.",
     "goLive": "Go Live", "finish": "Finish Quiz", "reopen": "Reopen",
-    "statusUpdated": "Quiz status updated.", "helpAlreadyUsed": "This help has already been used by this team."
+    "statusUpdated": "Quiz status updated.", "helpAlreadyUsed": "This help has already been used by this team.",
+    "manageDraft": "Manage"
   },
   "leagues": {
     "title": "Leagues", "addLeague": "Add league", "leagueName": "League name",

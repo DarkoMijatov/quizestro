@@ -104,7 +104,8 @@
   "scoring": {
     "team": "Tim", "total": "Ukupno", "points": "bodova", "notFound": "Kviz nije pronađen.",
     "goLive": "Pokreni", "finish": "Završi kviz", "reopen": "Ponovo otvori",
-    "statusUpdated": "Status kviza ažuriran.", "helpAlreadyUsed": "Ovaj tim je već iskoristio ovu pomoć."
+    "statusUpdated": "Status kviza ažuriran.", "helpAlreadyUsed": "Ovaj tim je već iskoristio ovu pomoć.",
+    "manageDraft": "Upravljaj"
   },
   "leagues": {
     "title": "Lige", "addLeague": "Dodaj ligu", "leagueName": "Naziv lige",
