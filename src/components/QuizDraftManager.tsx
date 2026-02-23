@@ -46,6 +46,8 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
   const [catSearch, setCatSearch] = useState('');
   const [teamSearch, setTeamSearch] = useState('');
   const [loading, setLoading] = useState(false);
+  const [creatingCat, setCreatingCat] = useState(false);
+  const [creatingTeam, setCreatingTeam] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -67,11 +69,45 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
   const filteredCats = catSearch.trim()
     ? availableCats.filter(c => c.name.toLowerCase().includes(catSearch.toLowerCase()))
     : availableCats;
+  const catSearchNoResults = catSearch.trim().length > 0 && filteredCats.length === 0;
 
   const availableTeams = allTeams.filter(t => !usedTeamIds.has(t.id));
   const filteredTeams = teamSearch.trim()
     ? availableTeams.filter(t => t.name.toLowerCase().includes(teamSearch.toLowerCase()))
     : availableTeams;
+  const teamSearchNoResults = teamSearch.trim().length > 0 && filteredTeams.length === 0;
+
+  const createAndAddCategory = async () => {
+    if (!catSearch.trim()) return;
+    setCreatingCat(true);
+    const { data } = await supabase.from('categories').insert({
+      name: catSearch.trim(),
+      organization_id: organizationId,
+    }).select().single();
+    if (data) {
+      const newCat = data as Category;
+      setAllCategories(prev => [...prev, newCat]);
+      setCatSearch('');
+      await addCategory(newCat.id);
+    }
+    setCreatingCat(false);
+  };
+
+  const createAndAddTeam = async () => {
+    if (!teamSearch.trim()) return;
+    setCreatingTeam(true);
+    const { data } = await supabase.from('teams').insert({
+      name: teamSearch.trim(),
+      organization_id: organizationId,
+    }).select().single();
+    if (data) {
+      const newTeam = data as Team;
+      setAllTeams(prev => [...prev, newTeam]);
+      setTeamSearch('');
+      await addTeam(newTeam.id);
+    }
+    setCreatingTeam(false);
+  };
 
   const addCategory = async (catId: string) => {
     setLoading(true);
@@ -216,7 +252,17 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
                   {c.name}
                 </button>
               ))}
-              {filteredCats.length === 0 && (
+              {catSearchNoResults && (
+                <button
+                  onClick={createAndAddCategory}
+                  disabled={creatingCat || loading}
+                  className="w-full flex items-center gap-2 rounded-lg border border-dashed border-primary/50 bg-primary/5 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 transition-colors text-left"
+                >
+                  <Plus className="h-3.5 w-3.5 flex-shrink-0" />
+                  {t('quiz.createCategoryPrompt', { name: catSearch.trim() })}
+                </button>
+              )}
+              {filteredCats.length === 0 && !catSearchNoResults && (
                 <p className="text-xs text-muted-foreground text-center py-2">{t('common.noResults')}</p>
               )}
             </div>
@@ -264,7 +310,17 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
                   {t.name}
                 </button>
               ))}
-              {filteredTeams.length === 0 && (
+              {teamSearchNoResults && (
+                <button
+                  onClick={createAndAddTeam}
+                  disabled={creatingTeam || loading}
+                  className="w-full flex items-center gap-2 rounded-lg border border-dashed border-primary/50 bg-primary/5 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 transition-colors text-left"
+                >
+                  <Plus className="h-3.5 w-3.5 flex-shrink-0" />
+                  {t('quiz.createTeamPrompt', { name: teamSearch.trim() })}
+                </button>
+              )}
+              {filteredTeams.length === 0 && !teamSearchNoResults && (
                 <p className="text-xs text-muted-foreground text-center py-2">{t('common.noResults')}</p>
               )}
             </div>
