@@ -99,7 +99,12 @@
     "importFromExcelDesc": "Import results from a prepared Excel file.",
     "downloadTemplate": "Download import template",
     "importDetailsDesc": "Enter basic quiz details before importing results.",
-    "continueToImport": "Continue to import"
+    "continueToImport": "Continue to import",
+    "prefillTitle": "Use settings from the previous quiz?",
+    "prefillDescription": "This league already has quizzes. You can reuse the same teams and categories from the last quiz and modify them as needed.",
+    "prefillApply": "Apply",
+    "prefillSkip": "Skip",
+    "prefillApplied": "Teams and categories loaded from previous quiz."
   },
   "scoring": {
     "team": "Team", "total": "Total", "points": "points", "notFound": "Quiz not found.",

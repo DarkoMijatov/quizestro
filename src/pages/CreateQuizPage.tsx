@@ -71,11 +71,17 @@ export default function CreateQuizPage() {
   const [selectedTeams, setSelectedTeams] = useState<TeamSelection[]>([]);
   const [teamSearch, setTeamSearch] = useState('');
   const [creatingTeam, setCreatingTeam] = useState(false);
-  const [aliasMode, setAliasMode] = useState<string | null>(null); // search term for alias mode
+  const [aliasMode, setAliasMode] = useState<string | null>(null);
   const [aliasTargetTeam, setAliasTargetTeam] = useState<string>('');
 
   // Drag state for reordering
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+
+  // League pre-fill
+  const [leaguePrefillAvailable, setLeaguePrefillAvailable] = useState(false);
+  const [leaguePrefillApplied, setLeaguePrefillApplied] = useState(false);
+  const [prefillCats, setPrefillCats] = useState<string[]>([]);
+  const [prefillTeams, setPrefillTeams] = useState<TeamSelection[]>([]);
 
   useEffect(() => {
     if (!currentOrg) return;
@@ -103,6 +109,65 @@ export default function CreateQuizPage() {
     };
     load();
   }, [currentOrg?.id]);
+
+  // When league changes, check for previous quiz data
+  useEffect(() => {
+    if (!selectedLeague || !currentOrg) {
+      setLeaguePrefillAvailable(false);
+      setPrefillCats([]);
+      setPrefillTeams([]);
+      return;
+    }
+    const fetchLastQuiz = async () => {
+      const { data: lastQuizzes } = await supabase
+        .from('quizzes')
+        .select('id')
+        .eq('league_id', selectedLeague)
+        .eq('organization_id', currentOrg.id)
+        .order('date', { ascending: false })
+        .limit(1);
+
+      if (!lastQuizzes || lastQuizzes.length === 0) {
+        setLeaguePrefillAvailable(false);
+        return;
+      }
+      const lastQuizId = (lastQuizzes[0] as any).id;
+
+      const [catRes, teamRes] = await Promise.all([
+        supabase.from('quiz_categories').select('category_id, sort_order').eq('quiz_id', lastQuizId).order('sort_order'),
+        supabase.from('quiz_teams').select('team_id, alias').eq('quiz_id', lastQuizId),
+      ]);
+
+      const prevCats = (catRes.data || []).map((c: any) => c.category_id);
+      const prevTeams = (teamRes.data || []).map((t: any) => ({ teamId: t.team_id, alias: t.alias || '' }));
+
+      if (prevCats.length > 0 || prevTeams.length > 0) {
+        setPrefillCats(prevCats);
+        setPrefillTeams(prevTeams);
+        setLeaguePrefillAvailable(true);
+        setLeaguePrefillApplied(false);
+      } else {
+        setLeaguePrefillAvailable(false);
+      }
+    };
+    fetchLastQuiz();
+  }, [selectedLeague, currentOrg?.id]);
+
+  const applyLeaguePrefill = () => {
+    // Only apply cats that still exist
+    const validCats = prefillCats.filter(id => categories.some(c => c.id === id));
+    setSelectedCats(validCats);
+    // Only apply teams that still exist
+    const validTeams = prefillTeams.filter(t => teams.some(tm => tm.id === t.teamId));
+    // Fill in team names for aliases that are empty
+    const teamsWithNames = validTeams.map(t => {
+      if (t.alias) return t;
+      const team = teams.find(tm => tm.id === t.teamId);
+      return { ...t, alias: team?.name || '' };
+    });
+    setSelectedTeams(teamsWithNames);
+    setLeaguePrefillApplied(true);
+  };
 
   const addCategory = (id: string) => {
     if (!selectedCats.includes(id)) setSelectedCats(prev => [...prev, id]);
@@ -483,6 +548,27 @@ export default function CreateQuizPage() {
                         ))}
                       </div>
                     </div>
+                  )}
+                  {leaguePrefillAvailable && !leaguePrefillApplied && (
+                    <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
+                      <p className="text-sm font-medium">{t('quiz.prefillTitle')}</p>
+                      <p className="text-xs text-muted-foreground">{t('quiz.prefillDescription')}</p>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={applyLeaguePrefill} className="gap-1">
+                          <Check className="h-3 w-3" />
+                          {t('quiz.prefillApply')}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setLeaguePrefillAvailable(false)}>
+                          {t('quiz.prefillSkip')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {leaguePrefillApplied && (
+                    <p className="text-xs text-primary flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      {t('quiz.prefillApplied')}
+                    </p>
                   )}
                 </div>
               )}
