@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { sr } from 'date-fns/locale';
+import { srLatn } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useAuth } from '@/hooks/useAuth';
@@ -277,7 +277,7 @@ export default function CreateQuizPage() {
 
   const formatDateLocale = (d: Date) => {
     return i18n.language === 'sr'
-      ? format(d, 'dd. MMMM yyyy.', { locale: sr })
+      ? format(d, 'dd. MMMM yyyy.', { locale: srLatn })
       : format(d, 'PPP');
   };
 

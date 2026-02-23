@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, Trophy, Eye, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { sr } from 'date-fns/locale';
+import { srLatn } from 'date-fns/locale';
 
 interface QuizRow {
   id: string;
@@ -119,7 +119,7 @@ export default function QuizzesPage() {
       render: (r) => {
         const lang = i18n.language;
         return lang === 'sr'
-          ? format(new Date(r.date), 'dd. MMMM yyyy.', { locale: sr })
+          ? format(new Date(r.date), 'dd. MMMM yyyy.', { locale: srLatn })
           : format(new Date(r.date), 'MMM dd, yyyy');
       },
       getValue: (r) => r.date,
