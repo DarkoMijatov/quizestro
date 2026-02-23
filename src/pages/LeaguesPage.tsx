@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { DataTable, Column, FilterConfig } from '@/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -15,8 +18,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, Award, Loader2, Search } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Plus, Pencil, Trash2, Award, Loader2 } from 'lucide-react';
 
 interface League {
   id: string;
@@ -26,14 +28,19 @@ interface League {
   organization_id: string;
 }
 
+interface LeagueRow extends League {
+  quizCount: number;
+  leaderName: string | null;
+}
+
 export default function LeaguesPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { currentOrg, currentRole } = useOrganizations();
   const { toast } = useToast();
 
-  const [leagues, setLeagues] = useState<League[]>([]);
+  const [leagues, setLeagues] = useState<LeagueRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<League | null>(null);
   const [leagueName, setLeagueName] = useState('');
@@ -47,12 +54,85 @@ export default function LeaguesPage() {
   const fetchLeagues = async () => {
     if (!currentOrg) return;
     setLoading(true);
-    const { data } = await supabase
+
+    const { data: leagueData } = await supabase
       .from('leagues')
       .select('*')
       .eq('organization_id', currentOrg.id)
       .order('created_at', { ascending: false }) as { data: League[] | null };
-    setLeagues(data || []);
+
+    const rawLeagues = leagueData || [];
+    if (rawLeagues.length === 0) { setLeagues([]); setLoading(false); return; }
+
+    const leagueIds = rawLeagues.map(l => l.id);
+
+    // Get quizzes for these leagues
+    const { data: quizzes } = await supabase
+      .from('quizzes')
+      .select('id, league_id, status')
+      .in('league_id', leagueIds);
+
+    // Count quizzes per league and get finished quiz IDs per league
+    const quizCountMap: Record<string, number> = {};
+    const finishedQuizIdsByLeague: Record<string, string[]> = {};
+    for (const q of (quizzes || [])) {
+      const lid = (q as any).league_id;
+      quizCountMap[lid] = (quizCountMap[lid] || 0) + 1;
+      if ((q as any).status === 'finished') {
+        if (!finishedQuizIdsByLeague[lid]) finishedQuizIdsByLeague[lid] = [];
+        finishedQuizIdsByLeague[lid].push((q as any).id);
+      }
+    }
+
+    // Get all finished quiz IDs across all leagues
+    const allFinishedIds = Object.values(finishedQuizIdsByLeague).flat();
+
+    let leaderMap: Record<string, string> = {};
+    if (allFinishedIds.length > 0) {
+      const { data: qtData } = await supabase
+        .from('quiz_teams')
+        .select('team_id, quiz_id, total_points')
+        .in('quiz_id', allFinishedIds);
+
+      // Aggregate total points per team per league
+      const teamPointsByLeague: Record<string, Record<string, number>> = {};
+      for (const qt of (qtData || [])) {
+        // Find which league this quiz belongs to
+        for (const [lid, qids] of Object.entries(finishedQuizIdsByLeague)) {
+          if (qids.includes((qt as any).quiz_id)) {
+            if (!teamPointsByLeague[lid]) teamPointsByLeague[lid] = {};
+            const tid = (qt as any).team_id;
+            teamPointsByLeague[lid][tid] = (teamPointsByLeague[lid][tid] || 0) + (Number((qt as any).total_points) || 0);
+            break;
+          }
+        }
+      }
+
+      // Find leader per league
+      const allTeamIds = new Set<string>();
+      const leaderTeamIds: Record<string, string> = {};
+      for (const [lid, teams] of Object.entries(teamPointsByLeague)) {
+        let maxPts = -1; let maxTid = '';
+        for (const [tid, pts] of Object.entries(teams)) {
+          if (pts > maxPts) { maxPts = pts; maxTid = tid; }
+        }
+        if (maxTid) { leaderTeamIds[lid] = maxTid; allTeamIds.add(maxTid); }
+      }
+
+      if (allTeamIds.size > 0) {
+        const { data: teamNames } = await supabase.from('teams').select('id, name').in('id', Array.from(allTeamIds));
+        const nameMap = new Map((teamNames || []).map((t: any) => [t.id, t.name]));
+        for (const [lid, tid] of Object.entries(leaderTeamIds)) {
+          leaderMap[lid] = nameMap.get(tid) || '?';
+        }
+      }
+    }
+
+    setLeagues(rawLeagues.map(l => ({
+      ...l,
+      quizCount: quizCountMap[l.id] || 0,
+      leaderName: leaderMap[l.id] || null,
+    })));
     setLoading(false);
   };
 
@@ -86,60 +166,65 @@ export default function LeaguesPage() {
     setDeleteItem(null); fetchLeagues();
   };
 
-  const filtered = leagues.filter((l) => l.name.toLowerCase().includes(search.toLowerCase()));
+  const columns: Column<LeagueRow>[] = [
+    { key: 'name', label: t('leagues.leagueName'), sortable: true, render: (r) => (
+      <div className="flex items-center gap-2">
+        <Award className="h-4 w-4 text-primary shrink-0" />
+        <span className="font-medium">{r.name}</span>
+        {r.season && <span className="text-xs text-muted-foreground">({r.season})</span>}
+      </div>
+    )},
+    { key: 'is_active', label: t('filters.status'), sortable: true, render: (r) => (
+      <Badge variant={r.is_active ? 'default' : 'secondary'} className="text-xs">
+        {r.is_active ? t('leagues.active') : t('leagues.inactive')}
+      </Badge>
+    ), getValue: (r) => r.is_active ? 1 : 0 },
+    { key: 'quizCount', label: t('leagueDetail.quizCount'), sortable: true, getValue: (r) => r.quizCount },
+    { key: 'leaderName', label: t('leagueDetail.leaderOrWinner'), sortable: true, render: (r) => (
+      <span className="text-sm">{r.leaderName || '-'}</span>
+    ), getValue: (r) => r.leaderName || '' },
+  ];
+
+  const filterConfigs: FilterConfig[] = [
+    { key: 'status', label: t('filters.status'), options: [
+      { value: 'active', label: t('leagues.active') },
+      { value: 'inactive', label: t('leagues.inactive') },
+    ]},
+  ];
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="font-display text-2xl font-bold">{t('leagues.title')}</h1>
-          {canEdit && (
-            <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('leagues.addLeague')}</Button>
-          )}
-        </div>
-
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={t('common.search')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-        ) : filtered.length === 0 ? (
-          <div className="rounded-xl border border-border bg-card p-12 text-center">
-            <Award className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground">{search ? t('common.noResults') : t('leagues.noLeagues')}</p>
-            {!search && canEdit && (
-              <Button onClick={openCreate} className="mt-4 gap-2"><Plus className="h-4 w-4" />{t('leagues.addLeague')}</Button>
-            )}
-          </div>
-        ) : (
-          <div className="grid gap-3">
-            {filtered.map((league) => (
-              <div key={league.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors">
-                <div className="flex items-center gap-3 min-w-0">
-                  <Award className="h-5 w-5 text-primary shrink-0" />
-                  <div>
-                    <p className="font-medium">{league.name}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {league.season && <span className="text-xs text-muted-foreground">{league.season}</span>}
-                      <Badge variant={league.is_active ? 'default' : 'secondary'} className="text-xs">
-                        {league.is_active ? t('leagues.active') : t('leagues.inactive')}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-                {canEdit && (
-                  <div className="flex items-center gap-1 shrink-0 ml-4">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(league)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteItem(league)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <DataTable
+        title={t('leagues.title')}
+        columns={columns}
+        data={leagues}
+        loading={loading}
+        defaultSortKey="name"
+        defaultSortDir="asc"
+        searchFn={(r, q) => r.name.toLowerCase().includes(q) || (r.season || '').toLowerCase().includes(q)}
+        filters={filterConfigs}
+        filterFn={(r, f) => {
+          if (f.status && f.status !== 'all') {
+            if (f.status === 'active' && !r.is_active) return false;
+            if (f.status === 'inactive' && r.is_active) return false;
+          }
+          return true;
+        }}
+        emptyIcon={<Award className="h-12 w-12 text-muted-foreground/30 mx-auto" />}
+        emptyMessage={t('leagues.noLeagues')}
+        emptyAction={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('leagues.addLeague')}</Button> : undefined}
+        onRowClick={(r) => navigate(`/dashboard/leagues/${r.id}`)}
+        headerActions={
+          canEdit ? (
+            <div className="flex items-center gap-2">
+              {canEdit && (
+                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); }}><Pencil className="h-4 w-4 opacity-0" /></Button>
+              )}
+              <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('leagues.addLeague')}</Button>
+            </div>
+          ) : undefined
+        }
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>

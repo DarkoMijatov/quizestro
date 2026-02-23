@@ -9,14 +9,16 @@ import { Button } from '@/components/ui/button';
 interface TopTeam { name: string; quizzes: number; wins: number; avgPoints: number }
 interface BestCategory { name: string; avgPoints: number }
 interface BestQuiz { name: string; date: string; teamCount: number; avgPoints: number }
+interface TopLeague { name: string; season: string; quizCount: number; leaderName: string; is_active: boolean }
 
 type SortDir = 'asc' | 'desc';
 
-function SortableTable<T>({ data, columns, defaultSortKey, defaultSortDir = 'desc' }: {
+function SortableTable<T>({ data, columns, defaultSortKey, defaultSortDir = 'desc', maxVisible = 10 }: {
   data: T[];
-  columns: { key: string; label: string; getValue: (row: T) => string | number; align?: 'left' | 'right' }[];
+  columns: { key: string; label: string; getValue: (row: T) => string | number; align?: 'left' | 'right'; render?: (row: T) => React.ReactNode }[];
   defaultSortKey: string;
   defaultSortDir?: SortDir;
+  maxVisible?: number;
 }) {
   const { t } = useTranslation();
   const [sortKey, setSortKey] = useState(defaultSortKey);
@@ -40,10 +42,13 @@ function SortableTable<T>({ data, columns, defaultSortKey, defaultSortDir = 'des
 
   if (data.length === 0) return <p className="text-sm text-muted-foreground text-center py-8">{t('stats.noData')}</p>;
 
+  const visible = sorted.slice(0, maxVisible);
+  const hasMore = sorted.length > maxVisible;
+
   return (
-    <div className="overflow-auto">
+    <div className={hasMore ? "max-h-[400px] overflow-auto" : "overflow-auto"}>
       <table className="w-full text-sm">
-        <thead>
+        <thead className="sticky top-0 bg-card z-10">
           <tr className="border-b border-border">
             <th className="text-left py-2 px-3 font-medium text-muted-foreground w-10">#</th>
             {columns.map(col => (
@@ -57,12 +62,12 @@ function SortableTable<T>({ data, columns, defaultSortKey, defaultSortDir = 'des
           </tr>
         </thead>
         <tbody>
-          {sorted.map((row, i) => (
+          {(hasMore ? sorted : visible).map((row, i) => (
             <tr key={i} className="border-b border-border/50 last:border-0">
               <td className="py-2.5 px-3 font-bold text-muted-foreground">{i + 1}</td>
               {columns.map(col => (
-                <td key={col.key} className={`py-2.5 px-3 ${col.align === 'right' ? 'text-right' : ''} ${col.key === 'name' ? 'font-medium' : ''} ${col.key === 'avgPoints' ? 'font-semibold text-primary' : ''}`}>
-                  {col.getValue(row)}
+                <td key={col.key} className={`py-2.5 px-3 ${col.align === 'right' ? 'text-right' : ''} ${col.key === 'name' ? 'font-medium' : ''} ${col.key === 'avgPoints' || col.key === 'totalPoints' ? 'font-semibold text-primary' : ''}`}>
+                  {col.render ? col.render(row) : col.getValue(row)}
                 </td>
               ))}
             </tr>
@@ -81,6 +86,7 @@ export default function StatsPage() {
   const [topTeams, setTopTeams] = useState<TopTeam[]>([]);
   const [bestCategories, setBestCategories] = useState<BestCategory[]>([]);
   const [bestQuizzes, setBestQuizzes] = useState<BestQuiz[]>([]);
+  const [topLeagues, setTopLeagues] = useState<TopLeague[]>([]);
 
   useEffect(() => {
     if (!currentOrg) return;
@@ -95,15 +101,26 @@ export default function StatsPage() {
       ]);
       setCounts({ quizzes: q.count || 0, teams: tm.count || 0, categories: c.count || 0, leagues: l.count || 0 });
 
-      // Top teams by quiz participation + wins
-      const { data: qtData } = await supabase
-        .from('quiz_teams')
-        .select('team_id, total_points, rank')
+      // Get all quizzes to know which are finished
+      const { data: allQuizzes } = await supabase
+        .from('quizzes')
+        .select('id, name, date, status, league_id')
         .eq('organization_id', currentOrg.id);
 
-      if (qtData && qtData.length > 0) {
+      const finishedQuizIds = new Set((allQuizzes || []).filter((q: any) => q.status === 'finished').map((q: any) => q.id));
+
+      // Get quiz_teams only for finished quizzes
+      const { data: allQtData } = await supabase
+        .from('quiz_teams')
+        .select('team_id, quiz_id, total_points, rank')
+        .eq('organization_id', currentOrg.id);
+
+      const qtFinished = (allQtData || []).filter((qt: any) => finishedQuizIds.has(qt.quiz_id));
+
+      // Top teams (only finished quizzes)
+      if (qtFinished.length > 0) {
         const teamStats: Record<string, { quizzes: number; wins: number; totalPoints: number }> = {};
-        for (const qt of qtData) {
+        for (const qt of qtFinished) {
           const tid = (qt as any).team_id;
           if (!teamStats[tid]) teamStats[tid] = { quizzes: 0, wins: 0, totalPoints: 0 };
           teamStats[tid].quizzes++;
@@ -126,14 +143,15 @@ export default function StatsPage() {
         );
       }
 
-      // Best categories by avg points
+      // Best categories (only finished quizzes)
       const { data: scoresData } = await supabase
         .from('scores')
-        .select('quiz_category_id, points, bonus_points')
+        .select('quiz_category_id, quiz_id, points, bonus_points')
         .eq('organization_id', currentOrg.id);
 
-      if (scoresData && scoresData.length > 0) {
-        // Get quiz_category -> category mapping
+      const finishedScores = (scoresData || []).filter((s: any) => finishedQuizIds.has(s.quiz_id));
+
+      if (finishedScores.length > 0) {
         const { data: qcData } = await supabase
           .from('quiz_categories')
           .select('id, category_id')
@@ -142,7 +160,7 @@ export default function StatsPage() {
         const qcMap = new Map((qcData || []).map((qc: any) => [qc.id, qc.category_id]));
 
         const catStats: Record<string, { total: number; count: number }> = {};
-        for (const s of scoresData) {
+        for (const s of finishedScores) {
           const catId = qcMap.get((s as any).quiz_category_id);
           if (!catId) continue;
           if (!catStats[catId]) catStats[catId] = { total: 0, count: 0 };
@@ -165,23 +183,17 @@ export default function StatsPage() {
         }
       }
 
-      // Best quizzes by avg points
-      const { data: quizData } = await supabase
-        .from('quizzes')
-        .select('id, name, date')
-        .eq('organization_id', currentOrg.id)
-        .order('date', { ascending: false });
-
-      if (quizData && quizData.length > 0 && qtData && qtData.length > 0) {
+      // Best quizzes (only finished)
+      if (qtFinished.length > 0) {
         const quizStats: Record<string, { totalPoints: number; teamCount: number }> = {};
-        for (const qt of qtData) {
+        for (const qt of qtFinished) {
           const qid = (qt as any).quiz_id;
           if (!quizStats[qid]) quizStats[qid] = { totalPoints: 0, teamCount: 0 };
           quizStats[qid].totalPoints += Number((qt as any).total_points) || 0;
           quizStats[qid].teamCount++;
         }
 
-        const quizMap = new Map((quizData as any[]).map(q => [q.id, q]));
+        const quizMap = new Map((allQuizzes || []).map((q: any) => [q.id, q]));
         setBestQuizzes(
           Object.entries(quizStats)
             .map(([id, s]) => {
@@ -194,6 +206,59 @@ export default function StatsPage() {
               };
             })
             .sort((a, b) => b.avgPoints - a.avgPoints)
+        );
+      }
+
+      // Top leagues
+      const { data: leaguesData } = await supabase
+        .from('leagues')
+        .select('id, name, season, is_active')
+        .eq('organization_id', currentOrg.id);
+
+      if (leaguesData && leaguesData.length > 0) {
+        const leagueQuizMap: Record<string, { count: number; finishedIds: string[] }> = {};
+        for (const quiz of (allQuizzes || [])) {
+          const lid = (quiz as any).league_id;
+          if (!lid) continue;
+          if (!leagueQuizMap[lid]) leagueQuizMap[lid] = { count: 0, finishedIds: [] };
+          leagueQuizMap[lid].count++;
+          if ((quiz as any).status === 'finished') leagueQuizMap[lid].finishedIds.push((quiz as any).id);
+        }
+
+        // Find leader per league from finished quizzes
+        const leagueLeaders: Record<string, string> = {};
+        for (const [lid, info] of Object.entries(leagueQuizMap)) {
+          if (info.finishedIds.length === 0) continue;
+          const teamPts: Record<string, number> = {};
+          for (const qt of qtFinished) {
+            if (info.finishedIds.includes((qt as any).quiz_id)) {
+              const tid = (qt as any).team_id;
+              teamPts[tid] = (teamPts[tid] || 0) + (Number((qt as any).total_points) || 0);
+            }
+          }
+          let maxTid = ''; let maxPts = -1;
+          for (const [tid, pts] of Object.entries(teamPts)) {
+            if (pts > maxPts) { maxPts = pts; maxTid = tid; }
+          }
+          if (maxTid) leagueLeaders[lid] = maxTid;
+        }
+
+        const allLeaderTids = new Set(Object.values(leagueLeaders));
+        let leaderNameMap = new Map<string, string>();
+        if (allLeaderTids.size > 0) {
+          const { data: tn } = await supabase.from('teams').select('id, name').in('id', Array.from(allLeaderTids));
+          leaderNameMap = new Map((tn || []).map((t: any) => [t.id, t.name]));
+        }
+
+        setTopLeagues(
+          (leaguesData as any[]).map(l => ({
+            name: l.name,
+            season: l.season || '',
+            is_active: l.is_active,
+            quizCount: leagueQuizMap[l.id]?.count || 0,
+            leaderName: leagueLeaders[l.id] ? (leaderNameMap.get(leagueLeaders[l.id]) || '?') : '-',
+          }))
+          .sort((a, b) => b.quizCount - a.quizCount)
         );
       }
 
@@ -227,6 +292,15 @@ export default function StatsPage() {
     { key: 'avgPoints', label: t('stats.avgPoints'), getValue: (r: BestQuiz) => r.avgPoints, align: 'right' as const },
   ];
 
+  const leagueColumns = [
+    { key: 'name', label: t('leagues.leagueName'), getValue: (r: TopLeague) => r.name },
+    { key: 'season', label: t('leagues.season'), getValue: (r: TopLeague) => r.season || '-' },
+    { key: 'quizCount', label: t('leagueDetail.quizCount'), getValue: (r: TopLeague) => r.quizCount, align: 'right' as const },
+    { key: 'leaderName', label: t('leagueDetail.leaderOrWinner'), getValue: (r: TopLeague) => r.leaderName, render: (r: TopLeague) => (
+      <span>{r.leaderName}</span>
+    )},
+  ];
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -251,21 +325,27 @@ export default function StatsPage() {
             {/* Top Teams */}
             <div className="rounded-xl border border-border bg-card p-6">
               <h3 className="font-display font-semibold mb-4">{t('stats.topTeams')}</h3>
-              <SortableTable data={topTeams} columns={teamColumns} defaultSortKey="quizzes" />
+              <SortableTable data={topTeams} columns={teamColumns} defaultSortKey="quizzes" maxVisible={10} />
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Best Categories */}
               <div className="rounded-xl border border-border bg-card p-6">
                 <h3 className="font-display font-semibold mb-4">{t('stats.bestCategories')}</h3>
-                <SortableTable data={bestCategories} columns={catColumns} defaultSortKey="avgPoints" />
+                <SortableTable data={bestCategories} columns={catColumns} defaultSortKey="avgPoints" maxVisible={10} />
               </div>
 
               {/* Best Quizzes */}
               <div className="rounded-xl border border-border bg-card p-6">
                 <h3 className="font-display font-semibold mb-4">{t('stats.bestQuizzes')}</h3>
-                <SortableTable data={bestQuizzes} columns={quizColumns} defaultSortKey="avgPoints" />
+                <SortableTable data={bestQuizzes} columns={quizColumns} defaultSortKey="avgPoints" maxVisible={10} />
               </div>
+            </div>
+
+            {/* Top Leagues */}
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="font-display font-semibold mb-4">{t('stats.topLeagues')}</h3>
+              <SortableTable data={topLeagues} columns={leagueColumns} defaultSortKey="quizCount" maxVisible={10} />
             </div>
           </>
         )}

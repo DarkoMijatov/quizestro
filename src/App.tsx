@@ -23,6 +23,7 @@ import QuizzesPage from "./pages/QuizzesPage";
 import CreateQuizPage from "./pages/CreateQuizPage";
 import QuizDetailPage from "./pages/QuizDetailPage";
 import LeaguesPage from "./pages/LeaguesPage";
+import LeagueDetailPage from "./pages/LeagueDetailPage";
 import QuestionBankPage from "./pages/QuestionBankPage";
 import StatsPage from "./pages/StatsPage";
 import MembersPage from "./pages/MembersPage";
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/dashboard/quizzes/new" element={<OrgRoute><CreateQuizPage /></OrgRoute>} />
             <Route path="/dashboard/quizzes/:id" element={<OrgRoute><QuizDetailPage /></OrgRoute>} />
             <Route path="/dashboard/leagues" element={<PremiumRoute><LeaguesPage /></PremiumRoute>} />
+            <Route path="/dashboard/leagues/:id" element={<PremiumRoute><LeagueDetailPage /></PremiumRoute>} />
             <Route path="/dashboard/questions" element={<PremiumRoute><QuestionBankPage /></PremiumRoute>} />
             <Route path="/dashboard/stats" element={<OrgRoute><StatsPage /></OrgRoute>} />
             <Route path="/dashboard/members" element={<OrgRoute><MembersPage /></OrgRoute>} />

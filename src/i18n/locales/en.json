@@ -122,7 +122,11 @@
     "title": "Analytics", "moreComingSoon": "More detailed analytics coming soon.",
     "topTeams": "Top Teams", "quizzesPlayed": "Played", "avgPoints": "Avg Points",
     "wins": "Wins", "bestCategories": "Best Categories", "bestQuizzes": "Best Quizzes",
-    "noData": "Not enough data to display."
+    "noData": "Not enough data to display.", "topLeagues": "Leagues"
+  },
+  "leagueDetail": {
+    "quizCount": "Quizzes", "leadingTeam": "Leading team", "winnerTeam": "Winner",
+    "totalTeams": "Total teams", "standings": "Standings", "leaderOrWinner": "Leader/Winner"
   },
   "members": {
     "title": "Members", "noMembers": "No members found.", "unknown": "Unknown user",
