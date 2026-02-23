@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -31,6 +31,8 @@ export function useOrganizations() {
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [currentRole, setCurrentRole] = useState<'owner' | 'admin' | 'user' | null>(null);
   const [loading, setLoading] = useState(true);
+  // Track which user ID we last completed a fetch for
+  const fetchedForUserRef = useRef<string | null>(null);
 
   const fetchOrgs = async () => {
     if (!user) {
@@ -38,6 +40,7 @@ export function useOrganizations() {
       setMemberships([]);
       setCurrentOrg(null);
       setCurrentRole(null);
+      fetchedForUserRef.current = null;
       setLoading(false);
       return;
     }
@@ -78,11 +81,11 @@ export function useOrganizations() {
       setCurrentRole(null);
     }
 
+    fetchedForUserRef.current = user.id;
     setLoading(false);
   };
 
   useEffect(() => {
-    // Reset loading immediately when user changes to prevent premature redirect
     setLoading(true);
     fetchOrgs();
   }, [user]);
@@ -97,12 +100,15 @@ export function useOrganizations() {
     }
   };
 
+  const hasFetchedForCurrentUser = !!user && fetchedForUserRef.current === user.id;
+
   return {
     organizations,
     memberships,
     currentOrg,
     currentRole,
     loading,
+    hasFetchedForCurrentUser,
     switchOrg,
     refetch: fetchOrgs,
   };
