@@ -330,12 +330,13 @@ export default function QuizDetailPage() {
         </div>
 
         {/* Scoring Table */}
-        <div className="rounded-xl border-2 border-foreground/20 bg-card shadow-md overflow-auto flex flex-col min-h-0 flex-1 mt-2">
+        <div className="rounded-xl border-2 border-foreground/20 bg-card shadow-md overflow-auto min-h-0 flex-1 mt-2">
+          <div style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
           {/* Header row */}
           <div
-            className="grid border-b-2 border-foreground/20 bg-muted"
+            className="grid border-b-2 border-foreground/20 bg-muted sticky top-0 z-10"
             style={{
-              gridTemplateColumns: `minmax(120px, 1.5fr) ${categories.map(() => '1fr').join(' ')} minmax(60px, 0.6fr)`,
+              gridTemplateColumns: `140px ${categories.map(() => '1fr').join(' ')} 70px`,
             }}
           >
             <div className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground flex items-center justify-center text-center", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}>
@@ -361,7 +362,7 @@ export default function QuizDetailPage() {
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex flex-col">
           {rankedTeams.map((team, rowIdx) => {
             const total = getTeamTotal(team.id);
             const teamName = team.alias || (team.team as any)?.name || '';
@@ -375,7 +376,7 @@ export default function QuizDetailPage() {
                   rowIdx === 0 && 'bg-primary/[0.04]',
                 )}
                 style={{
-                  gridTemplateColumns: `minmax(120px, 1.5fr) ${categories.map(() => '1fr').join(' ')} minmax(60px, 0.6fr)`,
+                  gridTemplateColumns: `140px ${categories.map(() => '1fr').join(' ')} 70px`,
                 }}
               >
                 {/* Rank + Team */}
@@ -490,6 +491,7 @@ export default function QuizDetailPage() {
               </div>
             );
           })}
+          </div>
           </div>
         </div>
       </div>
