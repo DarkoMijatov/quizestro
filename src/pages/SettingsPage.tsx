@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +21,7 @@ interface HelpType {
 
 export default function SettingsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { currentOrg, currentRole, refetch } = useOrganizations();
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -178,7 +180,7 @@ export default function SettingsPage() {
               </div>
             </div>
             {!isPremium && (
-              <Button size="sm" className="gap-1">
+              <Button size="sm" className="gap-1" onClick={() => navigate('/dashboard/pricing')}>
                 <Zap className="h-3 w-3" />
                 {t('freemium.upgrade')}
               </Button>
