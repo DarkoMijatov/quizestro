@@ -81,14 +81,26 @@ export default function TeamsPage() {
         aliasMap[a.team_id].push(a);
       });
 
-      // Fetch quiz_teams aggregates
+      // Fetch quiz_teams aggregates (only finished quizzes)
       const { data: qtData } = await supabase
         .from('quiz_teams')
-        .select('team_id, total_points, rank')
+        .select('team_id, total_points, rank, quiz_id')
         .in('team_id', teamIds);
 
+      // Get finished quiz IDs
+      const qtQuizIds = [...new Set((qtData || []).map((qt: any) => qt.quiz_id))];
+      let finishedQuizIds = new Set<string>();
+      if (qtQuizIds.length > 0) {
+        const { data: quizData } = await supabase
+          .from('quizzes')
+          .select('id')
+          .in('id', qtQuizIds)
+          .eq('status', 'finished');
+        finishedQuizIds = new Set((quizData || []).map((q: any) => q.id));
+      }
+
       const aggMap = new Map<string, { count: number; wins: number; totalPts: number }>();
-      (qtData || []).forEach((qt: any) => {
+      (qtData || []).filter((qt: any) => finishedQuizIds.has(qt.quiz_id)).forEach((qt: any) => {
         const agg = aggMap.get(qt.team_id) || { count: 0, wins: 0, totalPts: 0 };
         agg.count++;
         agg.totalPts += Number(qt.total_points || 0);
