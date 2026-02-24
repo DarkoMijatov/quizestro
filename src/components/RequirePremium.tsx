@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Lock, Zap } from 'lucide-react';
 
 export function RequirePremium({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { currentOrg } = useOrganizations();
   const isPremium = currentOrg?.subscription_tier === 'premium' || currentOrg?.subscription_tier === 'trial';
 
@@ -18,7 +20,7 @@ export function RequirePremium({ children }: { children: React.ReactNode }) {
           </div>
           <h2 className="font-display text-2xl font-bold mb-2">{t('freemium.premiumFeature')}</h2>
           <p className="text-muted-foreground max-w-md mb-6">{t('freemium.premiumDescription')}</p>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => navigate('/dashboard/pricing')}>
             <Zap className="h-4 w-4" />
             {t('freemium.upgrade')}
           </Button>

@@ -28,6 +28,7 @@ import QuestionBankPage from "./pages/QuestionBankPage";
 import StatsPage from "./pages/StatsPage";
 import MembersPage from "./pages/MembersPage";
 import SettingsPage from "./pages/SettingsPage";
+import PricingPage from "./pages/PricingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/dashboard/stats" element={<OrgRoute><StatsPage /></OrgRoute>} />
             <Route path="/dashboard/members" element={<OrgRoute><MembersPage /></OrgRoute>} />
             <Route path="/dashboard/settings" element={<OrgRoute><SettingsPage /></OrgRoute>} />
+            <Route path="/dashboard/pricing" element={<OrgRoute><PricingPage /></OrgRoute>} />
             <Route path="/dashboard/*" element={<OrgRoute><DashboardPage /></OrgRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
