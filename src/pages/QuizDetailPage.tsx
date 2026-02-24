@@ -330,7 +330,7 @@ export default function QuizDetailPage() {
         </div>
 
         {/* Scoring Table */}
-        <div className="rounded-xl border-2 border-foreground/20 bg-card shadow-md overflow-hidden flex flex-col min-h-0 flex-1 mt-2">
+        <div className="rounded-xl border-2 border-foreground/20 bg-card shadow-md overflow-auto flex flex-col min-h-0 flex-1 mt-2">
           {/* Header row */}
           <div
             className="grid border-b-2 border-foreground/20 bg-muted"
