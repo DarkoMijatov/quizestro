@@ -230,13 +230,20 @@ export type Database = {
         Row: {
           branding_color: string | null
           created_at: string
+          current_period_end: string | null
           default_categories_count: number | null
           default_questions_per_category: number | null
           id: string
           logo_url: string | null
           name: string
+          premium_override: boolean
+          premium_override_by: string | null
+          premium_override_reason: string | null
+          premium_override_until: string | null
           secondary_color: string | null
           slug: string | null
+          subscription_id: string | null
+          subscription_status: string | null
           subscription_tier: string
           trial_ends_at: string | null
           updated_at: string
@@ -244,13 +251,20 @@ export type Database = {
         Insert: {
           branding_color?: string | null
           created_at?: string
+          current_period_end?: string | null
           default_categories_count?: number | null
           default_questions_per_category?: number | null
           id?: string
           logo_url?: string | null
           name: string
+          premium_override?: boolean
+          premium_override_by?: string | null
+          premium_override_reason?: string | null
+          premium_override_until?: string | null
           secondary_color?: string | null
           slug?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
           subscription_tier?: string
           trial_ends_at?: string | null
           updated_at?: string
@@ -258,13 +272,20 @@ export type Database = {
         Update: {
           branding_color?: string | null
           created_at?: string
+          current_period_end?: string | null
           default_categories_count?: number | null
           default_questions_per_category?: number | null
           id?: string
           logo_url?: string | null
           name?: string
+          premium_override?: boolean
+          premium_override_by?: string | null
+          premium_override_reason?: string | null
+          premium_override_until?: string | null
           secondary_color?: string | null
           slug?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
           subscription_tier?: string
           trial_ends_at?: string | null
           updated_at?: string
@@ -644,6 +665,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          id: string
+          payload: Json | null
+          processed_at: string
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
