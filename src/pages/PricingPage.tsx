@@ -7,13 +7,24 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Check, Zap, Crown, Loader2 } from 'lucide-react';
+import { Check, Crown, Loader2, ArrowDownCircle } from 'lucide-react';
 import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function PricingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentOrg, currentRole } = useOrganizations();
+  const { currentOrg, currentRole, refetch } = useOrganizations();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
@@ -26,12 +37,8 @@ export default function PricingPage() {
     setLoading(variant);
     try {
       const { data, error } = await supabase.functions.invoke('billing-checkout', {
-        body: {
-          organization_id: currentOrg.id,
-          variant_id: variant,
-        },
+        body: { organization_id: currentOrg.id, variant_id: variant },
       });
-
       if (error) throw error;
       if (data?.checkout_url) {
         window.location.href = data.checkout_url;
@@ -40,11 +47,25 @@ export default function PricingPage() {
       }
     } catch (err: any) {
       console.error('Checkout error:', err);
-      toast({
-        title: t('common.error', 'Error'),
-        description: err.message || 'Failed to start checkout',
-        variant: 'destructive',
+      toast({ title: t('common.error', 'Error'), description: err.message || 'Failed to start checkout', variant: 'destructive' });
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleDowngrade = async () => {
+    if (!currentOrg || !isOwner) return;
+    setLoading('downgrade');
+    try {
+      const { data, error } = await supabase.functions.invoke('billing-cancel', {
+        body: { organization_id: currentOrg.id },
       });
+      if (error) throw error;
+      toast({ title: t('pricing.downgradeSuccess') });
+      refetch();
+    } catch (err: any) {
+      console.error('Downgrade error:', err);
+      toast({ title: t('common.error', 'Error'), description: err.message || 'Failed to cancel subscription', variant: 'destructive' });
     } finally {
       setLoading(null);
     }
@@ -53,52 +74,28 @@ export default function PricingPage() {
   const plans = [
     {
       key: 'free',
-      name: 'Free',
+      name: t('pricing.free.name', 'Free'),
       price: '€0',
       period: t('pricing.free.period', '/mo'),
-      features: [
-        '1 ' + t('settings.maxOrgs', 'Organization'),
-        t('pricing.free.ownerOnly', 'Owner only'),
-        t('pricing.free.quizLimit', 'Up to 10 quizzes'),
-        t('pricing.free.basicScoring', 'Basic scoring'),
-        t('pricing.free.teamMgmt', 'Team management'),
-      ],
+      features: (t('pricing.free.features', { returnObjects: true }) as string[]),
       current: !isPremium,
     },
     {
       key: 'monthly',
-      name: 'Pro',
+      name: t('pricing.premium.name', 'Pro'),
       price: '€9.99',
       period: '/' + t('pricing.month', 'mo'),
       popular: true,
-      features: [
-        t('pricing.pro.unlimitedOrgs', 'Unlimited organizations'),
-        t('pricing.pro.admins', 'Up to 3 admins'),
-        t('pricing.pro.unlimitedQuizzes', 'Unlimited quizzes'),
-        t('pricing.pro.leagues', 'Leagues & seasons'),
-        t('pricing.pro.questionBank', 'Question bank'),
-        t('pricing.pro.branding', 'Custom branding'),
-        t('pricing.pro.publicLeaderboards', 'Public leaderboards'),
-        t('pricing.pro.support', 'Priority support'),
-      ],
+      features: (t('pricing.premium.features', { returnObjects: true }) as string[]),
       current: isPremium,
     },
     {
       key: 'annual',
-      name: 'Pro Annual',
+      name: t('pricing.annual.name', 'Pro Annual'),
       price: '€99',
       period: '/' + t('pricing.year', 'yr'),
-      badge: t('pricing.save2months', 'Save 2 months'),
-      features: [
-        t('pricing.pro.unlimitedOrgs', 'Unlimited organizations'),
-        t('pricing.pro.admins', 'Up to 3 admins'),
-        t('pricing.pro.unlimitedQuizzes', 'Unlimited quizzes'),
-        t('pricing.pro.leagues', 'Leagues & seasons'),
-        t('pricing.pro.questionBank', 'Question bank'),
-        t('pricing.pro.branding', 'Custom branding'),
-        t('pricing.pro.publicLeaderboards', 'Public leaderboards'),
-        t('pricing.pro.support', 'Priority support'),
-      ],
+      badge: t('pricing.save2months'),
+      features: (t('pricing.premium.features', { returnObjects: true }) as string[]),
       current: false,
     },
   ];
@@ -116,9 +113,7 @@ export default function PricingPage() {
             <div
               key={plan.key}
               className={`relative rounded-xl border-2 p-6 flex flex-col ${
-                plan.popular
-                  ? 'border-primary shadow-lg shadow-primary/10'
-                  : 'border-border'
+                plan.popular ? 'border-primary shadow-lg shadow-primary/10' : 'border-border'
               }`}
             >
               {plan.popular && (
@@ -150,9 +145,30 @@ export default function PricingPage() {
               </ul>
 
               {plan.key === 'free' ? (
-                <Button variant="outline" disabled={plan.current} className="w-full">
-                  {plan.current ? t('pricing.currentPlan', 'Current plan') : t('pricing.free.cta')}
-                </Button>
+                isPremium && isOwner ? (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" className="w-full gap-2" disabled={loading !== null}>
+                        {loading === 'downgrade' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownCircle className="h-4 w-4" />}
+                        {t('pricing.downgrade')}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t('pricing.downgrade')}</AlertDialogTitle>
+                        <AlertDialogDescription>{t('pricing.downgradeConfirm')}</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDowngrade}>{t('common.confirm')}</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                ) : (
+                  <Button variant="outline" disabled={plan.current} className="w-full">
+                    {plan.current ? t('pricing.currentPlan') : t('pricing.free.cta')}
+                  </Button>
+                )
               ) : (
                 <Button
                   className="w-full gap-2"
@@ -165,15 +181,13 @@ export default function PricingPage() {
                   ) : (
                     <Crown className="h-4 w-4" />
                   )}
-                  {isPremium
-                    ? t('pricing.currentPlan', 'Current plan')
-                    : t('pricing.premium.cta')}
+                  {isPremium ? t('pricing.currentPlan') : t('pricing.premium.cta')}
                 </Button>
               )}
 
               {!isOwner && plan.key !== 'free' && (
                 <p className="text-xs text-muted-foreground mt-2 text-center">
-                  {t('pricing.ownerOnly', 'Only the organization owner can upgrade')}
+                  {t('pricing.ownerOnly')}
                 </p>
               )}
             </div>

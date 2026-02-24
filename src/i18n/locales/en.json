@@ -19,9 +19,27 @@
   },
   "pricing": {
     "title": "Simple pricing", "subtitle": "Start free, upgrade when ready",
-    "free": { "name": "Free", "price": "0", "currency": "$", "period": "/month", "features": ["1 organization","Owner only","Up to 10 quizzes total","Basic scoring","Team management"], "cta": "Get started free" },
-    "premium": { "name": "Premium", "price": "29", "currency": "$", "period": "/month", "popular": "Most popular", "features": ["Unlimited organizations","Up to 3 admins","Unlimited quizzes","Leagues & seasons","Question bank","Custom branding","Public leaderboards","Priority support"], "cta": "Start free trial" },
-    "trial": "14-day free Premium trial"
+    "free": { "name": "Free", "price": "0", "currency": "€", "period": "/month", "features": ["1 organization","Owner only","Up to 10 quizzes total","Basic scoring","Team management"], "cta": "Get started free" },
+    "premium": { "name": "Pro", "price": "9.99", "currency": "€", "period": "/month", "popular": "Most popular", "features": ["Unlimited organizations","Up to 3 admins","Unlimited quizzes","Leagues & seasons","Question bank","Custom branding","Public leaderboards","Priority support"], "cta": "Start free trial" },
+    "trial": "14-day free Pro trial",
+    "month": "mo", "year": "yr",
+    "save2months": "Save 2 months",
+    "currentPlan": "Current plan",
+    "ownerOnly": "Only the organization owner can manage subscription",
+    "downgrade": "Downgrade to Free",
+    "downgradeConfirm": "Are you sure? You will lose access to Pro features at the end of your billing period.",
+    "downgradeSuccess": "Subscription cancelled. You will retain Pro access until the end of your billing period.",
+    "pro": {
+      "unlimitedOrgs": "Unlimited organizations",
+      "admins": "Up to 3 admins",
+      "unlimitedQuizzes": "Unlimited quizzes",
+      "leagues": "Leagues & seasons",
+      "questionBank": "Question bank",
+      "branding": "Custom branding",
+      "publicLeaderboards": "Public leaderboards",
+      "support": "Priority support"
+    },
+    "annual": { "name": "Pro Annual", "price": "99", "currency": "€", "period": "/year" }
   },
   "auth": {
     "login": "Login", "register": "Sign Up", "email": "Email address", "password": "Password",

@@ -19,9 +19,27 @@
   },
   "pricing": {
     "title": "Jednostavne cene", "subtitle": "Započnite besplatno, nadogradite kada budete spremni",
-    "free": { "name": "Besplatno", "price": "0", "currency": "RSD", "period": "/mesečno", "features": ["1 organizacija","Samo vlasnik","Do 10 kvizova ukupno","Osnovno bodovanje","Upravljanje timovima"], "cta": "Započnite besplatno" },
-    "premium": { "name": "Premium", "price": "2.990", "currency": "RSD", "period": "/mesečno", "popular": "Najpopularnije", "features": ["Neograničene organizacije","Do 3 admina","Neograničeni kvizovi","Lige i sezone","Banka pitanja","Prilagođeni brending","Javne rang liste","Prioritetna podrška"], "cta": "Započnite probni period" },
-    "trial": "14 dana besplatno Premium probnog perioda"
+    "free": { "name": "Besplatno", "price": "0", "currency": "€", "period": "/mes", "features": ["1 organizacija","Samo vlasnik","Do 10 kvizova ukupno","Osnovno bodovanje","Upravljanje timovima"], "cta": "Započnite besplatno" },
+    "premium": { "name": "Pro", "price": "9,99", "currency": "€", "period": "/mes", "popular": "Najpopularnije", "features": ["Neograničene organizacije","Do 3 admina","Neograničeni kvizovi","Lige i sezone","Banka pitanja","Prilagođeni brending","Javne rang liste","Prioritetna podrška"], "cta": "Započnite probni period" },
+    "trial": "14 dana besplatno Pro probnog perioda",
+    "month": "mes", "year": "god",
+    "save2months": "Uštedite 2 meseca",
+    "currentPlan": "Trenutni plan",
+    "ownerOnly": "Samo vlasnik organizacije može upravljati pretplatom",
+    "downgrade": "Vrati na besplatno",
+    "downgradeConfirm": "Da li ste sigurni? Izgubićete pristup Pro funkcijama na kraju tekućeg obračunskog perioda.",
+    "downgradeSuccess": "Pretplata otkazana. Pro pristup ostaje do kraja obračunskog perioda.",
+    "pro": {
+      "unlimitedOrgs": "Neograničene organizacije",
+      "admins": "Do 3 admina",
+      "unlimitedQuizzes": "Neograničeni kvizovi",
+      "leagues": "Lige i sezone",
+      "questionBank": "Banka pitanja",
+      "branding": "Prilagođeni brending",
+      "publicLeaderboards": "Javne rang liste",
+      "support": "Prioritetna podrška"
+    },
+    "annual": { "name": "Pro godišnji", "price": "99", "currency": "€", "period": "/godišnje" }
   },
   "auth": {
     "login": "Prijava", "register": "Registracija", "email": "Email adresa", "password": "Lozinka",
