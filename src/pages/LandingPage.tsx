@@ -119,7 +119,7 @@ export default function LandingPage() {
             <h2 className="font-display text-3xl md:text-4xl font-bold">{t('pricing.title')}</h2>
             <p className="mt-4 text-muted-foreground text-lg">{t('pricing.subtitle')}</p>
           </div>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {/* Free */}
             <motion.div
               initial="hidden"
@@ -131,8 +131,8 @@ export default function LandingPage() {
             >
               <h3 className="font-display text-xl font-bold">{t('pricing.free.name')}</h3>
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold font-display">{t('pricing.free.price')}</span>
-                <span className="text-muted-foreground">{t('pricing.free.currency')}{t('pricing.free.period')}</span>
+                <span className="text-4xl font-bold font-display">€0</span>
+                <span className="text-muted-foreground">{t('pricing.free.period')}</span>
               </div>
               <ul className="mt-8 space-y-3">
                 {(t('pricing.free.features', { returnObjects: true }) as string[]).map((feat, i) => (
@@ -147,7 +147,7 @@ export default function LandingPage() {
               </Link>
             </motion.div>
 
-            {/* Premium */}
+            {/* Pro Monthly */}
             <motion.div
               initial="hidden"
               whileInView="visible"
@@ -161,8 +161,8 @@ export default function LandingPage() {
               </span>
               <h3 className="font-display text-xl font-bold">{t('pricing.premium.name')}</h3>
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold font-display">{t('pricing.premium.price')}</span>
-                <span className="text-muted-foreground">{t('pricing.premium.currency')}{t('pricing.premium.period')}</span>
+                <span className="text-4xl font-bold font-display">€9.99</span>
+                <span className="text-muted-foreground">/{t('pricing.month')}</span>
               </div>
               <ul className="mt-8 space-y-3">
                 {(t('pricing.premium.features', { returnObjects: true }) as string[]).map((feat, i) => (
@@ -176,6 +176,36 @@ export default function LandingPage() {
                 <Button className="w-full">{t('pricing.premium.cta')}</Button>
               </Link>
               <p className="text-xs text-muted-foreground text-center mt-3">{t('pricing.trial')}</p>
+            </motion.div>
+
+            {/* Pro Annual */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              custom={2}
+              className="rounded-xl border border-border bg-card p-8 relative"
+            >
+              <span className="absolute -top-3 right-4 rounded-full bg-secondary px-3 py-0.5 text-xs font-semibold text-secondary-foreground">
+                {t('pricing.save2months')}
+              </span>
+              <h3 className="font-display text-xl font-bold">{t('pricing.annual.name')}</h3>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-4xl font-bold font-display">€99</span>
+                <span className="text-muted-foreground">/{t('pricing.year')}</span>
+              </div>
+              <ul className="mt-8 space-y-3">
+                {(t('pricing.premium.features', { returnObjects: true }) as string[]).map((feat, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    {feat}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/register" className="block mt-8">
+                <Button variant="outline" className="w-full">{t('pricing.premium.cta')}</Button>
+              </Link>
             </motion.div>
           </div>
         </div>
