@@ -83,12 +83,13 @@ export default function TeamDetailPage() {
     fetchAll();
   }, [id, currentOrg?.id]);
 
+  const finishedParticipations = participations.filter((p) => p.quiz_status === 'finished');
   const totalQuizzes = participations.length;
-  const avgPoints = totalQuizzes > 0
-    ? (participations.reduce((s, p) => s + (p.total_points || 0), 0) / totalQuizzes).toFixed(1)
+  const avgPoints = finishedParticipations.length > 0
+    ? (finishedParticipations.reduce((s, p) => s + (p.total_points || 0), 0) / finishedParticipations.length).toFixed(1)
     : '0';
-  const bestRank = participations.reduce((best, p) => (p.rank && (best === 0 || p.rank < best) ? p.rank : best), 0);
-  const wins = participations.filter((p) => p.rank === 1).length;
+  const bestRank = finishedParticipations.reduce((best, p) => (p.rank && (best === 0 || p.rank < best) ? p.rank : best), 0);
+  const wins = finishedParticipations.filter((p) => p.rank === 1).length;
 
   if (loading) {
     return (
@@ -182,7 +183,7 @@ export default function TeamDetailPage() {
                   </div>
                   <div className="flex items-center gap-3 shrink-0 ml-4">
                     {p.rank && (
-                      <Badge variant={p.rank === 1 ? 'default' : 'secondary'}>
+                      <Badge variant={p.rank === 1 ? 'default' : 'outline'}>
                         #{p.rank}
                       </Badge>
                     )}

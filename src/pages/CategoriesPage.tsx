@@ -66,11 +66,26 @@ export default function CategoriesPage() {
       // Get quiz_categories for these categories
       const { data: qcData } = await supabase
         .from('quiz_categories')
-        .select('id, category_id')
+        .select('id, category_id, quiz_id')
         .in('category_id', catIds);
 
       const qcList = qcData || [];
       const qcIds = qcList.map((qc: any) => qc.id);
+
+      // Get finished quiz IDs
+      const qcQuizIds = [...new Set(qcList.map((qc: any) => qc.quiz_id))];
+      let finishedQuizIds = new Set<string>();
+      if (qcQuizIds.length > 0) {
+        const { data: quizData } = await supabase
+          .from('quizzes')
+          .select('id')
+          .in('id', qcQuizIds)
+          .eq('status', 'finished');
+        finishedQuizIds = new Set((quizData || []).map((q: any) => q.id));
+      }
+
+      // Filter qcList to only finished quizzes
+      const finishedQcIds = new Set(qcList.filter((qc: any) => finishedQuizIds.has(qc.quiz_id)).map((qc: any) => qc.id));
 
       // Get scores for these quiz_categories
       let scoreMap = new Map<string, { total: number; count: number }>();
@@ -85,6 +100,7 @@ export default function CategoriesPage() {
         qcList.forEach((qc: any) => qcToCat.set(qc.id, qc.category_id));
 
         (scoreData || []).forEach((s: any) => {
+          if (!finishedQcIds.has(s.quiz_category_id)) return;
           const catId = qcToCat.get(s.quiz_category_id);
           if (!catId) return;
           const agg = scoreMap.get(catId) || { total: 0, count: 0 };

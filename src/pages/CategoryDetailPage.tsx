@@ -86,11 +86,12 @@ export default function CategoryDetailPage() {
   }, [id, currentOrg?.id]);
 
   const totalUsed = usages.length;
-  const overallAvg = totalUsed > 0
-    ? (usages.reduce((s, u) => s + u.avg_score, 0) / totalUsed).toFixed(1)
+  const finishedUsages = usages.filter((u) => u.quiz_status === 'finished');
+  const overallAvg = finishedUsages.length > 0
+    ? (finishedUsages.reduce((s, u) => s + u.avg_score, 0) / finishedUsages.length).toFixed(1)
     : '0';
-  const highestAvg = usages.length > 0
-    ? Math.max(...usages.map((u) => u.avg_score)).toFixed(1)
+  const highestAvg = finishedUsages.length > 0
+    ? Math.max(...finishedUsages.map((u) => u.avg_score)).toFixed(1)
     : '0';
 
   if (loading) {
