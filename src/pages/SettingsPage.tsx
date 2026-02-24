@@ -10,7 +10,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Zap, Crown, Shield, Upload, Palette, Sun, Moon } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Loader2, Zap, Crown, Shield, Upload, Palette, Sun, Moon, ArrowDownCircle, CreditCard, CalendarDays, Receipt } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface HelpType {
   id: string;
@@ -34,6 +46,7 @@ export default function SettingsPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
 
   // Help types
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
@@ -134,6 +147,24 @@ export default function SettingsPage() {
     setSaving(false);
   };
 
+  const handleDowngrade = async () => {
+    if (!currentOrg || !isOwner) return;
+    setLoading('downgrade');
+    try {
+      const { error } = await supabase.functions.invoke('billing-cancel', {
+        body: { organization_id: currentOrg.id },
+      });
+      if (error) throw error;
+      toast({ title: t('pricing.downgradeSuccess') });
+      refetch();
+    } catch (err: any) {
+      console.error('Downgrade error:', err);
+      toast({ title: t('common.error', 'Error'), description: err.message || 'Failed to cancel subscription', variant: 'destructive' });
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const trialDaysLeft = currentOrg?.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(currentOrg.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0;
@@ -143,8 +174,14 @@ export default function SettingsPage() {
       <div className="space-y-6 max-w-2xl">
         <h1 className="font-display text-2xl font-bold">{t('settings.title')}</h1>
 
-        {/* Subscription card */}
-        <div className="rounded-xl border-2 border-primary/20 bg-card p-6">
+        {/* Manage Subscription */}
+        <div className="rounded-xl border-2 border-primary/20 bg-card p-6 space-y-5">
+          <div className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-primary" />
+            <h2 className="font-display font-semibold text-lg">{t('settings.manageSubscription')}</h2>
+          </div>
+
+          {/* Current plan row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {isPremium ? (
@@ -162,33 +199,59 @@ export default function SettingsPage() {
               )}
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold">{t('settings.subscription')}</p>
+                  <p className="font-semibold">{t('settings.currentPlan')}</p>
                   <Badge variant={isPremium ? 'default' : 'secondary'}>
-                    {isPremium ? 'Premium' : isTrial ? 'Trial' : 'Free'}
+                    {isPremium ? t('settings.planPremium') : isTrial ? t('settings.planTrial') : t('settings.planFree')}
                   </Badge>
+                  {(isPremium || isTrial) && currentOrg?.subscription_status && (
+                    <Badge variant={currentOrg.subscription_status === 'cancelled' ? 'destructive' : 'outline'} className="text-xs">
+                      {currentOrg.subscription_status === 'cancelled' ? t('settings.statusCancelled') : t('settings.statusActive')}
+                    </Badge>
+                  )}
                 </div>
-                {isTrial && trialDaysLeft > 0 && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t('settings.trialDaysLeft', { days: trialDaysLeft })}
-                  </p>
-                )}
                 {isFree && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t('settings.freeDescription')}
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t('settings.freeDescription')}</p>
                 )}
               </div>
             </div>
-            {!isPremium && (
-              <Button size="sm" className="gap-1" onClick={() => navigate('/dashboard/pricing')}>
-                <Zap className="h-3 w-3" />
-                {t('freemium.upgrade')}
-              </Button>
-            )}
           </div>
 
+          {/* Plan details */}
+          {(isPremium || isTrial) && (
+            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+              {isPremium && currentOrg?.current_period_end && (
+                <div className="flex items-center gap-2 text-sm">
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    {currentOrg.subscription_status === 'cancelled'
+                      ? t('settings.accessUntil')
+                      : t('settings.renewsOn')}:
+                  </span>
+                  <span className="font-medium">
+                    {new Date(currentOrg.current_period_end).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+              {isTrial && currentOrg?.trial_ends_at && (
+                <div className="flex items-center gap-2 text-sm">
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">{t('settings.billingStartsOn')}:</span>
+                  <span className="font-medium">
+                    {new Date(currentOrg.trial_ends_at).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+              {isTrial && trialDaysLeft > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {t('settings.trialDaysLeft', { days: trialDaysLeft })}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Free plan limits */}
           {isFree && (
-            <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+            <div className="grid grid-cols-3 gap-3 text-center">
               <div className="rounded-lg bg-muted/50 p-3">
                 <p className="text-lg font-bold">1</p>
                 <p className="text-xs text-muted-foreground">{t('settings.maxOrgs')}</p>
@@ -203,7 +266,63 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+
+          <Separator />
+
+          {/* Actions */}
+          <div className="flex flex-wrap gap-3">
+            {!isPremium && !isTrial && (
+              <Button className="gap-2" onClick={() => navigate('/dashboard/pricing')}>
+                <Zap className="h-4 w-4" />
+                {t('freemium.upgrade')}
+              </Button>
+            )}
+            {(isPremium || isTrial) && isOwner && (
+              <Button variant="outline" className="gap-2" onClick={() => navigate('/dashboard/pricing')}>
+                {t('settings.changePlan')}
+              </Button>
+            )}
+            {(isPremium || isTrial) && isOwner && currentOrg?.subscription_status !== 'cancelled' && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10" disabled={loading !== null}>
+                    {loading === 'downgrade' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownCircle className="h-4 w-4" />}
+                    {t('pricing.downgrade')}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t('pricing.downgrade')}</AlertDialogTitle>
+                    <AlertDialogDescription>{t('pricing.downgradeConfirm')}</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDowngrade}>{t('common.confirm')}</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            {!isOwner && (isPremium || isTrial) && (
+              <p className="text-xs text-muted-foreground">{t('pricing.ownerOnly')}</p>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Payment history */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-medium text-sm">{t('settings.paymentHistory')}</h3>
+            </div>
+            <div className="rounded-lg border border-border p-4 text-center">
+              <p className="text-sm text-muted-foreground">{t('settings.noPayments')}</p>
+            </div>
+          </div>
         </div>
+
+
+
 
         {/* Organization settings */}
         <div className="rounded-xl border border-border bg-card p-6 space-y-5">

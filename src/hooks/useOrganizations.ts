@@ -7,6 +7,9 @@ export interface Organization {
   name: string;
   slug: string | null;
   subscription_tier: string;
+  subscription_status: string | null;
+  subscription_id: string | null;
+  current_period_end: string | null;
   branding_color: string | null;
   secondary_color: string | null;
   logo_url: string | null;
