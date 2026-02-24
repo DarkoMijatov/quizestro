@@ -695,6 +695,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_use_pro_features: { Args: { _org_id: string }; Returns: boolean }
       get_user_org_role: {
         Args: { _org_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["org_role"]
