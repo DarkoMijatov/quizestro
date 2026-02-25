@@ -390,11 +390,6 @@ export default function QuizDetailPage() {
                     <p className={cn("font-bold text-foreground break-words leading-tight",
                       sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
                     )}>{teamName}</p>
-                    {team.alias && originalName && (
-                      <p className={cn("text-muted-foreground uppercase tracking-wide break-words leading-tight",
-                        sizeClass === 'size-lg' ? 'text-[10px]' : 'text-[8px]'
-                      )}>{originalName}</p>
-                    )}
                   </div>
                 </div>
 
