@@ -5,6 +5,84 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// ---------- Inline Postmark sender with retries ----------
+
+async function sendInviteEmail(
+  to: string,
+  organizationName: string,
+  inviteUrl: string
+): Promise<void> {
+  const token = Deno.env.get("POSTMARK_SERVER_TOKEN");
+  if (!token) {
+    console.warn("POSTMARK_SERVER_TOKEN not set — skipping invite email");
+    return;
+  }
+
+  const fromEmail = Deno.env.get("POSTMARK_FROM_EMAIL") || "noreply@quizory.app";
+  const subject = `Pozivnica za ${organizationName} na Quizory`;
+  const html = `
+<!DOCTYPE html>
+<html lang="sr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <tr><td style="background:#1a1a2e;padding:24px 32px;">
+          <span style="color:#f59e0b;font-size:20px;font-weight:700;">🏆 Quizory</span>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <h1 style="margin:0 0 16px;font-size:22px;color:#1a1a2e;">Pozvani ste u ${organizationName}!</h1>
+          <p style="color:#52525b;line-height:1.6;">
+            Dobili ste pozivnicu da se pridružite organizaciji <strong>${organizationName}</strong> na platformi Quizory.
+          </p>
+          <div style="text-align:center;margin:28px 0;">
+            <a href="${inviteUrl}" style="display:inline-block;background:#f59e0b;color:#1a1a2e;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">
+              Prihvati pozivnicu
+            </a>
+          </div>
+          <p style="color:#a1a1aa;font-size:13px;">
+            Ako nemate nalog, registrujte se koristeći email adresu na koju ste primili ovu poruku i automatski ćete biti dodati u organizaciju.
+          </p>
+        </td></tr>
+        <tr><td style="padding:16px 32px;background:#fafafa;border-top:1px solid #e4e4e7;">
+          <p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center;">© ${new Date().getFullYear()} Quizory</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const maxRetries = 3;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch("https://api.postmarkapp.com/email", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-Postmark-Server-Token": token,
+        },
+        body: JSON.stringify({ From: fromEmail, To: to, Subject: subject, HtmlBody: html }),
+      });
+      const data = await res.json();
+      if (res.ok && data.MessageID) {
+        console.log(`Invite email sent to ${to}, messageId=${data.MessageID}`);
+        return;
+      }
+      console.error(`Postmark attempt ${attempt}:`, data.Message || res.status);
+      if (res.status >= 400 && res.status < 500 && res.status !== 429) break;
+    } catch (err) {
+      console.error(`Postmark attempt ${attempt} exception:`, (err as Error).message);
+    }
+    if (attempt < maxRetries) await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+  }
+  console.error(`Failed to send invite email to ${to} after ${maxRetries} attempts`);
+}
+
+// ---------- Main handler ----------
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -56,6 +134,18 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Get org name for email
+    const { data: org } = await adminClient
+      .from("organizations")
+      .select("name")
+      .eq("id", organization_id)
+      .single();
+    const orgName = org?.name || "Organizacija";
+
+    // Determine the app URL for invite link
+    const appUrl = Deno.env.get("APP_URL") || "https://quizory.app";
+    const inviteUrl = `${appUrl}/register`;
+
     // Check if user already exists
     const { data: { users } } = await adminClient.auth.admin.listUsers();
     const existingUser = users?.find(
@@ -93,6 +183,9 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Send notification email (fire-and-forget)
+      sendInviteEmail(email, orgName, inviteUrl).catch(() => {});
+
       return new Response(JSON.stringify({ status: "added", email }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -111,6 +204,9 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      // Send invite email (fire-and-forget)
+      sendInviteEmail(email, orgName, inviteUrl).catch(() => {});
 
       return new Response(JSON.stringify({ status: "invited", email }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
