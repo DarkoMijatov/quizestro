@@ -485,6 +485,7 @@ export default function SettingsPage() {
                 <Moon className="h-4 w-4" /> {t('settings.darkTheme')}
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">{t('settings.themeNote', 'Tema se primenjuje samo unutar aplikacije. Javne stranice uvek koriste svetlu temu.')}</p>
           </div>
         )}
       </div>

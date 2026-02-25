@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, UserPlus, Trash2, Users, Crown, Shield, User, Pencil, Zap, Mail } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -203,9 +204,14 @@ export default function MembersPage() {
       key: 'actions', label: '', render: (r) => (
         <div className="flex items-center gap-1 justify-end">
           {canEditName(r) && (
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleEditName(r); }}>
-              <Pencil className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleEditName(r); }}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('members.editName')}</TooltipContent>
+            </Tooltip>
           )}
           {isOwner && r.role !== 'owner' && (
             <>
@@ -216,9 +222,14 @@ export default function MembersPage() {
                   <SelectItem value="user">User</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setDeleteItem(r); }}>
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setDeleteItem(r); }}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('members.remove', 'Ukloni')}</TooltipContent>
+              </Tooltip>
             </>
           )}
         </div>
