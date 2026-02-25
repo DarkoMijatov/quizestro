@@ -19,6 +19,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Plus, Eye, Pencil, Trash2, FolderOpen, Loader2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CategoryRow {
   id: string;
@@ -170,18 +171,33 @@ export default function CategoriesPage() {
       key: 'actions', label: '',
       render: (r) => (
         <div className="flex items-center gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/dashboard/categories/${r.id}`)}>
-            <Eye className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={() => navigate(`/dashboard/categories/${r.id}`)}>
+                <Eye className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('common.view', 'Pogledaj')}</TooltipContent>
+          </Tooltip>
           {canEdit && (
-            <Button variant="ghost" size="icon" onClick={() => openEdit(r)}>
-              <Pencil className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => openEdit(r)}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('common.edit')}</TooltipContent>
+            </Tooltip>
           )}
           {canEdit && (
-            <Button variant="ghost" size="icon" onClick={() => setDeleteItem(r)}>
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => setDeleteItem(r)}>
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('common.delete')}</TooltipContent>
+            </Tooltip>
           )}
         </div>
       ),

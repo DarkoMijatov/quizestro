@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import {
+  Tooltip, TooltipContent, TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Trophy, LayoutDashboard, Users, FolderOpen, Award,
   BarChart3, Settings, LogOut, BookOpen, UserPlus, ChevronLeft, ChevronRight, Building2, ChevronsUpDown, Lock, Menu, X,
 } from 'lucide-react';
@@ -43,6 +46,20 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const isPremium = currentOrg?.subscription_tier === 'premium' || currentOrg?.subscription_tier === 'trial';
 
+  // Apply theme only inside dashboard (on <html> element)
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('quizory-theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    return () => {
+      // When leaving dashboard, revert to light for public pages
+      document.documentElement.classList.remove('dark');
+    };
+  }, []);
+
   // Apply branding colors as CSS custom properties
   useEffect(() => {
     if (!currentOrg) return;
@@ -53,7 +70,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       root.style.setProperty('--ring', hsl);
       root.style.setProperty('--sidebar-primary', hsl);
       root.style.setProperty('--sidebar-ring', hsl);
-      // Accent derived from primary
       const [h] = hsl.split(' ');
       root.style.setProperty('--accent', `${h} 50% 15%`);
       root.style.setProperty('--accent-foreground', `${h} 80% 65%`);
@@ -64,7 +80,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       root.style.setProperty('--gold-light', hsl);
     }
     return () => {
-      // Reset to defaults when unmounting (e.g. logout)
       root.style.removeProperty('--primary');
       root.style.removeProperty('--ring');
       root.style.removeProperty('--sidebar-primary');
@@ -101,35 +116,56 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     return <Building2 className={`${dim} text-sidebar-primary`} />;
   };
 
+  const renderNavItem = (item: typeof navItems[0], isMobile: boolean) => {
+    const active = location.pathname === item.path;
+    const locked = item.premium && !isPremium;
+    const showLabel = isMobile || !collapsed;
+    const label = t(item.key);
+
+    const button = (
+      <button className={cn(
+        "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+        locked
+          ? "text-sidebar-foreground/30 cursor-not-allowed"
+          : active
+            ? "bg-sidebar-accent text-sidebar-primary"
+            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+      )}>
+        <item.icon className="h-4 w-4 shrink-0" />
+        {showLabel && <span className="flex-1 text-left">{label}</span>}
+        {showLabel && locked && <Lock className="h-3 w-3 shrink-0" />}
+      </button>
+    );
+
+    const link = (
+      <Link
+        key={item.path}
+        to={locked ? '#' : item.path}
+        onClick={(e) => {
+          if (locked) e.preventDefault();
+          if (isMobile) setMobileOpen(false);
+        }}
+      >
+        {button}
+      </Link>
+    );
+
+    // Show tooltip when sidebar is collapsed (desktop only)
+    if (collapsed && !isMobile) {
+      return (
+        <Tooltip key={item.path}>
+          <TooltipTrigger asChild>{link}</TooltipTrigger>
+          <TooltipContent side="right">{label}{locked ? ` (${t('common.premium', 'Premium')})` : ''}</TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return link;
+  };
+
   const renderNav = (isMobile = false) => (
     <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-      {navItems.map((item) => {
-        const active = location.pathname === item.path;
-        const locked = item.premium && !isPremium;
-        return (
-          <Link
-            key={item.path}
-            to={locked ? '#' : item.path}
-            onClick={(e) => {
-              if (locked) e.preventDefault();
-              if (isMobile) setMobileOpen(false);
-            }}
-          >
-            <button className={cn(
-              "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-              locked
-                ? "text-sidebar-foreground/30 cursor-not-allowed"
-                : active
-                  ? "bg-sidebar-accent text-sidebar-primary"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            )}>
-              <item.icon className="h-4 w-4 shrink-0" />
-              {!(isMobile ? false : collapsed) && <span className="flex-1 text-left">{t(item.key)}</span>}
-              {!(isMobile ? false : collapsed) && locked && <Lock className="h-3 w-3 shrink-0" />}
-            </button>
-          </Link>
-        );
-      })}
+      {navItems.map((item) => renderNavItem(item, isMobile))}
     </nav>
   );
 
@@ -166,9 +202,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <div className="flex justify-center py-2">
-              <OrgLogo size="sm" />
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex justify-center py-2 cursor-default">
+                  <OrgLogo size="sm" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">{currentOrg?.name}</TooltipContent>
+            </Tooltip>
           )}
         </div>
 
@@ -176,19 +217,38 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         <div className="p-2 border-t border-sidebar-border space-y-1">
           {!collapsed && <LanguageSwitcher variant="ghost" />}
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-          >
-            <LogOut className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>{t('nav.logout')}</span>}
-          </button>
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-center rounded-lg py-2 text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-          >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </button>
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                >
+                  <LogOut className="h-4 w-4 shrink-0" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{t('nav.logout')}</TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span>{t('nav.logout')}</span>
+            </button>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setCollapsed(!collapsed)}
+                className="w-full flex items-center justify-center rounded-lg py-2 text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+              >
+                {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{collapsed ? t('common.expand', 'Expand') : t('common.collapse', 'Collapse')}</TooltipContent>
+          </Tooltip>
         </div>
       </aside>
 

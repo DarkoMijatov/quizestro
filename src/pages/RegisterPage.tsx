@@ -46,8 +46,8 @@ export default function RegisterPage() {
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-dark items-center justify-center p-12">
         <div className="text-center">
           <Trophy className="h-16 w-16 text-primary mx-auto mb-6" />
-          <h1 className="font-display text-4xl font-bold text-primary-foreground dark:text-foreground">Quizory</h1>
-          <p className="mt-4 text-muted-foreground max-w-sm">{t('hero.subtitle')}</p>
+          <h1 className="font-display text-4xl font-bold text-white">Quizory</h1>
+          <p className="mt-4 text-white/60 max-w-sm">{t('hero.subtitle')}</p>
         </div>
       </div>
 

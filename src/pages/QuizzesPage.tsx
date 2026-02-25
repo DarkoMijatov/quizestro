@@ -14,6 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Plus, Trophy, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { srLatn } from 'date-fns/locale';
 
@@ -147,18 +148,33 @@ export default function QuizzesPage() {
       key: 'actions', label: '',
       render: (r) => (
         <div className="flex items-center gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/dashboard/quizzes/${r.id}`)}>
-            <Eye className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={() => navigate(`/dashboard/quizzes/${r.id}`)}>
+                <Eye className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('common.view', 'Pogledaj')}</TooltipContent>
+          </Tooltip>
           {canCreate && (
-            <Button variant="ghost" size="icon" onClick={() => navigate(`/dashboard/quizzes/${r.id}`)}>
-              <Pencil className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate(`/dashboard/quizzes/${r.id}`)}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('common.edit')}</TooltipContent>
+            </Tooltip>
           )}
           {canDelete && (
-            <Button variant="ghost" size="icon" onClick={() => setDeleteItem(r)}>
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => setDeleteItem(r)}>
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('common.delete')}</TooltipContent>
+            </Tooltip>
           )}
         </div>
       ),
