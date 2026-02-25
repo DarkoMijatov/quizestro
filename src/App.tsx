@@ -8,6 +8,7 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { ProtectedRoute, PublicOnlyRoute } from '@/components/ProtectedRoute';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { RequirePremium } from '@/components/RequirePremium';
+import { ForceDarkTheme } from '@/components/ForceDarkTheme';
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -49,12 +50,12 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
-            <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+            <Route path="/" element={<ForceDarkTheme><LandingPage /></ForceDarkTheme>} />
+            <Route path="/login" element={<ForceDarkTheme><PublicOnlyRoute><LoginPage /></PublicOnlyRoute></ForceDarkTheme>} />
+            <Route path="/register" element={<ForceDarkTheme><PublicOnlyRoute><RegisterPage /></PublicOnlyRoute></ForceDarkTheme>} />
+            <Route path="/forgot-password" element={<ForceDarkTheme><ForgotPasswordPage /></ForceDarkTheme>} />
+            <Route path="/reset-password" element={<ForceDarkTheme><ResetPasswordPage /></ForceDarkTheme>} />
+            <Route path="/onboarding" element={<ForceDarkTheme><ProtectedRoute><OnboardingPage /></ProtectedRoute></ForceDarkTheme>} />
             <Route path="/dashboard" element={<OrgRoute><DashboardPage /></OrgRoute>} />
             <Route path="/dashboard/teams" element={<OrgRoute><TeamsPage /></OrgRoute>} />
             <Route path="/dashboard/teams/:id" element={<OrgRoute><TeamDetailPage /></OrgRoute>} />
