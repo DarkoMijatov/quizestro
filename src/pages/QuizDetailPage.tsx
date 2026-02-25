@@ -136,6 +136,15 @@ export default function QuizDetailPage() {
   const saveAlias = async () => {
     if (!editingAliasTeamId) return;
     const trimmed = editingAliasValue.trim();
+    if (trimmed) {
+      const duplicate = teams.find(
+        (t) => t.id !== editingAliasTeamId && (t.alias || (t.team as any)?.name || '').toLowerCase() === trimmed.toLowerCase()
+      );
+      if (duplicate) {
+        toast({ title: t('scoring.aliasNotUnique', 'Alias already used by another team in this quiz'), variant: 'destructive' });
+        return;
+      }
+    }
     await supabase.from('quiz_teams').update({ alias: trimmed || null }).eq('id', editingAliasTeamId);
     setTeams((prev) =>
       prev.map((t) => (t.id === editingAliasTeamId ? { ...t, alias: trimmed || null } : t))
