@@ -46,7 +46,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const isPremium = currentOrg?.subscription_tier === 'premium' || currentOrg?.subscription_tier === 'trial';
 
-  // Apply theme only inside dashboard (on <html> element)
+  // Apply user-selected theme inside dashboard
   useEffect(() => {
     const savedTheme = localStorage.getItem('quizory-theme');
     if (savedTheme === 'dark') {
@@ -54,10 +54,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     } else {
       document.documentElement.classList.remove('dark');
     }
-    return () => {
-      // When leaving dashboard, revert to light for public pages
-      document.documentElement.classList.remove('dark');
-    };
   }, []);
 
   // Apply branding colors as CSS custom properties
