@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, KeyboardEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, KeyboardEvent, FocusEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +8,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
-  ArrowLeft, Loader2, Play, CheckCircle, Unlock, Download, ChevronLeft, ChevronRight,
+  ArrowLeft, Loader2, Play, CheckCircle, Unlock, Download, ChevronLeft, ChevronRight, Pencil,
 } from 'lucide-react';
 import { exportQuizToExcel } from '@/lib/excelUtils';
 import { QuizDraftManager } from '@/components/QuizDraftManager';
@@ -74,6 +74,8 @@ export default function QuizDetailPage() {
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
   const [helpUsages, setHelpUsages] = useState<HelpUsage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingAliasTeamId, setEditingAliasTeamId] = useState<string | null>(null);
+  const [editingAliasValue, setEditingAliasValue] = useState('');
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
@@ -124,6 +126,26 @@ export default function QuizDetailPage() {
     setScores((prev) =>
       prev.map((s) => (s.id === scoreId ? { ...s, [field]: value } : s))
     );
+  };
+
+  const startEditAlias = (team: QuizTeam) => {
+    setEditingAliasTeamId(team.id);
+    setEditingAliasValue(team.alias || (team.team as any)?.name || '');
+  };
+
+  const saveAlias = async () => {
+    if (!editingAliasTeamId) return;
+    const trimmed = editingAliasValue.trim();
+    await supabase.from('quiz_teams').update({ alias: trimmed || null }).eq('id', editingAliasTeamId);
+    setTeams((prev) =>
+      prev.map((t) => (t.id === editingAliasTeamId ? { ...t, alias: trimmed || null } : t))
+    );
+    setEditingAliasTeamId(null);
+  };
+
+  const handleAliasKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') saveAlias();
+    if (e.key === 'Escape') setEditingAliasTeamId(null);
   };
 
   const toggleHelp = async (teamId: string, catId: string, helpType: HelpType) => {
@@ -366,7 +388,7 @@ export default function QuizDetailPage() {
           {rankedTeams.map((team, rowIdx) => {
             const total = getTeamTotal(team.id);
             const teamName = team.alias || (team.team as any)?.name || '';
-            const originalName = (team.team as any)?.name || '';
+            
 
             return (
               <div
@@ -386,10 +408,27 @@ export default function QuizDetailPage() {
                   )}>
                     {rowIdx + 1}
                   </div>
-                  <div className="min-w-0">
-                    <p className={cn("font-bold text-foreground break-words leading-tight",
-                      sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
-                    )}>{teamName}</p>
+                  <div className="min-w-0 flex-1">
+                    {editingAliasTeamId === team.id ? (
+                      <input
+                        autoFocus
+                        className={cn(
+                          "w-full bg-transparent border-b border-primary outline-none font-bold text-foreground",
+                          sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
+                        )}
+                        value={editingAliasValue}
+                        onChange={(e) => setEditingAliasValue(e.target.value)}
+                        onBlur={saveAlias}
+                        onKeyDown={handleAliasKeyDown}
+                      />
+                    ) : (
+                      <div className="flex items-center gap-1 group cursor-pointer" onClick={() => canEdit && startEditAlias(team)}>
+                        <p className={cn("font-bold text-foreground break-words leading-tight",
+                          sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
+                        )}>{teamName}</p>
+                        {canEdit && <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
+                      </div>
+                    )}
                   </div>
                 </div>
 
