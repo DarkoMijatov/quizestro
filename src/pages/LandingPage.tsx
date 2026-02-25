@@ -1,17 +1,18 @@
-import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
-import { Trophy, Users, BarChart3, Zap, HelpCircle, Share2, Check, ArrowRight } from 'lucide-react';
-import heroBg from '@/assets/hero-bg.jpg';
+import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { Trophy, Users, BarChart3, Zap, HelpCircle, Share2, Check, ArrowRight } from "lucide-react";
+import heroBg from "@/assets/hero-bg.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
-    opacity: 1, y: 0,
-    transition: { delay: i * 0.1, duration: 0.5, ease: 'easeOut' as const },
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.5, ease: "easeOut" as const },
   }),
 };
 
@@ -19,16 +20,16 @@ export default function LandingPage() {
   const { t } = useTranslation();
 
   const features = [
-    { icon: Zap, key: 'liveScoring' },
-    { icon: Users, key: 'teams' },
-    { icon: Trophy, key: 'leagues' },
-    { icon: BarChart3, key: 'stats' },
-    { icon: HelpCircle, key: 'helps' },
-    { icon: Share2, key: 'export' },
+    { icon: Zap, key: "liveScoring" },
+    { icon: Users, key: "teams" },
+    { icon: Trophy, key: "leagues" },
+    { icon: BarChart3, key: "stats" },
+    { icon: HelpCircle, key: "helps" },
+    { icon: Share2, key: "export" },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navbar />
 
       {/* Hero */}
@@ -46,7 +47,7 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6"
           >
             <Trophy className="h-4 w-4" />
-            {t('hero.badge')}
+            {t("hero.badge")}
           </motion.div>
           <motion.h1
             initial="hidden"
@@ -55,7 +56,7 @@ export default function LandingPage() {
             custom={1}
             className="font-display text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight max-w-4xl mx-auto leading-tight"
           >
-            {t('hero.title')}
+            {t("hero.title")}
           </motion.h1>
           <motion.p
             initial="hidden"
@@ -64,7 +65,7 @@ export default function LandingPage() {
             custom={2}
             className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
           >
-            {t('hero.subtitle')}
+            {t("hero.subtitle")}
           </motion.p>
           <motion.div
             initial="hidden"
@@ -75,7 +76,7 @@ export default function LandingPage() {
           >
             <Link to="/register">
               <Button size="lg" className="text-base px-8 gap-2">
-                {t('hero.cta')}
+                {t("hero.cta")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
@@ -87,8 +88,8 @@ export default function LandingPage() {
       <section id="features" className="py-24 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="font-display text-3xl md:text-4xl font-bold">{t('features.title')}</h2>
-            <p className="mt-4 text-muted-foreground text-lg">{t('features.subtitle')}</p>
+            <h2 className="font-display text-3xl md:text-4xl font-bold">{t("features.title")}</h2>
+            <p className="mt-4 text-muted-foreground text-lg">{t("features.subtitle")}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => (
@@ -96,7 +97,7 @@ export default function LandingPage() {
                 key={f.key}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: '-50px' }}
+                viewport={{ once: true, margin: "-50px" }}
                 variants={fadeUp}
                 custom={i}
                 className="group rounded-xl border border-border bg-card p-6 hover:shadow-lg hover:border-primary/30 transition-all duration-300"
@@ -116,8 +117,8 @@ export default function LandingPage() {
       <section id="pricing" className="py-24">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="font-display text-3xl md:text-4xl font-bold">{t('pricing.title')}</h2>
-            <p className="mt-4 text-muted-foreground text-lg">{t('pricing.subtitle')}</p>
+            <h2 className="font-display text-3xl md:text-4xl font-bold">{t("pricing.title")}</h2>
+            <p className="mt-4 text-muted-foreground text-lg">{t("pricing.subtitle")}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {/* Free */}
@@ -129,13 +130,13 @@ export default function LandingPage() {
               custom={0}
               className="rounded-xl border border-border bg-card p-8"
             >
-              <h3 className="font-display text-xl font-bold">{t('pricing.free.name')}</h3>
+              <h3 className="font-display text-xl font-bold">{t("pricing.free.name")}</h3>
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-4xl font-bold font-display">€0</span>
-                <span className="text-muted-foreground">{t('pricing.free.period')}</span>
+                <span className="text-muted-foreground">{t("pricing.free.period")}</span>
               </div>
               <ul className="mt-8 space-y-3">
-                {(t('pricing.free.features', { returnObjects: true }) as string[]).map((feat, i) => (
+                {(t("pricing.free.features", { returnObjects: true }) as string[]).map((feat, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm">
                     <Check className="h-4 w-4 text-primary shrink-0" />
                     {feat}
@@ -143,7 +144,9 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link to="/register" className="block mt-8">
-                <Button variant="outline" className="w-full">{t('pricing.free.cta')}</Button>
+                <Button variant="outline" className="w-full">
+                  {t("pricing.free.cta")}
+                </Button>
               </Link>
             </motion.div>
 
@@ -157,15 +160,15 @@ export default function LandingPage() {
               className="rounded-xl border-2 border-primary bg-card p-8 relative shadow-gold"
             >
               <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-xs font-semibold text-primary-foreground">
-                {t('pricing.premium.popular')}
+                {t("pricing.premium.popular")}
               </span>
-              <h3 className="font-display text-xl font-bold">{t('pricing.premium.name')}</h3>
+              <h3 className="font-display text-xl font-bold">{t("pricing.premium.name")}</h3>
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-4xl font-bold font-display">€9.99</span>
-                <span className="text-muted-foreground">/{t('pricing.month')}</span>
+                <span className="text-muted-foreground">/{t("pricing.month")}</span>
               </div>
               <ul className="mt-8 space-y-3">
-                {(t('pricing.premium.features', { returnObjects: true }) as string[]).map((feat, i) => (
+                {(t("pricing.premium.features", { returnObjects: true }) as string[]).map((feat, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm">
                     <Check className="h-4 w-4 text-primary shrink-0" />
                     {feat}
@@ -173,9 +176,9 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link to="/register" className="block mt-8">
-                <Button className="w-full">{t('pricing.premium.cta')}</Button>
+                <Button className="w-full">{t("pricing.premium.cta")}</Button>
               </Link>
-              <p className="text-xs text-muted-foreground text-center mt-3">{t('pricing.trial')}</p>
+              <p className="text-xs text-muted-foreground text-center mt-3">{t("pricing.trial")}</p>
             </motion.div>
 
             {/* Pro Annual */}
@@ -188,15 +191,15 @@ export default function LandingPage() {
               className="rounded-xl border border-border bg-card p-8 relative"
             >
               <span className="absolute -top-3 right-4 rounded-full bg-secondary px-3 py-0.5 text-xs font-semibold text-secondary-foreground">
-                {t('pricing.save2months')}
+                {t("pricing.save2months")}
               </span>
-              <h3 className="font-display text-xl font-bold">{t('pricing.annual.name')}</h3>
+              <h3 className="font-display text-xl font-bold">{t("pricing.annual.name")}</h3>
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-4xl font-bold font-display">€99</span>
-                <span className="text-muted-foreground">/{t('pricing.year')}</span>
+                <span className="text-muted-foreground">/{t("pricing.year")}</span>
               </div>
               <ul className="mt-8 space-y-3">
-                {(t('pricing.premium.features', { returnObjects: true }) as string[]).map((feat, i) => (
+                {(t("pricing.premium.features", { returnObjects: true }) as string[]).map((feat, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm">
                     <Check className="h-4 w-4 text-primary shrink-0" />
                     {feat}
@@ -204,7 +207,9 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link to="/register" className="block mt-8">
-                <Button variant="outline" className="w-full">{t('pricing.premium.cta')}</Button>
+                <Button variant="outline" className="w-full">
+                  {t("pricing.premium.cta")}
+                </Button>
               </Link>
             </motion.div>
           </div>
