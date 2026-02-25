@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -27,17 +27,29 @@ export interface Membership {
   created_at: string;
 }
 
-export function useOrganizations() {
+interface OrganizationContextValue {
+  organizations: Organization[];
+  memberships: Membership[];
+  currentOrg: Organization | null;
+  currentRole: 'owner' | 'admin' | 'user' | null;
+  loading: boolean;
+  hasFetchedForCurrentUser: boolean;
+  switchOrg: (orgId: string) => void;
+  refetch: () => Promise<void>;
+}
+
+const OrganizationContext = createContext<OrganizationContextValue | null>(null);
+
+export function OrganizationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [currentRole, setCurrentRole] = useState<'owner' | 'admin' | 'user' | null>(null);
   const [loading, setLoading] = useState(true);
-  // Track which user ID we last completed a fetch for
   const fetchedForUserRef = useRef<string | null>(null);
 
-  const fetchOrgs = async () => {
+  const fetchOrgs = useCallback(async () => {
     if (!user) {
       setOrganizations([]);
       setMemberships([]);
@@ -50,7 +62,6 @@ export function useOrganizations() {
 
     setLoading(true);
 
-    // Fetch memberships
     const { data: membershipData } = await supabase
       .from('memberships')
       .select('*')
@@ -60,7 +71,6 @@ export function useOrganizations() {
     setMemberships(mems);
 
     if (mems.length > 0) {
-      // Fetch organizations
       const orgIds = mems.map((m) => m.organization_id);
       const { data: orgData } = await supabase
         .from('organizations')
@@ -70,7 +80,6 @@ export function useOrganizations() {
       const orgs = orgData || [];
       setOrganizations(orgs);
 
-      // Set current org from localStorage or first
       const savedOrgId = localStorage.getItem('quizory-current-org');
       const saved = orgs.find((o) => o.id === savedOrgId);
       const selected = saved || orgs[0];
@@ -86,14 +95,14 @@ export function useOrganizations() {
 
     fetchedForUserRef.current = user.id;
     setLoading(false);
-  };
+  }, [user]);
 
   useEffect(() => {
     setLoading(true);
     fetchOrgs();
-  }, [user]);
+  }, [fetchOrgs]);
 
-  const switchOrg = (orgId: string) => {
+  const switchOrg = useCallback((orgId: string) => {
     const org = organizations.find((o) => o.id === orgId);
     if (org) {
       setCurrentOrg(org);
@@ -101,18 +110,30 @@ export function useOrganizations() {
       const mem = memberships.find((m) => m.organization_id === orgId);
       setCurrentRole(mem?.role ?? null);
     }
-  };
+  }, [organizations, memberships]);
 
   const hasFetchedForCurrentUser = !!user && fetchedForUserRef.current === user.id;
 
-  return {
-    organizations,
-    memberships,
-    currentOrg,
-    currentRole,
-    loading,
-    hasFetchedForCurrentUser,
-    switchOrg,
-    refetch: fetchOrgs,
-  };
+  return (
+    <OrganizationContext.Provider value={{
+      organizations,
+      memberships,
+      currentOrg,
+      currentRole,
+      loading,
+      hasFetchedForCurrentUser,
+      switchOrg,
+      refetch: fetchOrgs,
+    }}>
+      {children}
+    </OrganizationContext.Provider>
+  );
+}
+
+export function useOrganizations() {
+  const ctx = useContext(OrganizationContext);
+  if (!ctx) {
+    throw new Error('useOrganizations must be used within OrganizationProvider');
+  }
+  return ctx;
 }

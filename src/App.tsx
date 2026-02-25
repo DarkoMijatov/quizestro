@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import '@/i18n';
 import { AuthProvider } from '@/hooks/useAuth';
+import { OrganizationProvider } from '@/hooks/useOrganizations';
 import { ProtectedRoute, PublicOnlyRoute } from '@/components/ProtectedRoute';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { RequirePremium } from '@/components/RequirePremium';
@@ -46,6 +47,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
+        <OrganizationProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -75,6 +77,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </OrganizationProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
