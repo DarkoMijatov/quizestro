@@ -41,7 +41,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="flex items-center gap-2 font-display font-bold text-xl">
           <Trophy className="h-5 w-5 text-primary" />
-          Kvizorija
+          Quizestro
         </div>
         <h2 className="font-display text-2xl font-bold">{t('auth.resetPassword')}</h2>
         <form onSubmit={handleUpdate} className="space-y-4">
