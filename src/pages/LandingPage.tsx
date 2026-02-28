@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { Trophy, Users, BarChart3, Zap, HelpCircle, Share2, Check, ArrowRight } from 'lucide-react';
+import { Users, BarChart3, Zap, HelpCircle, Share2, Check, ArrowRight, Trophy } from 'lucide-react';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const fadeUp = {
@@ -45,7 +45,7 @@ export default function LandingPage() {
             custom={0}
             className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6"
           >
-            <Trophy className="h-4 w-4" />
+            <img src="/logo.png" alt="" className="h-5 w-5 rounded" />
             {t('hero.badge')}
           </motion.div>
           <motion.h1

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
@@ -45,7 +45,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-dark items-center justify-center p-12">
         <div className="text-center">
-          <Trophy className="h-16 w-16 text-primary mx-auto mb-6" />
+          <img src="/logo.png" alt="Quizestro" className="h-16 w-16 mx-auto mb-6 rounded-lg" />
           <h1 className="font-display text-4xl font-bold text-foreground">Quizestro</h1>
           <p className="mt-4 text-muted-foreground max-w-sm">{t('hero.subtitle')}</p>
         </div>
@@ -54,7 +54,7 @@ export default function RegisterPage() {
       <div className="flex-1 flex flex-col">
         <div className="flex justify-between items-center p-4">
           <Link to="/" className="flex items-center gap-2 font-display font-bold lg:hidden">
-            <Trophy className="h-5 w-5 text-primary" />
+            <img src="/logo.png" alt="Quizestro" className="h-6 w-6 rounded" />
             Quizestro
           </Link>
           <LanguageSwitcher variant="ghost" />

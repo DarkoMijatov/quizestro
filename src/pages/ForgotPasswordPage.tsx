@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2 font-display font-bold">
-            <Trophy className="h-5 w-5 text-primary" />
+            <img src="/logo.png" alt="Quizestro" className="h-6 w-6 rounded" />
             Quizestro
           </Link>
           <LanguageSwitcher variant="ghost" />

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Trophy } from 'lucide-react';
+
 
 export function Footer() {
   const { t } = useTranslation();
@@ -9,7 +9,7 @@ export function Footer() {
     <footer className="border-t border-border bg-muted/30">
       <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2 font-display font-bold text-lg">
-          <Trophy className="h-5 w-5 text-primary" />
+          <img src="/logo.png" alt="Quizestro" className="h-6 w-6 rounded" />
           Quizestro
         </div>
         <p className="text-sm text-muted-foreground">

@@ -7,7 +7,7 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trophy, Loader2, Building2, ChevronRight, Plus } from 'lucide-react';
+import { Loader2, Building2, ChevronRight, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
@@ -95,7 +95,7 @@ export default function OnboardingPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 font-display font-bold text-xl">
-            <Trophy className="h-6 w-6 text-primary" />
+            <img src="/logo.png" alt="Quizestro" className="h-7 w-7 rounded" />
             Quizestro
           </div>
           <LanguageSwitcher variant="ghost" />
