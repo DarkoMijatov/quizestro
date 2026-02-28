@@ -155,10 +155,5 @@
 
   .brand-logo {
     border-radius: 9999px;
-    mix-blend-mode: multiply;
-  }
-
-  .dark .brand-logo {
-    mix-blend-mode: screen;
   }
 }
