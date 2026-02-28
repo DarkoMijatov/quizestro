@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2 font-display font-bold">
-            <img src="/logo.png" alt="Quizestro" className="h-6 w-6 rounded" />
+            <img src="/logo.png" alt="Quizestro" className="h-6 w-6 brand-logo" />
             Quizestro
           </Link>
           <LanguageSwitcher variant="ghost" />

@@ -45,7 +45,7 @@ export default function LandingPage() {
             custom={0}
             className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6"
           >
-            <img src="/logo.png" alt="" className="h-5 w-5 rounded" />
+            <img src="/logo.png" alt="" className="h-5 w-5 brand-logo" />
             {t('hero.badge')}
           </motion.div>
           <motion.h1
