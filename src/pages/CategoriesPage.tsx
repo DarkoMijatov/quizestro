@@ -211,8 +211,8 @@ export default function CategoriesPage() {
         data={categories}
         loading={loading}
         pageSize={15}
-        defaultSortKey="name"
-        defaultSortDir="asc"
+        defaultSortKey="avgPoints"
+        defaultSortDir="desc"
         title={t('categories.title')}
         emptyIcon={<FolderOpen className="h-12 w-12 text-muted-foreground/30 mx-auto" />}
         emptyMessage={t('categories.noCategories')}

@@ -136,7 +136,8 @@
     "seasonPlaceholder": "e.g. Spring 2026", "active": "Active", "inactive": "Inactive",
     "noLeagues": "No leagues yet. Add your first one!",
     "deleteConfirm": "Are you sure you want to delete this league?",
-    "created": "League created successfully!", "updated": "League updated successfully!", "deleted": "League deleted successfully!"
+    "created": "League created successfully!", "updated": "League updated successfully!", "deleted": "League deleted successfully!",
+    "startDate": "Start", "endDate": "End"
   },
   "questionBank": {
     "title": "Question Bank", "comingSoon": "Question bank is coming soon. Stay tuned!"

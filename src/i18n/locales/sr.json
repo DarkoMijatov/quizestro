@@ -136,7 +136,8 @@
     "seasonPlaceholder": "npr. Proleće 2026", "active": "Aktivna", "inactive": "Neaktivna",
     "noLeagues": "Još nema liga. Dodajte prvu!",
     "deleteConfirm": "Da li ste sigurni da želite da obrišete ovu ligu?",
-    "created": "Liga kreirana uspešno!", "updated": "Liga ažurirana uspešno!", "deleted": "Liga obrisana uspešno!"
+    "created": "Liga kreirana uspešno!", "updated": "Liga ažurirana uspešno!", "deleted": "Liga obrisana uspešno!",
+    "startDate": "Početak", "endDate": "Kraj"
   },
   "questionBank": {
     "title": "Banka pitanja", "comingSoon": "Banka pitanja stiže uskoro. Ostanite u toku!"
