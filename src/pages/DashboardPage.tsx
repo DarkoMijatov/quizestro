@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const [totalQuizCount, setTotalQuizCount] = useState(0);
 
   const isFree = currentOrg?.subscription_tier === 'free';
-  const TOTAL_LIMIT = 10;
+  const TOTAL_LIMIT = 20;
 
   useEffect(() => {
     if (!currentOrg) return;

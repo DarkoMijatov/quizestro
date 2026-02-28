@@ -12,6 +12,9 @@ export interface Organization {
   current_period_end: string | null;
   branding_color: string | null;
   secondary_color: string | null;
+  branding_bg_color: string | null;
+  branding_text_color: string | null;
+  branding_header_color: string | null;
   logo_url: string | null;
   default_categories_count: number;
   default_questions_per_category: number;

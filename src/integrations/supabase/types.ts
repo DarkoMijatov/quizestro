@@ -228,7 +228,10 @@ export type Database = {
       }
       organizations: {
         Row: {
+          branding_bg_color: string | null
           branding_color: string | null
+          branding_header_color: string | null
+          branding_text_color: string | null
           created_at: string
           current_period_end: string | null
           default_categories_count: number | null
@@ -249,7 +252,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          branding_bg_color?: string | null
           branding_color?: string | null
+          branding_header_color?: string | null
+          branding_text_color?: string | null
           created_at?: string
           current_period_end?: string | null
           default_categories_count?: number | null
@@ -270,7 +276,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          branding_bg_color?: string | null
           branding_color?: string | null
+          branding_header_color?: string | null
+          branding_text_color?: string | null
           created_at?: string
           current_period_end?: string | null
           default_categories_count?: number | null

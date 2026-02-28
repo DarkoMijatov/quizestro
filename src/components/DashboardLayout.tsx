@@ -75,6 +75,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       root.style.setProperty('--secondary', hsl.replace(/(\d+)%$/, (_, l) => `${Math.min(Number(l) + 60, 95)}%`));
       root.style.setProperty('--gold-light', hsl);
     }
+    // Pro branding: background, text, header colors
+    if (currentOrg.branding_bg_color) {
+      root.style.setProperty('--branding-bg', currentOrg.branding_bg_color);
+    }
+    if (currentOrg.branding_text_color) {
+      root.style.setProperty('--branding-text', currentOrg.branding_text_color);
+    }
+    if (currentOrg.branding_header_color) {
+      root.style.setProperty('--branding-header', currentOrg.branding_header_color);
+    }
     return () => {
       root.style.removeProperty('--primary');
       root.style.removeProperty('--ring');
@@ -84,8 +94,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       root.style.removeProperty('--accent-foreground');
       root.style.removeProperty('--secondary');
       root.style.removeProperty('--gold-light');
+      root.style.removeProperty('--branding-bg');
+      root.style.removeProperty('--branding-text');
+      root.style.removeProperty('--branding-header');
     };
-  }, [currentOrg?.branding_color, currentOrg?.secondary_color]);
+  }, [currentOrg?.branding_color, currentOrg?.secondary_color, currentOrg?.branding_bg_color, currentOrg?.branding_text_color, currentOrg?.branding_header_color]);
 
   const navItems = [
     { key: 'dashboard.title', icon: LayoutDashboard, path: '/dashboard' },
