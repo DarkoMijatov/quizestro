@@ -330,6 +330,9 @@ export default function QuizDetailPage() {
             <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{quiz.name}</h1>
           </div>
            <div className="flex items-center gap-2">
+            {currentOrg?.logo_url && (
+              <img src={currentOrg.logo_url} alt="" className="h-8 w-auto object-contain" />
+            )}
             {canReorder && (
               <QuizDraftManager
                 quizId={quizId!}
@@ -368,12 +371,6 @@ export default function QuizDetailPage() {
             color: currentOrg?.branding_text_color || undefined,
           }}
         >
-          {/* Logo watermark */}
-          {currentOrg?.logo_url && (
-            <div className="flex justify-center pt-2">
-              <img src={currentOrg.logo_url} alt="" className="h-10 w-auto object-contain opacity-80" />
-            </div>
-          )}
           <div style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
           {/* Header row */}
           <div
