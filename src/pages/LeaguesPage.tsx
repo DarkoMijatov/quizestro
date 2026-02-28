@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { srLatn } from 'date-fns/locale';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -31,10 +33,12 @@ interface League {
 interface LeagueRow extends League {
   quizCount: number;
   leaderName: string | null;
+  firstDate: string | null;
+  lastDate: string | null;
 }
 
 export default function LeaguesPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { currentOrg, currentRole } = useOrganizations();
   const { toast } = useToast();
@@ -68,14 +72,17 @@ export default function LeaguesPage() {
 
     const { data: quizzes } = await supabase
       .from('quizzes')
-      .select('id, league_id, status')
+      .select('id, league_id, status, date')
       .in('league_id', leagueIds);
 
     const quizCountMap: Record<string, number> = {};
     const finishedQuizIdsByLeague: Record<string, string[]> = {};
+    const datesByLeague: Record<string, string[]> = {};
     for (const q of (quizzes || [])) {
       const lid = (q as any).league_id;
       quizCountMap[lid] = (quizCountMap[lid] || 0) + 1;
+      if (!datesByLeague[lid]) datesByLeague[lid] = [];
+      datesByLeague[lid].push((q as any).date);
       if ((q as any).status === 'finished') {
         if (!finishedQuizIdsByLeague[lid]) finishedQuizIdsByLeague[lid] = [];
         finishedQuizIdsByLeague[lid].push((q as any).id);
@@ -122,11 +129,16 @@ export default function LeaguesPage() {
       }
     }
 
-    setLeagues(rawLeagues.map(l => ({
-      ...l,
-      quizCount: quizCountMap[l.id] || 0,
-      leaderName: leaderMap[l.id] || null,
-    })));
+    setLeagues(rawLeagues.map(l => {
+      const dates = (datesByLeague[l.id] || []).sort();
+      return {
+        ...l,
+        quizCount: quizCountMap[l.id] || 0,
+        leaderName: leaderMap[l.id] || null,
+        firstDate: dates.length > 0 ? dates[0] : null,
+        lastDate: dates.length > 0 ? dates[dates.length - 1] : null,
+      };
+    }));
     setLoading(false);
   };
 
@@ -160,6 +172,13 @@ export default function LeaguesPage() {
     setDeleteItem(null); fetchLeagues();
   };
 
+  const formatDate = (d: string | null) => {
+    if (!d) return '-';
+    return i18n.language === 'sr'
+      ? format(new Date(d), 'dd. MMMM yyyy.', { locale: srLatn })
+      : format(new Date(d), 'MMM dd, yyyy');
+  };
+
   const columns: Column<LeagueRow>[] = [
     { key: 'name', label: t('leagues.leagueName'), sortable: true, render: (r) => (
       <div className="flex items-center gap-2">
@@ -168,6 +187,12 @@ export default function LeaguesPage() {
         {r.season && <span className="text-xs text-muted-foreground">({r.season})</span>}
       </div>
     )},
+    { key: 'firstDate', label: t('leagues.startDate', 'Početak'), sortable: true, render: (r) => (
+      <span className="text-sm text-muted-foreground">{formatDate(r.firstDate)}</span>
+    ), getValue: (r) => r.firstDate || '' },
+    { key: 'lastDate', label: t('leagues.endDate', 'Kraj'), sortable: true, render: (r) => (
+      <span className="text-sm text-muted-foreground">{formatDate(r.lastDate)}</span>
+    ), getValue: (r) => r.lastDate || '' },
     { key: 'is_active', label: t('filters.status'), sortable: true, render: (r) => (
       <Badge variant={r.is_active ? 'default' : 'secondary'} className="text-xs">
         {r.is_active ? t('leagues.active') : t('leagues.inactive')}
@@ -207,8 +232,8 @@ export default function LeaguesPage() {
         columns={columns}
         data={leagues}
         loading={loading}
-        defaultSortKey="name"
-        defaultSortDir="asc"
+        defaultSortKey="lastDate"
+        defaultSortDir="desc"
         searchFn={(r, q) => r.name.toLowerCase().includes(q) || (r.season || '').toLowerCase().includes(q)}
         filters={filterConfigs}
         filterFn={(r, f) => {

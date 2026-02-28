@@ -8,6 +8,8 @@ import { DataTable, Column } from '@/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Award, Trophy, Users, Loader2, ArrowUpDown, Calendar, MapPin } from 'lucide-react';
+import { format } from 'date-fns';
+import { srLatn } from 'date-fns/locale';
 
 interface LeagueData {
   id: string;
@@ -38,7 +40,7 @@ interface QuizRow {
 
 export default function LeagueDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { currentOrg } = useOrganizations();
   const [league, setLeague] = useState<LeagueData | null>(null);
@@ -179,12 +181,17 @@ export default function LeagueDetailPage() {
 
   const quizColumns: Column<QuizRow>[] = [
     { key: 'name', label: t('quiz.name'), sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
-    { key: 'date', label: t('quiz.date'), sortable: true, render: (r) => (
-      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Calendar className="h-3.5 w-3.5" />
-        {new Date(r.date).toLocaleDateString()}
-      </div>
-    )},
+    { key: 'date', label: t('quiz.date'), sortable: true, render: (r) => {
+      const lang = i18n.language;
+      return (
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Calendar className="h-3.5 w-3.5" />
+          {lang === 'sr'
+            ? format(new Date(r.date), 'dd. MMMM yyyy.', { locale: srLatn })
+            : format(new Date(r.date), 'MMM dd, yyyy')}
+        </div>
+      );
+    }, getValue: (r) => r.date },
     { key: 'status', label: t('filters.status'), sortable: true, render: (r) => {
       const v = r.status === 'finished' ? 'default' : r.status === 'live' ? 'destructive' : 'secondary';
       return <Badge variant={v as any} className="text-xs">{t(`filters.${r.status}`)}</Badge>;
