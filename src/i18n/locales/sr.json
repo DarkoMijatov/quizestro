@@ -19,8 +19,8 @@
   },
   "pricing": {
     "title": "Jednostavne cene", "subtitle": "Započnite besplatno, nadogradite kada budete spremni",
-    "free": { "name": "Besplatno", "price": "0", "currency": "€", "period": "/mes", "features": ["1 organizacija","Samo vlasnik","Do 20 kvizova godišnje","Osnovno bodovanje","Upravljanje timovima"], "cta": "Započnite besplatno" },
-    "premium": { "name": "Pro", "price": "9,99", "currency": "€", "period": "/mes", "popular": "Najpopularnije", "features": ["Neograničene organizacije","Do 3 admina","Neograničeni kvizovi","Lige i sezone","Banka pitanja","Kompletno brendiranje","Prioritetna podrška"], "cta": "Započnite probni period" },
+    "free": { "name": "Besplatno", "price": "0", "priceDisplay": "0 din", "currency": "din", "period": "/mes", "features": ["1 organizacija","Samo vlasnik","Do 20 kvizova godišnje","Osnovno bodovanje","Upravljanje timovima"], "cta": "Započnite besplatno" },
+    "premium": { "name": "Pro", "price": "1.199", "priceDisplay": "1.199 din", "currency": "din", "period": "/mes", "popular": "Najpopularnije", "features": ["Neograničene organizacije","Do 3 admina","Neograničeni kvizovi","Lige i sezone","Banka pitanja","Kompletno brendiranje","Prioritetna podrška"], "cta": "Započnite probni period" },
     "trial": "14 dana besplatno Pro probnog perioda",
     "month": "mes", "year": "god",
     "save2months": "Uštedite 2 meseca",
@@ -39,7 +39,7 @@
       "publicLeaderboards": "Javne rang liste",
       "support": "Prioritetna podrška"
     },
-    "annual": { "name": "Pro godišnji", "price": "99", "currency": "€", "period": "/godišnje" }
+    "annual": { "name": "Pro godišnji", "price": "11.499", "priceDisplay": "11.499 din", "currency": "din", "period": "/godišnje" }
   },
   "auth": {
     "login": "Prijava", "register": "Registracija", "email": "Email adresa", "password": "Lozinka",

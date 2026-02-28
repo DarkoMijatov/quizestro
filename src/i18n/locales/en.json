@@ -19,8 +19,8 @@
   },
   "pricing": {
     "title": "Simple pricing", "subtitle": "Start free, upgrade when ready",
-    "free": { "name": "Free", "price": "0", "currency": "€", "period": "/month", "features": ["1 organization","Owner only","Up to 20 quizzes per year","Basic scoring","Team management"], "cta": "Get started free" },
-    "premium": { "name": "Pro", "price": "9.99", "currency": "€", "period": "/month", "popular": "Most popular", "features": ["Unlimited organizations","Up to 3 admins","Unlimited quizzes","Leagues & seasons","Question bank","Full branding customization","Priority support"], "cta": "Start free trial" },
+    "free": { "name": "Free", "price": "0", "priceDisplay": "€0", "currency": "€", "period": "/month", "features": ["1 organization","Owner only","Up to 20 quizzes per year","Basic scoring","Team management"], "cta": "Get started free" },
+    "premium": { "name": "Pro", "price": "9.99", "priceDisplay": "€9.99", "currency": "€", "period": "/month", "popular": "Most popular", "features": ["Unlimited organizations","Up to 3 admins","Unlimited quizzes","Leagues & seasons","Question bank","Full branding customization","Priority support"], "cta": "Start free trial" },
     "trial": "14-day free Pro trial",
     "month": "mo", "year": "yr",
     "save2months": "Save 2 months",
@@ -39,7 +39,7 @@
       "publicLeaderboards": "Public leaderboards",
       "support": "Priority support"
     },
-    "annual": { "name": "Pro Annual", "price": "99", "currency": "€", "period": "/year" }
+    "annual": { "name": "Pro Annual", "price": "99", "priceDisplay": "€99", "currency": "€", "period": "/year" }
   },
   "auth": {
     "login": "Login", "register": "Sign Up", "email": "Email address", "password": "Password",

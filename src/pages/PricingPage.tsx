@@ -75,7 +75,7 @@ export default function PricingPage() {
     {
       key: 'free',
       name: t('pricing.free.name', 'Free'),
-      price: '€0',
+      price: t('pricing.free.priceDisplay', '€0'),
       period: t('pricing.free.period', '/mo'),
       features: (t('pricing.free.features', { returnObjects: true }) as string[]),
       current: !isPremium,
@@ -83,7 +83,7 @@ export default function PricingPage() {
     {
       key: 'monthly',
       name: t('pricing.premium.name', 'Pro'),
-      price: '€9.99',
+      price: t('pricing.premium.priceDisplay', '€9.99'),
       period: '/' + t('pricing.month', 'mo'),
       popular: true,
       features: (t('pricing.premium.features', { returnObjects: true }) as string[]),
@@ -92,7 +92,7 @@ export default function PricingPage() {
     {
       key: 'annual',
       name: t('pricing.annual.name', 'Pro Annual'),
-      price: '€99',
+      price: t('pricing.annual.priceDisplay', '€99'),
       period: '/' + t('pricing.year', 'yr'),
       badge: t('pricing.save2months'),
       features: (t('pricing.premium.features', { returnObjects: true }) as string[]),

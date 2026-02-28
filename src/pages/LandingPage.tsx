@@ -131,7 +131,7 @@ export default function LandingPage() {
             >
               <h3 className="font-display text-xl font-bold">{t('pricing.free.name')}</h3>
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold font-display">€0</span>
+                <span className="text-4xl font-bold font-display">{t('pricing.free.priceDisplay', '€0')}</span>
                 <span className="text-muted-foreground">{t('pricing.free.period')}</span>
               </div>
               <ul className="mt-8 space-y-3">
@@ -161,7 +161,7 @@ export default function LandingPage() {
               </span>
               <h3 className="font-display text-xl font-bold">{t('pricing.premium.name')}</h3>
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold font-display">€9.99</span>
+                <span className="text-4xl font-bold font-display">{t('pricing.premium.priceDisplay', '€9.99')}</span>
                 <span className="text-muted-foreground">/{t('pricing.month')}</span>
               </div>
               <ul className="mt-8 space-y-3">
@@ -192,7 +192,7 @@ export default function LandingPage() {
               </span>
               <h3 className="font-display text-xl font-bold">{t('pricing.annual.name')}</h3>
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold font-display">€99</span>
+                <span className="text-4xl font-bold font-display">{t('pricing.annual.priceDisplay', '€99')}</span>
                 <span className="text-muted-foreground">/{t('pricing.year')}</span>
               </div>
               <ul className="mt-8 space-y-3">
