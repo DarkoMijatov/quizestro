@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -40,7 +40,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="flex items-center gap-2 font-display font-bold text-xl">
-          <Trophy className="h-5 w-5 text-primary" />
+          <img src="/logo.png" alt="Quizestro" className="h-6 w-6 rounded" />
           Quizestro
         </div>
         <h2 className="font-display text-2xl font-bold">{t('auth.resetPassword')}</h2>
