@@ -10,10 +10,10 @@ export function Footer() {
       <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2 font-display font-bold text-lg">
           <Trophy className="h-5 w-5 text-primary" />
-          Kvizorija
+          Quizestro
         </div>
         <p className="text-sm text-muted-foreground">
-          {t('footer.tagline')} · © {year} Kvizorija. {t('footer.rights')}
+          {t('footer.tagline')} · © {year} Quizestro. {t('footer.rights')}
         </p>
       </div>
     </footer>

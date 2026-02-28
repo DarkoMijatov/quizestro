@@ -35,7 +35,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-dark items-center justify-center p-12">
         <div className="text-center">
           <Trophy className="h-16 w-16 text-primary mx-auto mb-6" />
-          <h1 className="font-display text-4xl font-bold text-foreground">Kvizorija</h1>
+          <h1 className="font-display text-4xl font-bold text-foreground">Quizestro</h1>
           <p className="mt-4 text-muted-foreground max-w-sm">{t('hero.subtitle')}</p>
         </div>
       </div>
@@ -45,7 +45,7 @@ export default function LoginPage() {
         <div className="flex justify-between items-center p-4">
           <Link to="/" className="flex items-center gap-2 font-display font-bold lg:hidden">
             <Trophy className="h-5 w-5 text-primary" />
-            Kvizorija
+            Quizestro
           </Link>
           <LanguageSwitcher variant="ghost" />
         </div>
