@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2 font-display font-bold">
             <Trophy className="h-5 w-5 text-primary" />
-            Quizory
+            Kvizorija
           </Link>
           <LanguageSwitcher variant="ghost" />
         </div>

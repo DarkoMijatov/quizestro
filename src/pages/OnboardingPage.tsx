@@ -96,7 +96,7 @@ export default function OnboardingPage() {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 font-display font-bold text-xl">
             <Trophy className="h-6 w-6 text-primary" />
-            Quizory
+            Kvizorija
           </div>
           <LanguageSwitcher variant="ghost" />
         </div>
