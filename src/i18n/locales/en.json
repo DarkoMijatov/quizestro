@@ -199,7 +199,14 @@
     "statusCancelled": "Cancelled",
     "statusNone": "None",
     "perMonth": "/mo",
-    "perYear": "/yr"
+    "perYear": "/yr",
+    "changePassword": "Change Password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "passwordChanged": "Password changed successfully!",
+    "passwordMismatch": "Passwords do not match.",
+    "passwordTooShort": "Password must be at least 6 characters."
   },
   "freemium": {
     "freeplan": "Free Plan", "upgrade": "Upgrade",

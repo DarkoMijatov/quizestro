@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Zap, Crown, Shield, Upload, Palette, Sun, Moon, ArrowDownCircle, CreditCard, CalendarDays, Receipt } from 'lucide-react';
+import { Loader2, Zap, Crown, Shield, Upload, Palette, Sun, Moon, ArrowDownCircle, CreditCard, CalendarDays, Receipt, KeyRound } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +50,11 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
+
+  // Change password
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Help types
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
@@ -171,6 +176,28 @@ export default function SettingsPage() {
       toast({ title: t('common.error', 'Error'), description: err.message || 'Failed to cancel subscription', variant: 'destructive' });
     } finally {
       setLoading(null);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast({ title: 'Error', description: t('settings.passwordTooShort'), variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      toast({ title: 'Error', description: t('settings.passwordMismatch'), variant: 'destructive' });
+      return;
+    }
+    setPasswordLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordLoading(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: '✓', description: t('settings.passwordChanged') });
+      setNewPassword('');
+      setConfirmNewPassword('');
     }
   };
 
@@ -502,6 +529,40 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Change Password */}
+        <div className="rounded-xl border border-border bg-card p-6 space-y-5">
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-primary" />
+            <h2 className="font-display font-semibold">{t('settings.changePassword')}</h2>
+          </div>
+          <form onSubmit={handleChangePassword} className="space-y-4 max-w-sm">
+            <div className="space-y-2">
+              <Label>{t('settings.newPassword')}</Label>
+              <Input
+                type="password"
+                required
+                minLength={6}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('settings.confirmNewPassword')}</Label>
+              <Input
+                type="password"
+                required
+                minLength={6}
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+              />
+            </div>
+            <Button type="submit" disabled={passwordLoading || !newPassword || !confirmNewPassword}>
+              {passwordLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {t('settings.changePassword')}
+            </Button>
+          </form>
         </div>
 
         {/* Theme toggle (Owner only) */}

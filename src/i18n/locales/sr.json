@@ -199,7 +199,14 @@
     "statusCancelled": "Otkazana",
     "statusNone": "Nema",
     "perMonth": "/mes",
-    "perYear": "/god"
+    "perYear": "/god",
+    "changePassword": "Promena lozinke",
+    "currentPassword": "Trenutna lozinka",
+    "newPassword": "Nova lozinka",
+    "confirmNewPassword": "Potvrdite novu lozinku",
+    "passwordChanged": "Lozinka je uspešno promenjena!",
+    "passwordMismatch": "Lozinke se ne poklapaju.",
+    "passwordTooShort": "Lozinka mora imati najmanje 6 karaktera."
   },
   "freemium": {
     "freeplan": "Besplatni plan", "upgrade": "Nadogradite",
