@@ -43,6 +43,9 @@ export default function SettingsPage() {
   const [defaultQpc, setDefaultQpc] = useState(10);
   const [brandingColor, setBrandingColor] = useState('#d97706');
   const [secondaryColor, setSecondaryColor] = useState('#3b82f6');
+  const [bgColor, setBgColor] = useState('');
+  const [textColor, setTextColor] = useState('');
+  const [headerColor, setHeaderColor] = useState('');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -68,6 +71,9 @@ export default function SettingsPage() {
       setDefaultQpc(currentOrg.default_questions_per_category ?? 10);
       setBrandingColor(currentOrg.branding_color || '#d97706');
       setSecondaryColor(currentOrg.secondary_color || '#3b82f6');
+      setBgColor(currentOrg.branding_bg_color || '');
+      setTextColor(currentOrg.branding_text_color || '');
+      setHeaderColor(currentOrg.branding_header_color || '');
       setLogoUrl(currentOrg.logo_url || null);
     }
   }, [currentOrg]);
@@ -140,6 +146,9 @@ export default function SettingsPage() {
     if (isOwner) {
       updates.branding_color = brandingColor;
       updates.secondary_color = secondaryColor;
+      updates.branding_bg_color = bgColor || null;
+      updates.branding_text_color = textColor || null;
+      updates.branding_header_color = headerColor || null;
     }
     await supabase.from('organizations').update(updates).eq('id', currentOrg.id);
     await refetch();
@@ -257,7 +266,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground">{t('settings.maxOrgs')}</p>
               </div>
               <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-lg font-bold">10</p>
+                <p className="text-lg font-bold">20</p>
                 <p className="text-xs text-muted-foreground">{t('settings.quizzesTotal')}</p>
               </div>
               <div className="rounded-lg bg-muted/50 p-3">
@@ -408,6 +417,50 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Pro-only branding: bg, text, header colors */}
+            {(isPremium || isTrial) ? (
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>{t('settings.bgColor')}</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={bgColor || '#1a1a2e'}
+                      onChange={(e) => setBgColor(e.target.value)}
+                      className="h-10 w-10 rounded cursor-pointer border border-border"
+                    />
+                    <Input value={bgColor} onChange={(e) => setBgColor(e.target.value)} placeholder="#1a1a2e" className="font-mono text-sm" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('settings.textColor')}</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={textColor || '#ffffff'}
+                      onChange={(e) => setTextColor(e.target.value)}
+                      className="h-10 w-10 rounded cursor-pointer border border-border"
+                    />
+                    <Input value={textColor} onChange={(e) => setTextColor(e.target.value)} placeholder="#ffffff" className="font-mono text-sm" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('settings.headerColor')}</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={headerColor || '#2a2a4a'}
+                      onChange={(e) => setHeaderColor(e.target.value)}
+                      className="h-10 w-10 rounded cursor-pointer border border-border"
+                    />
+                    <Input value={headerColor} onChange={(e) => setHeaderColor(e.target.value)} placeholder="#2a2a4a" className="font-mono text-sm" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">{t('settings.brandingProOnly')}</p>
+            )}
 
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

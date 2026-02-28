@@ -361,20 +361,37 @@ export default function QuizDetailPage() {
         </div>
 
         {/* Scoring Table */}
-        <div className="rounded-xl border-2 border-foreground/20 bg-card shadow-md overflow-auto min-h-0 flex-1 mt-2">
+        <div
+          className="rounded-xl border-2 border-foreground/20 shadow-md overflow-auto min-h-0 flex-1 mt-2"
+          style={{
+            backgroundColor: currentOrg?.branding_bg_color || undefined,
+            color: currentOrg?.branding_text_color || undefined,
+          }}
+        >
+          {/* Logo watermark */}
+          {currentOrg?.logo_url && (
+            <div className="flex justify-center pt-2">
+              <img src={currentOrg.logo_url} alt="" className="h-10 w-auto object-contain opacity-80" />
+            </div>
+          )}
           <div style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
           {/* Header row */}
           <div
-            className="grid border-b-2 border-foreground/20 bg-muted sticky top-0 z-10"
+            className="grid border-b-2 border-foreground/20 sticky top-0 z-10"
             style={{
               gridTemplateColumns: `140px ${categories.map(() => '1fr').join(' ')} 70px`,
+              backgroundColor: currentOrg?.branding_header_color || undefined,
             }}
           >
-            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground flex items-center justify-center text-center", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}>
+            <div className={cn("p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}
+              style={{ color: currentOrg?.branding_text_color || undefined }}
+            >
               {t('scoring.team')}
             </div>
             {categories.map((cat, catIdx) => (
-              <div key={cat.id} className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center gap-0.5", sizeClass === 'size-xs' ? 'text-[9px]' : 'text-[10px]')}>
+              <div key={cat.id} className={cn("p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center gap-0.5", sizeClass === 'size-xs' ? 'text-[9px]' : 'text-[10px]')}
+                style={{ color: currentOrg?.branding_text_color || undefined }}
+              >
                 {canReorder && categories.length > 1 && (
                   <div className="flex items-center gap-0.5">
                     <button onClick={() => swapCategories(catIdx, -1)} disabled={catIdx === 0} className="p-0 disabled:opacity-20 hover:text-primary transition-colors">
@@ -388,7 +405,9 @@ export default function QuizDetailPage() {
                 {(cat.category as any)?.name || cat.category_id}
               </div>
             ))}
-            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-foreground text-center border-l-2 border-foreground/20 flex items-center justify-center", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}>
+            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}
+              style={{ color: currentOrg?.branding_text_color || undefined }}
+            >
               Σ
             </div>
           </div>
