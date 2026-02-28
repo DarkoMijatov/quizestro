@@ -95,7 +95,7 @@ export default function OnboardingPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 font-display font-bold text-xl">
-            <img src="/logo.png" alt="Quizestro" className="h-7 w-7 rounded" />
+            <img src="/logo.png" alt="Quizestro" className="h-7 w-7 brand-logo" />
             Quizestro
           </div>
           <LanguageSwitcher variant="ghost" />

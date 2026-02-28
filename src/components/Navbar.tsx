@@ -16,7 +16,7 @@ export function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 glass-light dark:glass">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold">
-          <img src="/logo.png" alt="Quizestro" className="h-7 w-7 rounded" />
+          <img src="/logo.png" alt="Quizestro" className="h-7 w-7 brand-logo" />
           <span>Quizestro</span>
         </Link>
 

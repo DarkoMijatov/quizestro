@@ -9,7 +9,7 @@ export function Footer() {
     <footer className="border-t border-border bg-muted/30">
       <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2 font-display font-bold text-lg">
-          <img src="/logo.png" alt="Quizestro" className="h-6 w-6 rounded" />
+          <img src="/logo.png" alt="Quizestro" className="h-6 w-6 brand-logo" />
           Quizestro
         </div>
         <p className="text-sm text-muted-foreground">

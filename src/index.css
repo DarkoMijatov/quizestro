@@ -152,4 +152,13 @@
     backdrop-filter: blur(16px);
     border: 1px solid hsl(220 15% 88% / 0.5);
   }
+
+  .brand-logo {
+    border-radius: 9999px;
+    mix-blend-mode: multiply;
+  }
+
+  .dark .brand-logo {
+    mix-blend-mode: screen;
+  }
 }
