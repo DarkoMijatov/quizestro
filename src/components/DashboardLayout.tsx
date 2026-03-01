@@ -226,7 +226,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         {renderNav()}
 
         <div className="p-2 border-t border-sidebar-border space-y-1">
-          {!collapsed && <LanguageSwitcher variant="ghost" />}
+          {!collapsed && <LanguageSwitcher variant="sidebar" />}
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
