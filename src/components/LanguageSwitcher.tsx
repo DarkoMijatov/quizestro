@@ -13,7 +13,7 @@ const languages = [
   { code: 'en', label: 'English', flag: 'EN' },
 ];
 
-export function LanguageSwitcher({ variant = 'default' }: { variant?: 'default' | 'ghost' }) {
+export function LanguageSwitcher({ variant = 'default' }: { variant?: 'default' | 'ghost' | 'sidebar' }) {
   const { i18n } = useTranslation();
 
   const changeLanguage = (lng: string) => {
@@ -26,7 +26,7 @@ export function LanguageSwitcher({ variant = 'default' }: { variant?: 'default' 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant={variant === 'ghost' ? 'ghost' : 'outline'} size="sm" className="gap-2">
+        <Button variant={variant === 'ghost' || variant === 'sidebar' ? 'ghost' : 'outline'} size="sm" className={variant === 'sidebar' ? 'gap-2 w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground' : 'gap-2'}>
           <Globe className="h-4 w-4" />
           <span>{current.flag}</span>
         </Button>
