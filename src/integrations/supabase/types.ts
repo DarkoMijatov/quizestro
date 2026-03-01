@@ -52,6 +52,50 @@ export type Database = {
           },
         ]
       }
+      gift_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          duration_days: number | null
+          id: string
+          is_used: boolean
+          note: string | null
+          used_at: string | null
+          used_by_org_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          duration_days?: number | null
+          id?: string
+          is_used?: boolean
+          note?: string | null
+          used_at?: string | null
+          used_by_org_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          duration_days?: number | null
+          id?: string
+          is_used?: boolean
+          note?: string | null
+          used_at?: string | null
+          used_by_org_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_codes_used_by_org_id_fkey"
+            columns: ["used_by_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       help_types: {
         Row: {
           created_at: string

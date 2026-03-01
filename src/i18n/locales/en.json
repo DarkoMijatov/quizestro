@@ -206,7 +206,13 @@
     "confirmNewPassword": "Confirm new password",
     "passwordChanged": "Password changed successfully!",
     "passwordMismatch": "Passwords do not match.",
-    "passwordTooShort": "Password must be at least 6 characters."
+    "passwordTooShort": "Password must be at least 6 characters.",
+    "giftCode": "Gift Code",
+    "giftCodeDescription": "Enter a gift code to activate Pro features for your organization.",
+    "giftCodePlaceholder": "e.g. QUIZPRO2026",
+    "redeemCode": "Redeem",
+    "giftCodeAppliedForever": "Gift code applied! Pro features are now active.",
+    "giftCodeAppliedDays": "Gift code applied! Pro features active for {{days}} days."
   },
   "freemium": {
     "freeplan": "Free Plan", "upgrade": "Upgrade",
