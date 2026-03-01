@@ -215,9 +215,15 @@ export default function SettingsPage() {
       const { data, error } = await supabase.functions.invoke('redeem-gift-code', {
         body: { code: giftCode.trim(), organization_id: currentOrg.id },
       });
-      if (error) throw error;
-      if (data?.error) {
-        toast({ title: 'Error', description: data.error, variant: 'destructive' });
+      if (error) {
+        // Try to parse the error body for a user-friendly message
+        const errorBody = typeof error === 'object' && 'context' in error
+          ? await (error as any).context?.json?.().catch(() => null)
+          : null;
+        const message = errorBody?.error || data?.error || error.message || 'Failed to redeem code';
+        toast({ title: '✗', description: message, variant: 'destructive' });
+      } else if (data?.error) {
+        toast({ title: '✗', description: data.error, variant: 'destructive' });
       } else {
         const desc = data.duration_days
           ? t('settings.giftCodeAppliedDays', { days: data.duration_days })
@@ -227,7 +233,7 @@ export default function SettingsPage() {
         await refetch();
       }
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to redeem code', variant: 'destructive' });
+      toast({ title: '✗', description: err.message || 'Failed to redeem code', variant: 'destructive' });
     } finally {
       setGiftLoading(false);
     }
