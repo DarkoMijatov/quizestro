@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { isOrgPremium } from '@/lib/premium';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -70,7 +71,7 @@ export default function SettingsPage() {
   const isOwner = currentRole === 'owner';
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
   const isFree = currentOrg?.subscription_tier === 'free';
-  const isPremium = currentOrg?.subscription_tier === 'premium';
+  const isPremium = isOrgPremium(currentOrg);
   const isTrial = currentOrg?.subscription_tier === 'trial';
 
   useEffect(() => {

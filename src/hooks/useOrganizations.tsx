@@ -19,6 +19,8 @@ export interface Organization {
   default_categories_count: number;
   default_questions_per_category: number;
   trial_ends_at: string | null;
+  premium_override: boolean;
+  premium_override_until: string | null;
   created_at: string;
 }
 

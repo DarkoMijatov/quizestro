@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { isOrgPremium } from '@/lib/premium';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Lock, Zap } from 'lucide-react';
@@ -9,7 +10,7 @@ export function RequirePremium({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentOrg } = useOrganizations();
-  const isPremium = currentOrg?.subscription_tier === 'premium' || currentOrg?.subscription_tier === 'trial';
+  const isPremium = isOrgPremium(currentOrg);
 
   if (!isPremium) {
     return (

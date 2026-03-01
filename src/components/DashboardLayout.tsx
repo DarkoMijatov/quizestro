@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { isOrgPremium } from '@/lib/premium';
 import {
   Tooltip, TooltipContent, TooltipTrigger,
 } from '@/components/ui/tooltip';
@@ -44,7 +45,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { currentOrg, organizations, switchOrg, currentRole } = useOrganizations();
 
-  const isPremium = currentOrg?.subscription_tier === 'premium' || currentOrg?.subscription_tier === 'trial';
+  const isPremium = isOrgPremium(currentOrg);
 
   // Apply user-selected theme inside dashboard
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { isOrgPremium } from '@/lib/premium';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -30,7 +31,7 @@ export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const isOwner = currentRole === 'owner';
-  const isPremium = currentOrg?.subscription_tier === 'premium' || currentOrg?.subscription_tier === 'trial';
+  const isPremium = isOrgPremium(currentOrg);
 
   const handleCheckout = async (variant: 'monthly' | 'annual') => {
     if (!currentOrg || !isOwner) return;

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { isOrgPremium } from '@/lib/premium';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +32,7 @@ export default function DashboardPage() {
   const [recentQuizzes, setRecentQuizzes] = useState<RecentQuiz[]>([]);
   const [totalQuizCount, setTotalQuizCount] = useState(0);
 
-  const isFree = currentOrg?.subscription_tier === 'free';
+  const isFree = !isOrgPremium(currentOrg);
   const TOTAL_LIMIT = 20;
 
   useEffect(() => {
@@ -106,10 +107,12 @@ export default function DashboardPage() {
                   style={{ width: `${Math.min((totalQuizCount / TOTAL_LIMIT) * 100, 100)}%` }}
                 />
               </div>
-              <Button size="sm" variant="outline" className="gap-1 shrink-0">
-                <Zap className="h-3 w-3" />
-                {t('freemium.upgrade')}
-              </Button>
+              <Link to="/dashboard/pricing">
+                <Button size="sm" variant="outline" className="gap-1 shrink-0">
+                  <Zap className="h-3 w-3" />
+                  {t('freemium.upgrade')}
+                </Button>
+              </Link>
             </div>
           </div>
         )}
