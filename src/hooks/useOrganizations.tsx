@@ -21,6 +21,7 @@ export interface Organization {
   trial_ends_at: string | null;
   premium_override: boolean;
   premium_override_until: string | null;
+  premium_override_reason: string | null;
   created_at: string;
 }
 

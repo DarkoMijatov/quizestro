@@ -73,6 +73,7 @@ export default function SettingsPage() {
   const isFree = currentOrg?.subscription_tier === 'free';
   const isPremium = isOrgPremium(currentOrg);
   const isTrial = currentOrg?.subscription_tier === 'trial';
+  const hasPermanentGift = !!(currentOrg?.premium_override && !currentOrg?.premium_override_until);
 
   useEffect(() => {
     if (currentOrg) {
@@ -241,177 +242,203 @@ export default function SettingsPage() {
       <div className="space-y-6 max-w-2xl">
         <h1 className="font-display text-2xl font-bold">{t('settings.title')}</h1>
 
-        {/* Manage Subscription */}
-        <div className="rounded-xl border-2 border-primary/20 bg-card p-6 space-y-5">
-          <div className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-primary" />
-            <h2 className="font-display font-semibold text-lg">{t('settings.manageSubscription')}</h2>
-          </div>
-
-          {/* Current plan row */}
-          <div className="flex items-center justify-between">
+        {hasPermanentGift ? (
+          /* Permanent gift code - simple Pro status display */
+          <div className="rounded-xl border-2 border-primary/20 bg-card p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-primary" />
+              <h2 className="font-display font-semibold text-lg">{t('settings.manageSubscription')}</h2>
+            </div>
             <div className="flex items-center gap-3">
-              {isPremium ? (
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Crown className="h-5 w-5 text-primary" />
-                </div>
-              ) : isTrial ? (
-                <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
-                  <Shield className="h-5 w-5 text-accent-foreground" />
-                </div>
-              ) : (
-                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-muted-foreground" />
-                </div>
-              )}
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Crown className="h-5 w-5 text-primary" />
+              </div>
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-semibold">{t('settings.currentPlan')}</p>
-                  <Badge variant={isPremium ? 'default' : 'secondary'}>
-                    {isPremium ? t('settings.planPremium') : isTrial ? t('settings.planTrial') : t('settings.planFree')}
-                  </Badge>
-                  {(isPremium || isTrial) && currentOrg?.subscription_status && (
-                    <Badge variant={currentOrg.subscription_status === 'cancelled' ? 'destructive' : 'outline'} className="text-xs">
-                      {currentOrg.subscription_status === 'cancelled' ? t('settings.statusCancelled') : t('settings.statusActive')}
-                    </Badge>
+                  <Badge variant="default">{t('settings.planPremium')}</Badge>
+                  <Badge variant="outline" className="text-xs">{t('settings.statusActive')}</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {currentOrg?.premium_override_reason || t('settings.giftCodeAppliedForever')}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Normal subscription management */
+          <>
+            <div className="rounded-xl border-2 border-primary/20 bg-card p-6 space-y-5">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                <h2 className="font-display font-semibold text-lg">{t('settings.manageSubscription')}</h2>
+              </div>
+
+              {/* Current plan row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {isPremium ? (
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Crown className="h-5 w-5 text-primary" />
+                    </div>
+                  ) : isTrial ? (
+                    <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
+                      <Shield className="h-5 w-5 text-accent-foreground" />
+                    </div>
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <Zap className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold">{t('settings.currentPlan')}</p>
+                      <Badge variant={isPremium ? 'default' : 'secondary'}>
+                        {isPremium ? t('settings.planPremium') : isTrial ? t('settings.planTrial') : t('settings.planFree')}
+                      </Badge>
+                      {(isPremium || isTrial) && currentOrg?.subscription_status && (
+                        <Badge variant={currentOrg.subscription_status === 'cancelled' ? 'destructive' : 'outline'} className="text-xs">
+                          {currentOrg.subscription_status === 'cancelled' ? t('settings.statusCancelled') : t('settings.statusActive')}
+                        </Badge>
+                      )}
+                    </div>
+                    {isFree && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{t('settings.freeDescription')}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Plan details */}
+              {(isPremium || isTrial) && (
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+                  {isPremium && currentOrg?.current_period_end && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">
+                        {currentOrg.subscription_status === 'cancelled'
+                          ? t('settings.accessUntil')
+                          : t('settings.renewsOn')}:
+                      </span>
+                      <span className="font-medium">
+                        {new Date(currentOrg.current_period_end).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                  {isTrial && currentOrg?.trial_ends_at && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">{t('settings.billingStartsOn')}:</span>
+                      <span className="font-medium">
+                        {new Date(currentOrg.trial_ends_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                  {isTrial && trialDaysLeft > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {t('settings.trialDaysLeft', { days: trialDaysLeft })}
+                    </p>
                   )}
                 </div>
-                {isFree && (
-                  <p className="text-xs text-muted-foreground mt-0.5">{t('settings.freeDescription')}</p>
+              )}
+
+              {/* Free plan limits */}
+              {isFree && (
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <p className="text-lg font-bold">1</p>
+                    <p className="text-xs text-muted-foreground">{t('settings.maxOrgs')}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <p className="text-lg font-bold">20</p>
+                    <p className="text-xs text-muted-foreground">{t('settings.quizzesTotal')}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <p className="text-lg font-bold">1</p>
+                    <p className="text-xs text-muted-foreground">{t('settings.maxMembers')}</p>
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-3">
+                {!isPremium && !isTrial && (
+                  <Button className="gap-2" onClick={() => navigate('/dashboard/pricing')}>
+                    <Zap className="h-4 w-4" />
+                    {t('freemium.upgrade')}
+                  </Button>
+                )}
+                {(isPremium || isTrial) && isOwner && (
+                  <Button variant="outline" className="gap-2" onClick={() => navigate('/dashboard/pricing')}>
+                    {t('settings.changePlan')}
+                  </Button>
+                )}
+                {(isPremium || isTrial) && isOwner && currentOrg?.subscription_status !== 'cancelled' && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10" disabled={loading !== null}>
+                        {loading === 'downgrade' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownCircle className="h-4 w-4" />}
+                        {t('pricing.downgrade')}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t('pricing.downgrade')}</AlertDialogTitle>
+                        <AlertDialogDescription>{t('pricing.downgradeConfirm')}</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDowngrade}>{t('common.confirm')}</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                {!isOwner && (isPremium || isTrial) && (
+                  <p className="text-xs text-muted-foreground">{t('pricing.ownerOnly')}</p>
                 )}
               </div>
-            </div>
-          </div>
 
-          {/* Plan details */}
-          {(isPremium || isTrial) && (
-            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
-              {isPremium && currentOrg?.current_period_end && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">
-                    {currentOrg.subscription_status === 'cancelled'
-                      ? t('settings.accessUntil')
-                      : t('settings.renewsOn')}:
-                  </span>
-                  <span className="font-medium">
-                    {new Date(currentOrg.current_period_end).toLocaleDateString()}
-                  </span>
+              <Separator />
+
+              {/* Payment history */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-medium text-sm">{t('settings.paymentHistory')}</h3>
                 </div>
-              )}
-              {isTrial && currentOrg?.trial_ends_at && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">{t('settings.billingStartsOn')}:</span>
-                  <span className="font-medium">
-                    {new Date(currentOrg.trial_ends_at).toLocaleDateString()}
-                  </span>
+                <div className="rounded-lg border border-border p-4 text-center">
+                  <p className="text-sm text-muted-foreground">{t('settings.noPayments')}</p>
                 </div>
-              )}
-              {isTrial && trialDaysLeft > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {t('settings.trialDaysLeft', { days: trialDaysLeft })}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Free plan limits */}
-          {isFree && (
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-lg font-bold">1</p>
-                <p className="text-xs text-muted-foreground">{t('settings.maxOrgs')}</p>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-lg font-bold">20</p>
-                <p className="text-xs text-muted-foreground">{t('settings.quizzesTotal')}</p>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-lg font-bold">1</p>
-                <p className="text-xs text-muted-foreground">{t('settings.maxMembers')}</p>
               </div>
             </div>
-          )}
 
-          <Separator />
-
-          {/* Actions */}
-          <div className="flex flex-wrap gap-3">
-            {!isPremium && !isTrial && (
-              <Button className="gap-2" onClick={() => navigate('/dashboard/pricing')}>
-                <Zap className="h-4 w-4" />
-                {t('freemium.upgrade')}
-              </Button>
-            )}
-            {(isPremium || isTrial) && isOwner && (
-              <Button variant="outline" className="gap-2" onClick={() => navigate('/dashboard/pricing')}>
-                {t('settings.changePlan')}
-              </Button>
-            )}
-            {(isPremium || isTrial) && isOwner && currentOrg?.subscription_status !== 'cancelled' && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10" disabled={loading !== null}>
-                    {loading === 'downgrade' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownCircle className="h-4 w-4" />}
-                    {t('pricing.downgrade')}
+            {/* Gift Code Redeem */}
+            {isOwner && (
+              <div className="rounded-xl border border-border bg-card p-6 space-y-5">
+                <div className="flex items-center gap-2">
+                  <Gift className="h-5 w-5 text-primary" />
+                  <h2 className="font-display font-semibold">{t('settings.giftCode')}</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">{t('settings.giftCodeDescription')}</p>
+                <form onSubmit={handleRedeemGiftCode} className="flex gap-3 max-w-sm">
+                  <Input
+                    value={giftCode}
+                    onChange={(e) => setGiftCode(e.target.value.toUpperCase())}
+                    placeholder={t('settings.giftCodePlaceholder')}
+                    className="font-mono tracking-wider uppercase"
+                    required
+                  />
+                  <Button type="submit" disabled={giftLoading || !giftCode.trim()}>
+                    {giftLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    {t('settings.redeemCode')}
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t('pricing.downgrade')}</AlertDialogTitle>
-                    <AlertDialogDescription>{t('pricing.downgradeConfirm')}</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDowngrade}>{t('common.confirm')}</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                </form>
+              </div>
             )}
-            {!isOwner && (isPremium || isTrial) && (
-              <p className="text-xs text-muted-foreground">{t('pricing.ownerOnly')}</p>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Payment history */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-medium text-sm">{t('settings.paymentHistory')}</h3>
-            </div>
-            <div className="rounded-lg border border-border p-4 text-center">
-              <p className="text-sm text-muted-foreground">{t('settings.noPayments')}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Gift Code Redeem */}
-        {isOwner && (
-          <div className="rounded-xl border border-border bg-card p-6 space-y-5">
-            <div className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-primary" />
-              <h2 className="font-display font-semibold">{t('settings.giftCode')}</h2>
-            </div>
-            <p className="text-sm text-muted-foreground">{t('settings.giftCodeDescription')}</p>
-            <form onSubmit={handleRedeemGiftCode} className="flex gap-3 max-w-sm">
-              <Input
-                value={giftCode}
-                onChange={(e) => setGiftCode(e.target.value.toUpperCase())}
-                placeholder={t('settings.giftCodePlaceholder')}
-                className="font-mono tracking-wider uppercase"
-                required
-              />
-              <Button type="submit" disabled={giftLoading || !giftCode.trim()}>
-                {giftLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {t('settings.redeemCode')}
-              </Button>
-            </form>
-          </div>
+          </>
         )}
-
         {/* Organization settings */}
         <div className="rounded-xl border border-border bg-card p-6 space-y-5">
           <h2 className="font-display font-semibold">{t('settings.orgSettings')}</h2>
