@@ -28,7 +28,7 @@ interface MemberRow {
   user_id: string;
   role: 'owner' | 'admin' | 'user';
   created_at: string;
-  profile?: { full_name: string | null };
+  profile?: { full_name: string | null; email: string | null };
 }
 
 interface PendingInvite {
@@ -82,7 +82,7 @@ export default function MembersPage() {
       const userIds = memberList.map((m) => m.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, full_name')
+        .select('user_id, full_name, email')
         .in('user_id', userIds);
 
       const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
@@ -185,7 +185,12 @@ export default function MembersPage() {
           <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-sm font-bold shrink-0">
             {(r.profile?.full_name || '?')[0]?.toUpperCase()}
           </div>
-          <span className="font-medium">{r.profile?.full_name || t('members.unknown')}</span>
+          <div className="flex flex-col">
+            <span className="font-medium">{r.profile?.full_name || t('members.unknown')}</span>
+            {r.profile?.email && (
+              <span className="text-xs text-muted-foreground">{r.profile.email}</span>
+            )}
+          </div>
         </div>
       ), getValue: (r) => r.profile?.full_name || '',
     },
