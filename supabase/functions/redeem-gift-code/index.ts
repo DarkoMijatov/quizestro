@@ -82,6 +82,7 @@ Deno.serve(async (req) => {
     const { error: updateError } = await supabaseAdmin
       .from('organizations')
       .update({
+        subscription_tier: 'premium',
         premium_override: true,
         premium_override_until: overrideUntil,
         premium_override_by: user.id,
