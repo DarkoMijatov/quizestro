@@ -206,7 +206,13 @@
     "confirmNewPassword": "Potvrdite novu lozinku",
     "passwordChanged": "Lozinka je uspešno promenjena!",
     "passwordMismatch": "Lozinke se ne poklapaju.",
-    "passwordTooShort": "Lozinka mora imati najmanje 6 karaktera."
+    "passwordTooShort": "Lozinka mora imati najmanje 6 karaktera.",
+    "giftCode": "Poklon kod",
+    "giftCodeDescription": "Unesite poklon kod da aktivirate Pro funkcionalnosti za vašu organizaciju.",
+    "giftCodePlaceholder": "npr. QUIZPRO2026",
+    "redeemCode": "Aktiviraj",
+    "giftCodeAppliedForever": "Poklon kod primenjen! Pro funkcionalnosti su aktivirane.",
+    "giftCodeAppliedDays": "Poklon kod primenjen! Pro funkcionalnosti aktivne {{days}} dana."
   },
   "freemium": {
     "freeplan": "Besplatni plan", "upgrade": "Nadogradite",

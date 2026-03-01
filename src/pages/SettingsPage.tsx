@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Zap, Crown, Shield, Upload, Palette, Sun, Moon, ArrowDownCircle, CreditCard, CalendarDays, Receipt, KeyRound } from 'lucide-react';
+import { Loader2, Zap, Crown, Shield, Upload, Palette, Sun, Moon, ArrowDownCircle, CreditCard, CalendarDays, Receipt, KeyRound, Gift } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +55,10 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
+
+  // Gift code
+  const [giftCode, setGiftCode] = useState('');
+  const [giftLoading, setGiftLoading] = useState(false);
 
   // Help types
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
@@ -198,6 +202,32 @@ export default function SettingsPage() {
       toast({ title: '✓', description: t('settings.passwordChanged') });
       setNewPassword('');
       setConfirmNewPassword('');
+    }
+  };
+
+  const handleRedeemGiftCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentOrg || !giftCode.trim()) return;
+    setGiftLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('redeem-gift-code', {
+        body: { code: giftCode.trim(), organization_id: currentOrg.id },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast({ title: 'Error', description: data.error, variant: 'destructive' });
+      } else {
+        const desc = data.duration_days
+          ? t('settings.giftCodeAppliedDays', { days: data.duration_days })
+          : t('settings.giftCodeAppliedForever');
+        toast({ title: '🎁', description: desc });
+        setGiftCode('');
+        await refetch();
+      }
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to redeem code', variant: 'destructive' });
+    } finally {
+      setGiftLoading(false);
     }
   };
 
@@ -357,8 +387,29 @@ export default function SettingsPage() {
           </div>
         </div>
 
-
-
+        {/* Gift Code Redeem */}
+        {isOwner && (
+          <div className="rounded-xl border border-border bg-card p-6 space-y-5">
+            <div className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-primary" />
+              <h2 className="font-display font-semibold">{t('settings.giftCode')}</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">{t('settings.giftCodeDescription')}</p>
+            <form onSubmit={handleRedeemGiftCode} className="flex gap-3 max-w-sm">
+              <Input
+                value={giftCode}
+                onChange={(e) => setGiftCode(e.target.value.toUpperCase())}
+                placeholder={t('settings.giftCodePlaceholder')}
+                className="font-mono tracking-wider uppercase"
+                required
+              />
+              <Button type="submit" disabled={giftLoading || !giftCode.trim()}>
+                {giftLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {t('settings.redeemCode')}
+              </Button>
+            </form>
+          </div>
+        )}
 
         {/* Organization settings */}
         <div className="rounded-xl border border-border bg-card p-6 space-y-5">
