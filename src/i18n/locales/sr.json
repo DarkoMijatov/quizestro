@@ -1,7 +1,7 @@
 {
   "nav": {
     "features": "Funkcionalnosti", "pricing": "Cene", "login": "Prijava", "register": "Registracija",
-    "dashboard": "Kontrolna tabla", "logout": "Odjava"
+    "dashboard": "Kontrolna tabla", "logout": "Odjava", "faq": "Pomoć", "contact": "Kontakt"
   },
   "hero": {
     "badge": "Platforma za pub kvizove", "title": "Organizujte kvizove kao profesionalci",
@@ -255,6 +255,29 @@
     "selectTeam": "Izaberite tim",
     "confirmImport": "Potvrdi uvoz",
     "willBeCreated": "biće automatski kreirana"
+  },
+  "landing": {
+    "faqTitle": "Često postavljana pitanja",
+    "faqSubtitle": "Pronađite odgovore na najčešća pitanja o platformi",
+    "instructionsTitle": "Kako koristiti Quizestro",
+    "instructionsSubtitle": "Vodič za brz početak u nekoliko koraka",
+    "step1Title": "Kreirajte organizaciju",
+    "step1Desc": "Registrujte se i kreirajte svoju organizaciju. Ona predstavlja vaš kviz klub ili tim organizatora.",
+    "step2Title": "Dodajte timove i kategorije",
+    "step2Desc": "Unesite timove koji učestvuju i kategorije pitanja koje koristite na kvizovima.",
+    "step3Title": "Pokrenite kviz",
+    "step3Desc": "Kreirajte kviz, izaberite timove i kategorije, pa unosite bodove uživo tokom događaja.",
+    "step4Title": "Pratite statistike",
+    "step4Desc": "Pregledajte detaljne statistike po timu, kategoriji i sezoni. Kreirajte lige za dugoročno praćenje.",
+    "contactTitle": "Imate pitanje?",
+    "contactSubtitle": "Pošaljite nam poruku i odgovorićemo vam u najkraćem roku",
+    "contactName": "Vaše ime",
+    "contactEmail": "Email adresa",
+    "contactMessage": "Vaša poruka",
+    "contactSend": "Pošaljite poruku",
+    "contactSuccess": "Poruka je uspešno poslata! Odgovorićemo vam uskoro.",
+    "contactError": "Greška pri slanju poruke. Pokušajte ponovo.",
+    "noFaq": "FAQ stavke će uskoro biti dodate."
   },
   "language": { "sr": "Srpski", "en": "English" },
   "filters": {

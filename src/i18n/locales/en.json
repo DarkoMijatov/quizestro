@@ -1,7 +1,7 @@
 {
   "nav": {
     "features": "Features", "pricing": "Pricing", "login": "Login", "register": "Sign Up",
-    "dashboard": "Dashboard", "logout": "Logout"
+    "dashboard": "Dashboard", "logout": "Logout", "faq": "Help", "contact": "Contact"
   },
   "hero": {
     "badge": "Pub Quiz Platform", "title": "Run your quizzes like a pro",
@@ -255,6 +255,29 @@
     "selectTeam": "Select team",
     "confirmImport": "Confirm import",
     "willBeCreated": "will be created automatically"
+  },
+  "landing": {
+    "faqTitle": "Frequently Asked Questions",
+    "faqSubtitle": "Find answers to the most common questions about the platform",
+    "instructionsTitle": "How to use Quizestro",
+    "instructionsSubtitle": "A quick start guide in a few simple steps",
+    "step1Title": "Create an organization",
+    "step1Desc": "Sign up and create your organization. It represents your quiz club or team of organizers.",
+    "step2Title": "Add teams and categories",
+    "step2Desc": "Enter the teams that participate and the question categories you use at your quizzes.",
+    "step3Title": "Start a quiz",
+    "step3Desc": "Create a quiz, select teams and categories, then enter scores live during the event.",
+    "step4Title": "Track statistics",
+    "step4Desc": "View detailed statistics by team, category, and season. Create leagues for long-term tracking.",
+    "contactTitle": "Have a question?",
+    "contactSubtitle": "Send us a message and we'll get back to you as soon as possible",
+    "contactName": "Your name",
+    "contactEmail": "Email address",
+    "contactMessage": "Your message",
+    "contactSend": "Send message",
+    "contactSuccess": "Message sent successfully! We'll get back to you soon.",
+    "contactError": "Error sending message. Please try again.",
+    "noFaq": "FAQ items will be added soon."
   },
   "language": { "sr": "Srpski", "en": "English" },
   "filters": {

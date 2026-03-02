@@ -30,6 +30,12 @@ export function Navbar() {
               <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 {t('nav.pricing')}
               </a>
+              <a href="#faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                {t('nav.faq')}
+              </a>
+              <a href="#contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                {t('nav.contact')}
+              </a>
             </>
           )}
           <LanguageSwitcher />
@@ -57,6 +63,12 @@ export function Navbar() {
               </a>
               <a href="#pricing" className="block text-sm font-medium py-2" onClick={() => setOpen(false)}>
                 {t('nav.pricing')}
+              </a>
+              <a href="#faq" className="block text-sm font-medium py-2" onClick={() => setOpen(false)}>
+                {t('nav.faq')}
+              </a>
+              <a href="#contact" className="block text-sm font-medium py-2" onClick={() => setOpen(false)}>
+                {t('nav.contact')}
               </a>
             </>
           )}

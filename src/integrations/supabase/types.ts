@@ -52,6 +52,66 @@ export type Database = {
           },
         ]
       }
+      contact_submissions: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      faq_items: {
+        Row: {
+          answer_en: string
+          answer_sr: string
+          created_at: string
+          id: string
+          is_published: boolean
+          question_en: string
+          question_sr: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          answer_en: string
+          answer_sr: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          question_en: string
+          question_sr: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          answer_en?: string
+          answer_sr?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          question_en?: string
+          question_sr?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gift_codes: {
         Row: {
           code: string
