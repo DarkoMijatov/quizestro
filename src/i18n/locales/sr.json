@@ -241,6 +241,7 @@
     "createNew": "Kreirajte novu organizaciju"
   },
   "footer": { "tagline": "Platforma za organizovanje kvizova", "rights": "Sva prava zadržana.", "createdBy": "Kreirao" },
+  "cookies": { "message": "Koristimo samo neophodne kolačiće za pravilno funkcionisanje platforme.", "learnMore": "Saznajte više", "accept": "Prihvatam", "decline": "Odbijam" },
   "excel": {
     "export": "Excel", "import": "Uvezi",
     "importTitle": "Uvezi rezultate iz Excela",
