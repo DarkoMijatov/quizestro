@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Zap, Crown, Shield, Upload, Palette, Sun, Moon, ArrowDownCircle, CreditCard, CalendarDays, Receipt, KeyRound, Gift } from 'lucide-react';
+import { Loader2, Zap, Crown, Shield, Upload, Palette, Sun, Moon, ArrowDownCircle, CreditCard, CalendarDays, Receipt, KeyRound, Gift, Trash2, AlertTriangle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,6 +60,10 @@ export default function SettingsPage() {
   // Gift code
   const [giftCode, setGiftCode] = useState('');
   const [giftLoading, setGiftLoading] = useState(false);
+
+  // Delete account
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Help types
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
@@ -236,6 +240,24 @@ export default function SettingsPage() {
       toast({ title: '✗', description: err.message || 'Failed to redeem code', variant: 'destructive' });
     } finally {
       setGiftLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+    setDeleteLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('deactivate-account');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: '✓', description: t('settings.deleteAccountSuccess') });
+      localStorage.removeItem('quizory-current-org');
+      await supabase.auth.signOut();
+      navigate('/login');
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to delete account', variant: 'destructive' });
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -687,6 +709,58 @@ export default function SettingsPage() {
             <p className="text-xs text-muted-foreground">{t('settings.themeNote', 'Tema se primenjuje samo unutar aplikacije. Javne stranice uvek koriste svetlu temu.')}</p>
           </div>
         )}
+
+        {/* Delete Account - Danger Zone */}
+        <div className="rounded-xl border-2 border-destructive/30 bg-card p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-destructive" />
+            <h2 className="font-display font-semibold text-destructive">{t('settings.deleteAccount')}</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">{t('settings.deleteAccountDescription')}</p>
+          {isOwner && (
+            <div className="flex items-start gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <p className="text-sm text-destructive">{t('settings.deleteAccountOwnerWarning')}</p>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">{t('settings.reactivateNote')}</p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="gap-2">
+                <Trash2 className="h-4 w-4" />
+                {t('settings.deleteAccountButton')}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('settings.deleteAccount')}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {isOwner ? t('settings.deleteAccountOwnerWarning') : t('settings.deleteAccountConfirm')}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="space-y-2 py-2">
+                <Label>{t('settings.typeDeleteConfirm')}</Label>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="font-mono"
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setDeleteConfirmText('')}>{t('common.cancel')}</AlertDialogCancel>
+                <Button
+                  variant="destructive"
+                  disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
+                  onClick={handleDeleteAccount}
+                >
+                  {deleteLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {t('settings.deleteAccountButton')}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
     </DashboardLayout>
   );

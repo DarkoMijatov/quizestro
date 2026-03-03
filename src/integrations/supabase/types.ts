@@ -340,7 +340,9 @@ export type Database = {
           current_period_end: string | null
           default_categories_count: number | null
           default_questions_per_category: number | null
+          deleted_at: string | null
           id: string
+          is_deleted: boolean
           logo_url: string | null
           name: string
           premium_override: boolean
@@ -364,7 +366,9 @@ export type Database = {
           current_period_end?: string | null
           default_categories_count?: number | null
           default_questions_per_category?: number | null
+          deleted_at?: string | null
           id?: string
+          is_deleted?: boolean
           logo_url?: string | null
           name: string
           premium_override?: boolean
@@ -388,7 +392,9 @@ export type Database = {
           current_period_end?: string | null
           default_categories_count?: number | null
           default_questions_per_category?: number | null
+          deleted_at?: string | null
           id?: string
+          is_deleted?: boolean
           logo_url?: string | null
           name?: string
           premium_override?: boolean
@@ -443,27 +449,33 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          deactivated_at: string | null
           email: string | null
           full_name: string | null
           id: string
+          is_deactivated: boolean
           preferred_language: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          deactivated_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          is_deactivated?: boolean
           preferred_language?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          deactivated_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          is_deactivated?: boolean
           preferred_language?: string | null
           updated_at?: string
           user_id?: string
