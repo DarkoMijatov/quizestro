@@ -46,6 +46,7 @@
     "confirmPassword": "Potvrdite lozinku", "fullName": "Puno ime", "forgotPassword": "Zaboravili ste lozinku?",
     "noAccount": "Nemate nalog?", "hasAccount": "Već imate nalog?", "loginCta": "Prijavite se",
     "registerCta": "Registrujte se", "resetPassword": "Resetujte lozinku", "resetCta": "Pošaljite link",
+    "acceptTerms": "Prihvatam", "termsOfService": "Uslove korišćenja", "privacyPolicy": "Politiku privatnosti",
     "resetSuccess": "Proverite vaš email za link za resetovanje lozinke.", "backToLogin": "Nazad na prijavu"
   },
   "dashboard": {
@@ -227,7 +228,7 @@
     "create": "Kreirajte", "search": "Pretražite", "loading": "Učitavanje...",
     "back": "Nazad", "next": "Dalje", "finish": "Završite", "close": "Zatvorite",
     "confirm": "Potvrdite", "noResults": "Nema rezultata", "viewAll": "Pogledajte sve",
-    "details": "Detalji"
+    "details": "Detalji", "and": "i"
   },
   "onboarding": {
     "title": "Kreirajte organizaciju",
@@ -239,7 +240,7 @@
     "selectOrgSubtitle": "Pripadate više organizacija. Izaberite onu u kojoj želite da radite.",
     "createNew": "Kreirajte novu organizaciju"
   },
-  "footer": { "tagline": "Platforma za organizovanje kvizova", "rights": "Sva prava zadržana." },
+  "footer": { "tagline": "Platforma za organizovanje kvizova", "rights": "Sva prava zadržana.", "createdBy": "Kreirao" },
   "excel": {
     "export": "Excel", "import": "Uvezi",
     "importTitle": "Uvezi rezultate iz Excela",

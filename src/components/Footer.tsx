@@ -12,9 +12,15 @@ export function Footer() {
           <img src="/logo.png" alt="Quizestro" className="h-6 w-6 brand-logo" />
           Quizestro
         </div>
-        <p className="text-sm text-muted-foreground">
-          {t('footer.tagline')} · © {year} Quizestro. {t('footer.rights')}
-        </p>
+        <div className="text-sm text-muted-foreground text-center md:text-right space-y-1">
+          <p>{t('footer.tagline')} · © {year} Quizestro. {t('footer.rights')}</p>
+          <p>
+            {t('footer.createdBy')}{' '}
+            <a href="https://www.darkmsolutions.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
+              DarkM Solutions
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );

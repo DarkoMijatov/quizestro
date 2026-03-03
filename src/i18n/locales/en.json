@@ -46,6 +46,7 @@
     "confirmPassword": "Confirm password", "fullName": "Full name", "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?", "hasAccount": "Already have an account?", "loginCta": "Sign in",
     "registerCta": "Create account", "resetPassword": "Reset password", "resetCta": "Send reset link",
+    "acceptTerms": "I accept the", "termsOfService": "Terms of Service", "privacyPolicy": "Privacy Policy",
     "resetSuccess": "Check your email for the password reset link.", "backToLogin": "Back to login"
   },
   "dashboard": {
@@ -227,7 +228,7 @@
     "create": "Create", "search": "Search", "loading": "Loading...",
     "back": "Back", "next": "Next", "finish": "Finish", "close": "Close",
     "confirm": "Confirm", "noResults": "No results", "viewAll": "View all",
-    "details": "Details"
+    "details": "Details", "and": "and"
   },
   "onboarding": {
     "title": "Create your organization",
@@ -239,7 +240,7 @@
     "selectOrgSubtitle": "You belong to multiple organizations. Choose the one you want to work in.",
     "createNew": "Create a new organization"
   },
-  "footer": { "tagline": "The quiz management platform", "rights": "All rights reserved." },
+  "footer": { "tagline": "The quiz management platform", "rights": "All rights reserved.", "createdBy": "Created by" },
   "excel": {
     "export": "Excel", "import": "Import",
     "importTitle": "Import results from Excel",
