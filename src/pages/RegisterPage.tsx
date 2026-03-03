@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function RegisterPage() {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +81,21 @@ export default function RegisterPage() {
                 <Label htmlFor="confirm">{t('auth.confirmPassword')}</Label>
                 <Input id="confirm" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="terms"
+                  checked={acceptedTerms}
+                  onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="terms" className="text-sm font-normal leading-snug cursor-pointer">
+                  {t('auth.acceptTerms')}{' '}
+                  <a href="/terms" target="_blank" className="text-primary hover:underline">{t('auth.termsOfService')}</a>
+                  {' '}{t('common.and')}{' '}
+                  <a href="/privacy" target="_blank" className="text-primary hover:underline">{t('auth.privacyPolicy')}</a>
+                </Label>
+              </div>
+              <Button type="submit" className="w-full" disabled={loading || !acceptedTerms}>
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {t('auth.registerCta')}
               </Button>
