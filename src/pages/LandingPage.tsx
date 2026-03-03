@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { CookieBanner } from '@/components/CookieBanner';
 import { Users, BarChart3, Zap, HelpCircle, Share2, Check, ArrowRight, Trophy, UserPlus, FolderOpen, PlayCircle, TrendingUp, Send, Loader2, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -335,6 +336,7 @@ export default function LandingPage() {
       </section>
 
       <Footer />
+      <CookieBanner />
     </div>
   );
 }

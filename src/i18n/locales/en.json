@@ -241,6 +241,7 @@
     "createNew": "Create a new organization"
   },
   "footer": { "tagline": "The quiz management platform", "rights": "All rights reserved.", "createdBy": "Created by" },
+  "cookies": { "message": "We use essential cookies to ensure the platform works properly.", "learnMore": "Learn more", "accept": "Accept", "decline": "Decline" },
   "excel": {
     "export": "Excel", "import": "Import",
     "importTitle": "Import results from Excel",
