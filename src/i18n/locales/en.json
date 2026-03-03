@@ -213,7 +213,15 @@
     "giftCodePlaceholder": "e.g. QUIZPRO2026",
     "redeemCode": "Redeem",
     "giftCodeAppliedForever": "Gift code applied! Pro features are now active.",
-    "giftCodeAppliedDays": "Gift code applied! Pro features active for {{days}} days."
+    "giftCodeAppliedDays": "Gift code applied! Pro features active for {{days}} days.",
+    "deleteAccount": "Delete Account",
+    "deleteAccountDescription": "Deactivating your account will log you out and remove you from all organizations. If you are the owner of an organization, that organization will also be deleted.",
+    "deleteAccountConfirm": "Are you sure you want to delete your account? This action will remove you from all organizations.",
+    "deleteAccountOwnerWarning": "You are the owner of one or more organizations. Deleting your account will also delete those organizations and remove all their members.",
+    "deleteAccountButton": "Delete my account",
+    "deleteAccountSuccess": "Your account has been deactivated. You can reactivate it by contacting support.",
+    "typeDeleteConfirm": "Type DELETE to confirm",
+    "reactivateNote": "Note: This is a soft delete. Contact support to reactivate your account in the future."
   },
   "freemium": {
     "freeplan": "Free Plan", "upgrade": "Upgrade",

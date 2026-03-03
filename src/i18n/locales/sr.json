@@ -213,7 +213,15 @@
     "giftCodePlaceholder": "npr. QUIZPRO2026",
     "redeemCode": "Aktiviraj",
     "giftCodeAppliedForever": "Poklon kod primenjen! Pro funkcionalnosti su aktivirane.",
-    "giftCodeAppliedDays": "Poklon kod primenjen! Pro funkcionalnosti aktivne {{days}} dana."
+    "giftCodeAppliedDays": "Poklon kod primenjen! Pro funkcionalnosti aktivne {{days}} dana.",
+    "deleteAccount": "Brisanje naloga",
+    "deleteAccountDescription": "Deaktivacijom naloga bićete odjavljeni i uklonjeni iz svih organizacija. Ako ste vlasnik organizacije, ta organizacija će takođe biti obrisana.",
+    "deleteAccountConfirm": "Da li ste sigurni da želite da obrišete svoj nalog? Ova akcija će vas ukloniti iz svih organizacija.",
+    "deleteAccountOwnerWarning": "Vi ste vlasnik jedne ili više organizacija. Brisanje naloga će obrisati i te organizacije i ukloniti sve njihove članove.",
+    "deleteAccountButton": "Obriši moj nalog",
+    "deleteAccountSuccess": "Vaš nalog je deaktiviran. Možete ga ponovo aktivirati kontaktiranjem podrške.",
+    "typeDeleteConfirm": "Unesite DELETE za potvrdu",
+    "reactivateNote": "Napomena: Ovo je meko brisanje. Kontaktirajte podršku da ponovo aktivirate nalog u budućnosti."
   },
   "freemium": {
     "freeplan": "Besplatni plan", "upgrade": "Nadogradite",
