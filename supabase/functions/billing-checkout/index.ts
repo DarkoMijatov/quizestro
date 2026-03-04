@@ -73,15 +73,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create Lemon Squeezy checkout
-    const apiKey = Deno.env.get("LEMONSQUEEZY_API_KEY");
-    const storeId = Deno.env.get("LEMONSQUEEZY_STORE_ID");
-    const monthlyVariantId = Deno.env.get("LEMONSQUEEZY_VARIANT_ID_MONTHLY");
-    const annualVariantId = Deno.env.get("LEMONSQUEEZY_VARIANT_ID_ANNUAL");
+    // Create Paddle checkout transaction
+    const apiKey = Deno.env.get("PADDLE_API_KEY");
+    const monthlyPriceId = Deno.env.get("PADDLE_PRICE_ID_MONTHLY");
+    const annualPriceId = Deno.env.get("PADDLE_PRICE_ID_ANNUAL");
 
-    const selectedVariant = variant_id === "annual" ? annualVariantId : monthlyVariantId;
+    const selectedPriceId = variant_id === "annual" ? annualPriceId : monthlyPriceId;
 
-    if (!apiKey || !storeId || !selectedVariant) {
+    if (!apiKey || !selectedPriceId) {
       return new Response(
         JSON.stringify({ error: "Billing not configured" }),
         {
@@ -95,38 +94,41 @@ Deno.serve(async (req) => {
     const { data: userData } = await supabase.auth.getUser();
     const userEmail = userData?.user?.email || "";
 
-    const checkoutRes = await fetch(
-      "https://api.lemonsqueezy.com/v1/checkouts",
+    // Determine Paddle API base URL (sandbox vs production)
+    const paddleBaseUrl = Deno.env.get("PADDLE_ENVIRONMENT") === "sandbox"
+      ? "https://sandbox-api.paddle.com"
+      : "https://api.paddle.com";
+
+    const transactionRes = await fetch(
+      `${paddleBaseUrl}/transactions`,
       {
         method: "POST",
         headers: {
-          Accept: "application/vnd.api+json",
-          "Content-Type": "application/vnd.api+json",
+          "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          data: {
-            type: "checkouts",
-            attributes: {
-              checkout_data: {
-                email: userEmail,
-                custom: {
-                  organization_id,
-                },
-              },
+          items: [
+            {
+              price_id: selectedPriceId,
+              quantity: 1,
             },
-            relationships: {
-              store: { data: { type: "stores", id: storeId } },
-              variant: { data: { type: "variants", id: selectedVariant } },
-            },
+          ],
+          customer_email: userEmail,
+          custom_data: {
+            organization_id,
+          },
+          collection_mode: "automatic",
+          checkout: {
+            url: null, // Will use Paddle's hosted checkout
           },
         }),
       }
     );
 
-    if (!checkoutRes.ok) {
-      const errText = await checkoutRes.text();
-      console.error("Lemon Squeezy error:", errText);
+    if (!transactionRes.ok) {
+      const errText = await transactionRes.text();
+      console.error("Paddle error:", errText);
       return new Response(
         JSON.stringify({ error: "Failed to create checkout session" }),
         {
@@ -136,12 +138,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    const checkoutData = await checkoutRes.json();
-    const checkoutUrl = checkoutData.data.attributes.url;
+    const transactionData = await transactionRes.json();
+    const checkoutUrl = transactionData.data?.checkout?.url;
+    const transactionId = transactionData.data?.id;
 
-    return new Response(JSON.stringify({ checkout_url: checkoutUrl }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        checkout_url: checkoutUrl,
+        transaction_id: transactionId,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (err) {
     console.error("Checkout error:", err);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
