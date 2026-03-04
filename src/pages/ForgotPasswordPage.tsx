@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { buildSiteUrl } from '@/lib/auth';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export default function ForgotPasswordPage() {
@@ -20,16 +19,12 @@ export default function ForgotPasswordPage() {
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke('auth-send-email', {
-      body: {
-        action: 'recovery',
-        email,
-        redirectTo: buildSiteUrl('/reset-password'),
-      },
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
-    if (error || data?.error) {
-      toast({ title: 'Error', description: error?.message || data?.error, variant: 'destructive' });
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       setSent(true);
     }

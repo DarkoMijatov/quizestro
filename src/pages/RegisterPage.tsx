@@ -9,7 +9,6 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Checkbox } from '@/components/ui/checkbox';
-import { buildSiteUrl } from '@/lib/auth';
 
 export default function RegisterPage() {
   const { t } = useTranslation();
@@ -28,18 +27,17 @@ export default function RegisterPage() {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke('auth-send-email', {
-      body: {
-        action: 'signup',
-        email,
-        password,
-        fullName,
-        redirectTo: buildSiteUrl('/auth/callback'),
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName },
+        emailRedirectTo: window.location.origin,
       },
     });
     setLoading(false);
-    if (error || data?.error) {
-      toast({ title: 'Error', description: error?.message || data?.error, variant: 'destructive' });
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: '✓', description: 'Check your email to verify your account.' });
     }

@@ -41,9 +41,6 @@ export default function PricingPage() {
         body: { organization_id: currentOrg.id, variant_id: variant },
       });
       if (error) throw error;
-      if (data?.error) {
-        throw new Error(data.error);
-      }
       if (data?.checkout_url) {
         window.location.href = data.checkout_url;
       } else {

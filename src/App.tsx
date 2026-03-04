@@ -15,7 +15,6 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-import AuthCallbackPage from "./pages/AuthCallbackPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import DashboardPage from "./pages/DashboardPage";
 import TeamsPage from "./pages/TeamsPage";
@@ -60,7 +59,6 @@ const App = () => (
             <Route path="/register" element={<ForceDarkTheme><PublicOnlyRoute><RegisterPage /></PublicOnlyRoute></ForceDarkTheme>} />
             <Route path="/forgot-password" element={<ForceDarkTheme><ForgotPasswordPage /></ForceDarkTheme>} />
             <Route path="/reset-password" element={<ForceDarkTheme><ResetPasswordPage /></ForceDarkTheme>} />
-            <Route path="/auth/callback" element={<ForceDarkTheme><AuthCallbackPage /></ForceDarkTheme>} />
             <Route path="/terms" element={<ForceDarkTheme><TermsPage /></ForceDarkTheme>} />
             <Route path="/privacy" element={<ForceDarkTheme><PrivacyPage /></ForceDarkTheme>} />
             <Route path="/onboarding" element={<ForceDarkTheme><ProtectedRoute><OnboardingPage /></ProtectedRoute></ForceDarkTheme>} />
