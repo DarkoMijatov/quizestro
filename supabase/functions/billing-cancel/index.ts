@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get("LEMONSQUEEZY_API_KEY");
+    const apiKey = Deno.env.get("PADDLE_API_KEY");
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "Billing not configured" }),
@@ -87,38 +87,35 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Cancel subscription via Lemon Squeezy API
+    const paddleBaseUrl = Deno.env.get("PADDLE_ENVIRONMENT") === "sandbox"
+      ? "https://sandbox-api.paddle.com"
+      : "https://api.paddle.com";
+
+    // Cancel subscription via Paddle API
     const cancelRes = await fetch(
-      `https://api.lemonsqueezy.com/v1/subscriptions/${org.subscription_id}`,
+      `${paddleBaseUrl}/subscriptions/${org.subscription_id}/cancel`,
       {
-        method: "PATCH",
+        method: "POST",
         headers: {
-          Accept: "application/vnd.api+json",
-          "Content-Type": "application/vnd.api+json",
+          "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          data: {
-            type: "subscriptions",
-            id: org.subscription_id,
-            attributes: {
-              cancelled: true,
-            },
-          },
+          effective_from: "next_billing_period",
         }),
       }
     );
 
     if (!cancelRes.ok) {
       const errText = await cancelRes.text();
-      console.error("Lemon Squeezy cancel error:", errText);
+      console.error("Paddle cancel error:", errText);
       return new Response(
         JSON.stringify({ error: "Failed to cancel subscription" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Update org status locally (webhook will also handle this, but we update immediately for UX)
+    // Update org status locally
     await serviceClient
       .from("organizations")
       .update({ subscription_status: "cancelled" })
