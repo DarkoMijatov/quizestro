@@ -71,3 +71,15 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Produkcioni deployment (Mint + Supabase + Stripe + email)
+
+Detaljan vodič je u `docs/production-setup-sr.md`.
+
+- Brza pred-produkcijska provera: `npm run release:check`
+
+- Auth callback ruta za email potvrdu: `/auth/callback`
+
+- Billing fallback i migracija sa Lemona na Stripe: `docs/production-setup-sr.md` section 13
+
+- Custom auth email flow preko Postmark-a: `supabase/functions/auth-send-email`
