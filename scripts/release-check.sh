@@ -71,16 +71,24 @@ echo "Domain: $DOMAIN"
 
 # Frontend env variables
 require_env VITE_SUPABASE_URL
-require_env VITE_SUPABASE_ANON_KEY
+
+if [[ -n "${VITE_SUPABASE_PUBLISHABLE_KEY:-}" ]]; then
+  ok "VITE_SUPABASE_PUBLISHABLE_KEY is set"
+elif [[ -n "${VITE_SUPABASE_ANON_KEY:-}" ]]; then
+  ok "VITE_SUPABASE_ANON_KEY is set (fallback)"
+else
+  err "Missing required env var: VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY fallback)"
+  failed=1
+fi
 
 # Optional server-side secrets (only warns in local check)
 for optional_secret in \
   SUPABASE_SERVICE_ROLE_KEY \
-  LEMONSQUEEZY_API_KEY \
-  LEMONSQUEEZY_STORE_ID \
-  LEMONSQUEEZY_VARIANT_ID_MONTHLY \
-  LEMONSQUEEZY_VARIANT_ID_ANNUAL \
-  LEMONSQUEEZY_WEBHOOK_SECRET \
+  STRIPE_SECRET_KEY \
+  STRIPE_PRICE_ID_MONTHLY \
+  STRIPE_PRICE_ID_ANNUAL \
+  STRIPE_WEBHOOK_SECRET \
+  SITE_URL \
   POSTMARK_SERVER_TOKEN \
   POSTMARK_FROM_EMAIL; do
   if [[ -z "${!optional_secret:-}" ]]; then
@@ -97,7 +105,7 @@ else
   warn "dist/ does not exist yet (run npm run build before upload to Mint)"
 fi
 
-for fn in billing-checkout billing-webhook billing-cancel send-email; do
+for fn in billing-checkout billing-webhook billing-cancel send-email auth-send-email; do
   if [[ -f "supabase/functions/$fn/index.ts" ]]; then
     ok "Edge function present: $fn"
   else

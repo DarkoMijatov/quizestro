@@ -1,10 +1,10 @@
-# Quizestro — produkcioni setup (Mint + Supabase + Lemon Squeezy + transactional email)
+# Quizestro — produkcioni setup (Mint + Supabase + Stripe + transactional email)
 
 Ovaj dokument je praktičan vodič da aplikaciju objaviš na:
 
 - `quizestro.darkmsolutions.com` (frontend)
 - Supabase Edge Functions (backend logika)
-- Lemon Squeezy (naplata pretplate)
+- Stripe (naplata pretplate)
 - Postmark (transactional email sa template-ima)
 
 > Napomena: Mint MySQL baza ti nije potrebna za ovu aplikaciju jer već koristiš Supabase (Postgres + Auth + Edge Functions).
@@ -49,13 +49,13 @@ dig +short quizestro.darkmsolutions.com
 Frontend treba da zna gde je Supabase projekat. Na buildu/hostingu postavi:
 
 - `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `VITE_SUPABASE_PUBLISHABLE_KEY` (preporučeno) ili `VITE_SUPABASE_ANON_KEY`
 
 Lokalno to ide u `.env`:
 
 ```env
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-VITE_SUPABASE_ANON_KEY=YOUR_ANON_KEY
+VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_ANON_OR_PUBLISHABLE_KEY
 ```
 
 ## 4) Supabase Edge Functions — deploy
@@ -72,7 +72,7 @@ supabase functions deploy send-email
 
 Ako koristiš i ostale funkcije, deploy i njih.
 
-## 5) Secrets za funkcije (Lemon + email)
+## 5) Secrets za funkcije (Stripe + email)
 
 Postavi secrets u Supabase projektu:
 
@@ -81,31 +81,29 @@ supabase secrets set \
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
 SUPABASE_ANON_KEY=YOUR_ANON_KEY \
 SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY \
-LEMONSQUEEZY_API_KEY=YOUR_LEMON_API_KEY \
-LEMONSQUEEZY_STORE_ID=YOUR_STORE_ID \
-LEMONSQUEEZY_VARIANT_ID_MONTHLY=YOUR_MONTHLY_VARIANT_ID \
-LEMONSQUEEZY_VARIANT_ID_ANNUAL=YOUR_ANNUAL_VARIANT_ID \
-LEMONSQUEEZY_WEBHOOK_SECRET=YOUR_WEBHOOK_SECRET \
+STRIPE_SECRET_KEY=sk_live_xxx \
+STRIPE_PRICE_ID_MONTHLY=price_xxx \
+STRIPE_PRICE_ID_ANNUAL=price_xxx \
+STRIPE_WEBHOOK_SECRET=whsec_xxx \
+SITE_URL=https://quizestro.darkmsolutions.com \
 POSTMARK_SERVER_TOKEN=YOUR_POSTMARK_SERVER_TOKEN \
 POSTMARK_FROM_EMAIL=billing@darkmsolutions.com
 ```
 
-## 6) Lemon Squeezy povezivanje (pretplata)
+## 6) Stripe povezivanje (pretplata)
 
-U Lemon Squeezy:
+U Stripe Dashboard-u:
 
-1. Kreiraj product + varijante (Monthly/Annual).
-2. Upiši njihove variant ID-jeve u secrets.
-3. Podesi webhook URL na:
+1. Kreiraj Product + Price za Monthly i Annual.
+2. Price ID vrednosti upiši u `STRIPE_PRICE_ID_MONTHLY` i `STRIPE_PRICE_ID_ANNUAL`.
+3. Podesi webhook endpoint:
    `https://YOUR_PROJECT.supabase.co/functions/v1/billing-webhook`
-4. U webhook events uključi:
-   - `subscription_created`
-   - `subscription_updated`
-   - `subscription_cancelled`
-   - `subscription_expired`
-   - `subscription_payment_failed`
+4. Uključi događaje:
+   - `checkout.session.completed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
 
-U kodu su već pripremljene funkcije za checkout i webhook obradu.
+U kodu su checkout i webhook funkcije prebačene na Stripe.
 
 ## 7) Transactional email + template-i
 
@@ -148,9 +146,9 @@ Ako bude potrebno, u funkcijama su već uključeni CORS header-i, ali proveri da
 - [ ] `quizestro.darkmsolutions.com` pokazuje na Mint i ima SSL
 - [ ] Frontend build (`dist`) je uploadovan
 - [ ] SPA routing radi (`.htaccess`)
-- [ ] `VITE_SUPABASE_URL` i `VITE_SUPABASE_ANON_KEY` su produkcioni
+- [ ] `VITE_SUPABASE_URL` i `VITE_SUPABASE_PUBLISHABLE_KEY` (ili anon key) su produkcioni
 - [ ] Sve Supabase funkcije deployovane
-- [ ] Lemon Squeezy webhook aktivan i potpis validan
+- [ ] Stripe webhook aktivan i potpis validan
 - [ ] Postmark sender verifikovan
 - [ ] Email template-i poslati uspešno iz `send-email`
 - [ ] Test kupovina menja `organizations.subscription_status`
@@ -182,3 +180,60 @@ Skript će vratiti `exit 1` samo za blokirajuće probleme.
 ---
 
 Ovaj check je zamišljen kao brza zaštita od najčešćih propusta pre objave.
+
+
+## 12) Troubleshooting: `otp_expired` posle klika na verifikacioni email
+
+Ako te link odvede na URL tipa:
+`...#error=access_denied&error_code=otp_expired...`
+
+najčešći uzroci su:
+
+1. **Pogrešan Site URL / Redirect URL u Supabase Auth** (npr. ostao `*.lovableproject.com`).
+2. Link je **otvoren više puta** (OTP link je jednokratan).
+3. Link je istekao zbog TTL-a.
+
+Obavezno proveri u Supabase Dashboard -> Authentication -> URL Configuration:
+
+- Site URL: `https://quizestro.darkmsolutions.com`
+- Redirect URLs:
+  - `https://quizestro.darkmsolutions.com/auth/callback`
+  - `https://quizestro.darkmsolutions.com/reset-password`
+  - `https://quizestro.darkmsolutions.com/*`
+
+U aplikaciji je dodat dedicated callback route `/auth/callback` da korisnik dobije jasnu poruku i fallback akcije kada je link istekao.
+
+
+## 13) Ako Lemon odbije nalog — pređi na Stripe
+
+Ako od Lemon Squeezy dobiješ poruku poput:
+
+> "we don't currently allow services of any kind ..."
+
+to znači da je nalog/proizvod klasifikovan kao **usluga** koju ne mogu da verifikuju na checkout-u.
+
+Praktične opcije:
+
+1. **Reklasifikuj proizvod kao SaaS/digital subscription**
+   - Jasno opiši šta korisnik dobija odmah nakon kupovine (npr. premium feature access u aplikaciji).
+   - U Terms/Privacy i product copy izbegni formulacije koje zvuče kao consulting/agencija usluga.
+2. **Ako i dalje odbijaju, pređi na drugi billing provider** (npr. Stripe Billing/Paddle).
+3. Dok provider nije odobren, sakrij/disable upgrade CTA u produkciji da korisnici ne udaraju u blokiran checkout.
+
+U ovom kodu je unapređeno rukovanje greškom checkout-a tako da se provider poruka vrati do UI-a umesto generičkog "Failed to create checkout session".
+
+
+## 14) Auth email preko Postmark (bez Supabase template-a)
+
+Za registraciju i reset lozinke frontend sada koristi Edge funkciju `auth-send-email` koja:
+
+- generiše Supabase auth link (`admin.generateLink`)
+- šalje email preko Postmark API-ja sa custom HTML template-om
+
+Deploy komanda:
+
+```bash
+supabase functions deploy auth-send-email
+```
+
+Time više ne zavisiš od default Supabase Auth template email-ova za signup/recovery.
