@@ -34,6 +34,7 @@ import PricingPage from "./pages/PricingPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import RefundPage from "./pages/RefundPage";
+import BillingCheckoutPage from "./pages/BillingCheckoutPage";
 import BillingSuccessPage from "./pages/BillingSuccessPage";
 import BillingCancelPage from "./pages/BillingCancelPage";
 import NotFound from "./pages/NotFound";
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/terms" element={<ForceDarkTheme><TermsPage /></ForceDarkTheme>} />
             <Route path="/privacy" element={<ForceDarkTheme><PrivacyPage /></ForceDarkTheme>} />
             <Route path="/refund" element={<ForceDarkTheme><RefundPage /></ForceDarkTheme>} />
+            <Route path="/billing/checkout" element={<ForceDarkTheme><BillingCheckoutPage /></ForceDarkTheme>} />
             <Route path="/billing/success" element={<ForceDarkTheme><BillingSuccessPage /></ForceDarkTheme>} />
             <Route path="/billing/cancel" element={<ForceDarkTheme><BillingCancelPage /></ForceDarkTheme>} />
             <Route path="/onboarding" element={<ForceDarkTheme><ProtectedRoute><OnboardingPage /></ProtectedRoute></ForceDarkTheme>} />

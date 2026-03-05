@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
           },
           collection_mode: "automatic",
           checkout: {
-            url: `${appUrl}/billing/success`,
+            url: `${appUrl}/billing/checkout`,
           },
         }),
       }
