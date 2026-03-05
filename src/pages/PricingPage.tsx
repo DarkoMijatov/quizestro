@@ -50,6 +50,9 @@ export default function PricingPage() {
         if (data?.transaction_id && !checkoutUrl.searchParams.has('transaction_id')) {
           checkoutUrl.searchParams.set('transaction_id', data.transaction_id);
         }
+        if (!checkoutUrl.searchParams.has('organization_id')) {
+          checkoutUrl.searchParams.set('organization_id', currentOrg.id);
+        }
         window.location.href = checkoutUrl.toString();
       } else {
         throw new Error('No checkout URL');

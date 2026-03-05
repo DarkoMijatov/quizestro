@@ -42,6 +42,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function addDaysIso(dateIso: string, days: number): string {
+  const d = new Date(dateIso);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -114,6 +120,12 @@ Deno.serve(async (req) => {
       subscriptionData?.subscription_id ||
       subscriptionData?.subscription?.id ||
       "";
+    const transactionAt =
+      payload?.occurred_at ||
+      subscriptionData?.billed_at ||
+      subscriptionData?.created_at ||
+      new Date().toISOString();
+    const trialEndsAt = addDaysIso(transactionAt, 14);
     const currentPeriodEnd =
       subscriptionData?.current_billing_period?.ends_at ||
       subscriptionData?.scheduled_change?.effective_at;
@@ -155,6 +167,7 @@ Deno.serve(async (req) => {
           subscription_status: "active",
           subscription_id: subscriptionId,
           current_period_end: currentPeriodEnd,
+          trial_ends_at: trialEndsAt,
         };
       } else if (status === "canceled") {
         updates = {
@@ -180,6 +193,7 @@ Deno.serve(async (req) => {
       updates = {
         subscription_tier: "premium",
         subscription_status: "active",
+        trial_ends_at: trialEndsAt,
         ...(subscriptionId ? { subscription_id: subscriptionId } : {}),
       };
     }

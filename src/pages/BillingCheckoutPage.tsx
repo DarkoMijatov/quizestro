@@ -17,15 +17,17 @@ declare global {
 
 export default function BillingCheckoutPage() {
   const [error, setError] = useState<string | null>(null);
-  const transactionId = useMemo(() => {
+  const checkoutContext = useMemo(() => {
     const search = new URLSearchParams(window.location.search);
-    return (
+    const transactionId =
       search.get('transaction_id') ||
       search.get('txn') ||
       search.get('paddle_transaction_id') ||
-      ''
-    );
+      '';
+    const organizationId = search.get('organization_id') || '';
+    return { transactionId, organizationId };
   }, []);
+  const { transactionId, organizationId } = checkoutContext;
 
   useEffect(() => {
     let redirectTimer: number | undefined;
@@ -73,7 +75,7 @@ export default function BillingCheckoutPage() {
         transactionId,
         settings: {
           displayMode: 'overlay',
-          successUrl: `${window.location.origin}/billing/success`,
+          successUrl: `${window.location.origin}/billing/success?transaction_id=${encodeURIComponent(transactionId)}&organization_id=${encodeURIComponent(organizationId)}`,
         },
       });
     };
@@ -111,7 +113,7 @@ export default function BillingCheckoutPage() {
     return () => {
       if (redirectTimer) window.clearTimeout(redirectTimer);
     };
-  }, [transactionId]);
+  }, [transactionId, organizationId]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-background">

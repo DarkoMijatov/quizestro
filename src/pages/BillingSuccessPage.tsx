@@ -5,12 +5,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { isOrgPremium } from '@/lib/premium';
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function BillingSuccessPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { currentOrg, refetch } = useOrganizations();
   const [checking, setChecking] = useState(true);
+  const search = new URLSearchParams(window.location.search);
+  const transactionId = search.get('transaction_id') || '';
+  const organizationId = search.get('organization_id') || currentOrg?.id || '';
 
   useEffect(() => {
     if (isOrgPremium(currentOrg)) {
@@ -18,6 +22,24 @@ export default function BillingSuccessPage() {
       navigate('/dashboard/pricing', { replace: true });
     }
   }, [currentOrg, navigate]);
+
+  useEffect(() => {
+    const confirm = async () => {
+      if (!user || !transactionId || !organizationId) return;
+      try {
+        await supabase.functions.invoke('billing-confirm', {
+          body: {
+            transaction_id: transactionId,
+            organization_id: organizationId,
+          },
+        });
+      } catch (err) {
+        console.error('Billing confirm error:', err);
+      }
+    };
+
+    confirm();
+  }, [user, transactionId, organizationId]);
 
   useEffect(() => {
     let tries = 0;
