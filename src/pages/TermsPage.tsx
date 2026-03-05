@@ -25,8 +25,8 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-xl font-semibold text-foreground">{isSr ? '1. Prihvatanje uslova' : '1. Acceptance of Terms'}</h2>
             <p>{isSr
-              ? 'Korišćenjem platforme Quizestro prihvatate ove uslove korišćenja u celosti. Ako se ne slažete sa bilo kojim delom ovih uslova, molimo vas da ne koristite platformu.'
-              : 'By using the Quizestro platform, you accept these terms of service in their entirety. If you do not agree with any part of these terms, please do not use the platform.'
+              ? 'Quizestro platforma je u vlasništvu i pod upravljanjem kompanije DARKM SOLUTIONS. Korišćenjem platforme Quizestro prihvatate ove uslove korišćenja u celosti. Ako se ne slažete sa bilo kojim delom ovih uslova, molimo vas da ne koristite platformu.'
+              : 'The Quizestro platform is owned and operated by DARKM SOLUTIONS. By using the Quizestro platform, you accept these terms of service in their entirety. If you do not agree with any part of these terms, please do not use the platform.'
             }</p>
           </section>
 
@@ -92,8 +92,8 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-xl font-semibold text-foreground">{isSr ? '9. Kontakt' : '9. Contact'}</h2>
             <p>{isSr
-              ? 'Za sva pitanja u vezi sa ovim uslovima, kontaktirajte nas putem kontakt forme na sajtu ili na email adresu navedenu na platformi.'
-              : 'For any questions regarding these terms, contact us via the contact form on our website or the email address listed on the platform.'
+              ? 'Za sva pitanja u vezi sa ovim uslovima, kontaktirajte DARKM SOLUTIONS putem kontakt forme na sajtu ili na email adresu navedenu na platformi.'
+              : 'For any questions regarding these terms, contact DARKM SOLUTIONS via the contact form on our website or the email address listed on the platform.'
             }</p>
           </section>
         </div>

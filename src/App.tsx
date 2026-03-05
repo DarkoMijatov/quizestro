@@ -33,6 +33,7 @@ import SettingsPage from "./pages/SettingsPage";
 import PricingPage from "./pages/PricingPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import RefundPage from "./pages/RefundPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/reset-password" element={<ForceDarkTheme><ResetPasswordPage /></ForceDarkTheme>} />
             <Route path="/terms" element={<ForceDarkTheme><TermsPage /></ForceDarkTheme>} />
             <Route path="/privacy" element={<ForceDarkTheme><PrivacyPage /></ForceDarkTheme>} />
+            <Route path="/refund" element={<ForceDarkTheme><RefundPage /></ForceDarkTheme>} />
             <Route path="/onboarding" element={<ForceDarkTheme><ProtectedRoute><OnboardingPage /></ProtectedRoute></ForceDarkTheme>} />
             <Route path="/dashboard" element={<OrgRoute><DashboardPage /></OrgRoute>} />
             <Route path="/dashboard/teams" element={<OrgRoute><TeamsPage /></OrgRoute>} />
