@@ -42,7 +42,11 @@ export default function PricingPage() {
       });
       if (error) throw error;
       if (data?.checkout_url) {
-        window.location.href = data.checkout_url;
+        const checkoutUrl = new URL(data.checkout_url);
+        if (data?.transaction_id && !checkoutUrl.searchParams.has('transaction_id')) {
+          checkoutUrl.searchParams.set('transaction_id', data.transaction_id);
+        }
+        window.location.href = checkoutUrl.toString();
       } else {
         throw new Error('No checkout URL');
       }
