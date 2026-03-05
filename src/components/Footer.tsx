@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
-
+import { Link } from 'react-router-dom';
 
 export function Footer() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const year = new Date().getFullYear();
+  const isSr = i18n.language === 'sr';
 
   return (
     <footer className="border-t border-border bg-muted/30">
@@ -12,7 +13,20 @@ export function Footer() {
           <img src="/logo.png" alt="Quizestro" className="h-6 w-6 brand-logo" />
           Quizestro
         </div>
-        <div className="text-sm text-muted-foreground text-center md:text-right space-y-1">
+        <div className="flex flex-col items-center md:items-end gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <Link to="/terms" className="hover:text-foreground transition-colors">
+              {isSr ? 'Uslovi korišćenja' : 'Terms'}
+            </Link>
+            <span>·</span>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">
+              {isSr ? 'Privatnost' : 'Privacy'}
+            </Link>
+            <span>·</span>
+            <Link to="/refund" className="hover:text-foreground transition-colors">
+              {isSr ? 'Povraćaj sredstava' : 'Refund Policy'}
+            </Link>
+          </div>
           <p>{t('footer.tagline')} · © {year} Quizestro. {t('footer.rights')}</p>
           <p>
             {t('footer.createdBy')}{' '}

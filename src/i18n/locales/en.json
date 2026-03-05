@@ -18,7 +18,7 @@
     "export": { "title": "Export & Share", "description": "PDF, Excel exports and public leaderboards for projectors." }
   },
   "pricing": {
-    "title": "Simple pricing", "subtitle": "Start free, upgrade when ready",
+    "title": "Simple plans", "subtitle": "Start free, upgrade when ready",
     "free": { "name": "Free", "price": "0", "priceDisplay": "€0", "currency": "€", "period": "/month", "features": ["1 organization","Owner only","Up to 20 quizzes per year","Basic scoring","Team management"], "cta": "Get started free" },
     "premium": { "name": "Pro", "price": "9.99", "priceDisplay": "€9.99", "currency": "€", "period": "/month", "popular": "Most popular", "features": ["Unlimited organizations","Up to 3 admins","Unlimited quizzes","Leagues & seasons","Question bank","Full branding customization","Priority support"], "cta": "Start free trial" },
     "trial": "14-day free Pro trial",
@@ -50,7 +50,7 @@
     "resetSuccess": "Check your email for the password reset link.", "backToLogin": "Back to login"
   },
   "dashboard": {
-    "title": "Dashboard", "welcome": "Welcome back", "quizzes": "Quizzes", "teams": "Teams",
+    "title": "Dashboard", "welcome": "Dashboard", "quizzes": "Quizzes", "teams": "Teams",
     "leagues": "Leagues", "categories": "Categories", "members": "Members", "settings": "Settings",
     "questionBank": "Question Bank", "stats": "Analytics", "organization": "Organization",
     "recentQuizzes": "Recent Quizzes", "noQuizzes": "No quizzes yet. Create your first one!", "createQuiz": "New Quiz"
