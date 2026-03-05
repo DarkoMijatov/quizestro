@@ -65,19 +65,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get org subscription_id
+    // Get org billing state
     const { data: org } = await serviceClient
       .from("organizations")
-      .select("subscription_id")
+      .select("subscription_id, subscription_status, subscription_tier")
       .eq("id", organization_id)
       .single();
-
-    if (!org?.subscription_id) {
-      return new Response(
-        JSON.stringify({ error: "No active subscription found" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     const apiKey = Deno.env.get("PADDLE_API_KEY");
     if (!apiKey) {
@@ -91,9 +84,53 @@ Deno.serve(async (req) => {
       ? "https://sandbox-api.paddle.com"
       : "https://api.paddle.com";
 
+    let subscriptionId = org?.subscription_id || null;
+
+    // Fallback for orgs where subscription_id wasn't persisted yet:
+    // find latest active/trialing/past_due subscription by custom_data.organization_id.
+    if (!subscriptionId) {
+      const listRes = await fetch(`${paddleBaseUrl}/subscriptions`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+      });
+
+      if (listRes.ok) {
+        const listJson = await listRes.json();
+        const subs = Array.isArray(listJson?.data) ? listJson.data : [];
+        const match = subs.find((s: any) => {
+          const subOrgId =
+            s?.custom_data?.organization_id ||
+            s?.custom_data?.organizationId;
+          const status = (s?.status || "").toLowerCase();
+          return (
+            subOrgId === organization_id &&
+            (status === "active" || status === "trialing" || status === "past_due")
+          );
+        });
+
+        if (match?.id) {
+          subscriptionId = match.id as string;
+          await serviceClient
+            .from("organizations")
+            .update({ subscription_id: subscriptionId })
+            .eq("id", organization_id);
+        }
+      }
+    }
+
+    if (!subscriptionId) {
+      return new Response(
+        JSON.stringify({ error: "No cancellable Paddle subscription found for this organization" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Cancel subscription via Paddle API
     const cancelRes = await fetch(
-      `${paddleBaseUrl}/subscriptions/${org.subscription_id}/cancel`,
+      `${paddleBaseUrl}/subscriptions/${subscriptionId}/cancel`,
       {
         method: "POST",
         headers: {
@@ -110,8 +147,8 @@ Deno.serve(async (req) => {
       const errText = await cancelRes.text();
       console.error("Paddle cancel error:", errText);
       return new Response(
-        JSON.stringify({ error: "Failed to cancel subscription" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Failed to cancel subscription", details: errText }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

@@ -67,40 +67,47 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     }
 
     setLoading(true);
-
-    const { data: membershipData } = await supabase
-      .from('memberships')
-      .select('*')
-      .eq('user_id', user.id) as { data: Membership[] | null };
-
-    const mems = membershipData || [];
-    setMemberships(mems);
-
-    if (mems.length > 0) {
-      const orgIds = mems.map((m) => m.organization_id);
-      const { data: orgData } = await supabase
-        .from('organizations')
+    try {
+      const { data: membershipData } = await supabase
+        .from('memberships')
         .select('*')
-        .in('id', orgIds) as { data: Organization[] | null };
+        .eq('user_id', user.id) as { data: Membership[] | null };
 
-      const orgs = orgData || [];
-      setOrganizations(orgs);
+      const mems = membershipData || [];
+      setMemberships(mems);
 
-      const savedOrgId = localStorage.getItem('quizory-current-org');
-      const saved = orgs.find((o) => o.id === savedOrgId);
-      const selected = saved || orgs[0];
-      setCurrentOrg(selected);
+      if (mems.length > 0) {
+        const orgIds = mems.map((m) => m.organization_id);
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('*')
+          .in('id', orgIds) as { data: Organization[] | null };
 
-      const mem = mems.find((m) => m.organization_id === selected.id);
-      setCurrentRole(mem?.role ?? null);
-    } else {
-      setOrganizations([]);
-      setCurrentOrg(null);
-      setCurrentRole(null);
+        const orgs = orgData || [];
+        setOrganizations(orgs);
+
+        if (orgs.length > 0) {
+          const savedOrgId = localStorage.getItem('quizory-current-org');
+          const saved = orgs.find((o) => o.id === savedOrgId);
+          const selected = saved || orgs[0];
+          setCurrentOrg(selected);
+
+          const mem = mems.find((m) => m.organization_id === selected.id);
+          setCurrentRole(mem?.role ?? null);
+        } else {
+          setCurrentOrg(null);
+          setCurrentRole(null);
+        }
+      } else {
+        setOrganizations([]);
+        setCurrentOrg(null);
+        setCurrentRole(null);
+      }
+
+      fetchedForUserRef.current = user.id;
+    } finally {
+      setLoading(false);
     }
-
-    fetchedForUserRef.current = user.id;
-    setLoading(false);
   }, [user]);
 
   useEffect(() => {

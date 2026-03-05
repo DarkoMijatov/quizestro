@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Check, Crown, Loader2, ArrowDownCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,17 +25,13 @@ import {
 export default function PricingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentOrg, currentRole, refetch } = useOrganizations();
+  const { currentOrg, currentRole } = useOrganizations();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
 
   const isOwner = currentRole === 'owner';
   const isPremium = isOrgPremium(currentOrg);
-
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
 
   const handleCheckout = async (variant: 'monthly' | 'annual') => {
     if (!currentOrg || !isOwner) return;
