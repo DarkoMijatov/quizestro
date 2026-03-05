@@ -101,24 +101,22 @@ Deno.serve(async (req) => {
       payload,
     });
 
-    // Extract organization_id from custom_data
+    // Extract organization_id from custom_data (support multiple payload shapes)
     const subscriptionData = payload.data;
-    const organizationId = subscriptionData?.custom_data?.organization_id;
-    const subscriptionId = subscriptionData?.id || "";
+    const organizationId =
+      subscriptionData?.custom_data?.organization_id ||
+      subscriptionData?.custom_data?.organizationId ||
+      subscriptionData?.subscription?.custom_data?.organization_id ||
+      subscriptionData?.items?.[0]?.price?.custom_data?.organization_id ||
+      subscriptionData?.transaction?.custom_data?.organization_id;
+    const subscriptionId =
+      subscriptionData?.id ||
+      subscriptionData?.subscription_id ||
+      subscriptionData?.subscription?.id ||
+      "";
     const currentPeriodEnd =
       subscriptionData?.current_billing_period?.ends_at ||
       subscriptionData?.scheduled_change?.effective_at;
-
-    if (!organizationId) {
-      console.error("No organization_id in webhook payload custom_data");
-      return new Response(
-        JSON.stringify({ error: "Missing organization_id" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
 
     const handledEvents = [
       "subscription.created",
@@ -126,11 +124,19 @@ Deno.serve(async (req) => {
       "subscription.canceled",
       "subscription.past_due",
       "subscription.activated",
+      "transaction.completed",
     ];
 
     if (!handledEvents.includes(eventType)) {
       console.log(`Unhandled event type: ${eventType}`);
       return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!organizationId) {
+      console.error("No organization_id in webhook payload custom_data");
+      return new Response(JSON.stringify({ ok: true, skipped: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -169,6 +175,12 @@ Deno.serve(async (req) => {
     } else if (eventType === "subscription.past_due") {
       updates = {
         subscription_status: "past_due",
+      };
+    } else if (eventType === "transaction.completed") {
+      updates = {
+        subscription_tier: "premium",
+        subscription_status: "active",
+        ...(subscriptionId ? { subscription_id: subscriptionId } : {}),
       };
     }
 
