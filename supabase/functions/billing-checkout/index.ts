@@ -98,6 +98,17 @@ Deno.serve(async (req) => {
     const paddleBaseUrl = Deno.env.get("PADDLE_ENVIRONMENT") === "sandbox"
       ? "https://sandbox-api.paddle.com"
       : "https://api.paddle.com";
+    const appUrl = (Deno.env.get("APP_URL") || req.headers.get("origin") || "").replace(/\/$/, "");
+
+    if (!appUrl) {
+      return new Response(
+        JSON.stringify({ error: "APP_URL is not configured" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     const transactionRes = await fetch(
       `${paddleBaseUrl}/transactions`,
@@ -120,7 +131,7 @@ Deno.serve(async (req) => {
           },
           collection_mode: "automatic",
           checkout: {
-            url: null, // Will use Paddle's hosted checkout
+            url: `${appUrl}/billing/success`,
           },
         }),
       }
