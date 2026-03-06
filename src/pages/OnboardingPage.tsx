@@ -14,7 +14,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 export default function OnboardingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { organizations, loading: orgLoading, hasFetchedForCurrentUser, switchOrg } = useOrganizations();
+  const { organizations, loading: orgLoading, hasFetchedForCurrentUser, switchOrg, refetch } = useOrganizations();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [orgName, setOrgName] = useState('');
@@ -84,6 +84,7 @@ export default function OnboardingPage() {
 
     localStorage.setItem('quizory-current-org', org.id);
     toast({ title: '✓', description: t('onboarding.success') });
+    await refetch();
     navigate('/dashboard');
   };
 
