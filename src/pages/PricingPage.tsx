@@ -25,7 +25,7 @@ import {
 export default function PricingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentOrg, currentRole } = useOrganizations();
+  const { currentOrg, currentRole, refetch } = useOrganizations();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
