@@ -72,6 +72,17 @@ Deno.serve(async (req) => {
       .eq("id", organization_id)
       .single();
 
+    // If already free with no subscription and no override, nothing to cancel
+    if (
+      (!org?.subscription_id) &&
+      (!org?.premium_override) &&
+      (org?.subscription_tier === "free" || !org?.subscription_tier)
+    ) {
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // If premium via gift code / override (no Paddle subscription), just reset to free
     if (org?.premium_override && !org?.subscription_id) {
       await serviceClient
