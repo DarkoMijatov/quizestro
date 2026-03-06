@@ -1,27 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { isOrgPremium } from '@/lib/premium';
-import { DashboardLayout } from '@/components/DashboardLayout';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Trophy, Users, FolderOpen, Award, Plus, Loader2, Calendar, MapPin, ArrowRight, Zap } from 'lucide-react';
-import { useOrganizations } from '@/hooks/useOrganizations';
-import { format } from 'date-fns';
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { isOrgPremium } from "@/lib/premium";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Trophy, Users, FolderOpen, Award, Plus, Loader2, Calendar, MapPin, ArrowRight, Zap } from "lucide-react";
+import { useOrganizations } from "@/hooks/useOrganizations";
+import { format } from "date-fns";
 
 interface RecentQuiz {
   id: string;
   name: string;
   date: string;
   location: string | null;
-  status: 'draft' | 'live' | 'finished';
+  status: "draft" | "live" | "finished";
 }
 
 const statusColors: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground',
-  live: 'bg-primary/10 text-primary border-primary/30',
-  finished: 'bg-accent text-accent-foreground',
+  draft: "bg-muted text-muted-foreground",
+  live: "bg-primary/10 text-primary border-primary/30",
+  finished: "bg-accent text-accent-foreground",
 };
 
 export default function DashboardPage() {
@@ -41,11 +41,24 @@ export default function DashboardPage() {
       setLoading(true);
 
       const [q, tm, c, l, recent] = await Promise.all([
-        supabase.from('quizzes').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id),
-        supabase.from('teams').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id).eq('is_deleted', false),
-        supabase.from('categories').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id).eq('is_deleted', false),
-        supabase.from('leagues').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id),
-        supabase.from('quizzes').select('id, name, date, location, status').eq('organization_id', currentOrg.id).order('date', { ascending: false }).limit(5),
+        supabase.from("quizzes").select("id", { count: "exact", head: true }).eq("organization_id", currentOrg.id),
+        supabase
+          .from("teams")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", currentOrg.id)
+          .eq("is_deleted", false),
+        supabase
+          .from("categories")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", currentOrg.id)
+          .eq("is_deleted", false),
+        supabase.from("leagues").select("id", { count: "exact", head: true }).eq("organization_id", currentOrg.id),
+        supabase
+          .from("quizzes")
+          .select("id, name, date, location, status")
+          .eq("organization_id", currentOrg.id)
+          .order("date", { ascending: false })
+          .limit(5),
       ]);
 
       setCounts({
@@ -62,10 +75,28 @@ export default function DashboardPage() {
   }, [currentOrg?.id]);
 
   const stats = [
-    { label: t('dashboard.quizzes'), value: counts.quizzes, icon: Trophy, color: 'text-primary', path: '/dashboard/quizzes' },
-    { label: t('dashboard.teams'), value: counts.teams, icon: Users, color: 'text-blue-500', path: '/dashboard/teams' },
-    { label: t('dashboard.categories'), value: counts.categories, icon: FolderOpen, color: 'text-emerald-500', path: '/dashboard/categories' },
-    { label: t('dashboard.leagues'), value: counts.leagues, icon: Award, color: 'text-purple-500', path: '/dashboard/leagues' },
+    {
+      label: t("dashboard.quizzes"),
+      value: counts.quizzes,
+      icon: Trophy,
+      color: "text-primary",
+      path: "/dashboard/quizzes",
+    },
+    { label: t("dashboard.teams"), value: counts.teams, icon: Users, color: "text-blue-500", path: "/dashboard/teams" },
+    {
+      label: t("dashboard.categories"),
+      value: counts.categories,
+      icon: FolderOpen,
+      color: "text-emerald-500",
+      path: "/dashboard/categories",
+    },
+    {
+      label: t("dashboard.leagues"),
+      value: counts.leagues,
+      icon: Award,
+      color: "text-purple-500",
+      path: "/dashboard/leagues",
+    },
   ];
 
   return (
@@ -73,7 +104,7 @@ export default function DashboardPage() {
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-display text-2xl md:text-3xl font-bold">{t('dashboard.welcome')}!</h1>
+            <h1 className="font-display text-2xl md:text-3xl font-bold">{t("dashboard.welcome")}</h1>
             <p className="text-muted-foreground mt-1">
               {currentOrg?.name} · <span className="capitalize">{currentRole}</span>
             </p>
@@ -81,7 +112,7 @@ export default function DashboardPage() {
           <Link to="/dashboard/quizzes/new">
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              {t('dashboard.createQuiz')}
+              {t("dashboard.createQuiz")}
             </Button>
           </Link>
         </div>
@@ -94,9 +125,9 @@ export default function DashboardPage() {
                 <Zap className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="font-semibold text-sm">{t('freemium.freeplan')}</p>
+                <p className="font-semibold text-sm">{t("freemium.freeplan")}</p>
                 <p className="text-xs text-muted-foreground">
-                  {t('freemium.quizzesUsed', { used: totalQuizCount, limit: TOTAL_LIMIT })}
+                  {t("freemium.quizzesUsed", { used: totalQuizCount, limit: TOTAL_LIMIT })}
                 </p>
               </div>
             </div>
@@ -110,7 +141,7 @@ export default function DashboardPage() {
               <Link to="/dashboard/pricing">
                 <Button size="sm" variant="outline" className="gap-1 shrink-0">
                   <Zap className="h-3 w-3" />
-                  {t('freemium.upgrade')}
+                  {t("freemium.upgrade")}
                 </Button>
               </Link>
             </div>
@@ -119,7 +150,9 @@ export default function DashboardPage() {
 
         {/* Stats grid */}
         {loading ? (
-          <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -132,7 +165,7 @@ export default function DashboardPage() {
                     </div>
                     <p className="mt-2 text-3xl font-bold font-display">{s.value}</p>
                     <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground group-hover:text-primary transition-colors">
-                      <span>{t('common.viewAll')}</span>
+                      <span>{t("common.viewAll")}</span>
                       <ArrowRight className="h-3 w-3" />
                     </div>
                   </div>
@@ -143,21 +176,24 @@ export default function DashboardPage() {
             {/* Recent quizzes */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display text-lg font-semibold">{t('dashboard.recentQuizzes')}</h2>
+                <h2 className="font-display text-lg font-semibold">{t("dashboard.recentQuizzes")}</h2>
                 {recentQuizzes.length > 0 && (
-                  <Link to="/dashboard/quizzes" className="text-sm text-primary hover:underline flex items-center gap-1">
-                    {t('common.viewAll')} <ArrowRight className="h-3 w-3" />
+                  <Link
+                    to="/dashboard/quizzes"
+                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                  >
+                    {t("common.viewAll")} <ArrowRight className="h-3 w-3" />
                   </Link>
                 )}
               </div>
               {recentQuizzes.length === 0 ? (
                 <div className="rounded-xl border border-border bg-card p-12 text-center">
                   <Trophy className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-                  <p className="text-muted-foreground">{t('dashboard.noQuizzes')}</p>
+                  <p className="text-muted-foreground">{t("dashboard.noQuizzes")}</p>
                   <Link to="/dashboard/quizzes/new">
                     <Button className="mt-4 gap-2">
                       <Plus className="h-4 w-4" />
-                      {t('dashboard.createQuiz')}
+                      {t("dashboard.createQuiz")}
                     </Button>
                   </Link>
                 </div>
@@ -176,7 +212,7 @@ export default function DashboardPage() {
                           <div className="flex items-center gap-4 mt-1.5 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {format(new Date(quiz.date), 'PPP')}
+                              {format(new Date(quiz.date), "PPP")}
                             </span>
                             {quiz.location && (
                               <span className="flex items-center gap-1">
