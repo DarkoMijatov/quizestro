@@ -68,9 +68,27 @@ Deno.serve(async (req) => {
     // Get org billing state
     const { data: org } = await serviceClient
       .from("organizations")
-      .select("subscription_id, subscription_status, subscription_tier")
+      .select("subscription_id, subscription_status, subscription_tier, premium_override")
       .eq("id", organization_id)
       .single();
+
+    // If premium via gift code / override (no Paddle subscription), just reset to free
+    if (org?.premium_override && !org?.subscription_id) {
+      await serviceClient
+        .from("organizations")
+        .update({
+          subscription_tier: "free",
+          subscription_status: "none",
+          premium_override: false,
+          premium_override_until: null,
+          premium_override_reason: null,
+        })
+        .eq("id", organization_id);
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const apiKey = Deno.env.get("PADDLE_API_KEY");
     if (!apiKey) {
@@ -86,8 +104,7 @@ Deno.serve(async (req) => {
 
     let subscriptionId = org?.subscription_id || null;
 
-    // Fallback for orgs where subscription_id wasn't persisted yet:
-    // find latest active/trialing/past_due subscription by custom_data.organization_id.
+    // Fallback: find active subscription by custom_data.organization_id
     if (!subscriptionId) {
       const listRes = await fetch(`${paddleBaseUrl}/subscriptions`, {
         method: "GET",
@@ -122,10 +139,18 @@ Deno.serve(async (req) => {
     }
 
     if (!subscriptionId) {
-      return new Response(
-        JSON.stringify({ error: "No cancellable Paddle subscription found for this organization" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // No Paddle subscription found — just reset to free
+      await serviceClient
+        .from("organizations")
+        .update({
+          subscription_tier: "free",
+          subscription_status: "none",
+        })
+        .eq("id", organization_id);
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Cancel subscription via Paddle API
