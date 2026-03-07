@@ -69,8 +69,15 @@ export default function PricingPage() {
         body: { organization_id: currentOrg.id },
       });
       if (error) throw error;
-      toast({ title: t('pricing.downgradeSuccess') });
-      refetch();
+      if (data?.cancel_url) {
+        // Redirect to Paddle's cancellation portal
+        window.open(data.cancel_url, '_blank');
+        toast({ title: t('pricing.downgradeRedirect', 'Please complete cancellation on the opened page.') });
+      } else if (data?.success) {
+        // Gift code / override cancellation handled server-side
+        toast({ title: t('pricing.downgradeSuccess') });
+        refetch();
+      }
     } catch (err: any) {
       console.error('Downgrade error:', err);
       toast({ title: t('common.error', 'Error'), description: err.message || 'Failed to cancel subscription', variant: 'destructive' });
