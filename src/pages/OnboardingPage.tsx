@@ -83,7 +83,7 @@ export default function OnboardingPage() {
       {
         organization_id: org.id,
         name: "Joker",
-        effect: "marker",
+        effect: "double",
         description: "Doubles points + bonus points for the category",
       },
       { organization_id: org.id, name: "Double Chance", effect: "marker", description: "Marker only, no score effect" },
