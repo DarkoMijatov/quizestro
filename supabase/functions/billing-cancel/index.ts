@@ -102,6 +102,7 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = Deno.env.get("PADDLE_API_KEY");
+    console.log("PADDLE_API_KEY available:", !!apiKey, "length:", apiKey?.length ?? 0);
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "Billing not configured" }),
@@ -109,7 +110,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const paddleBaseUrl = Deno.env.get("PADDLE_ENVIRONMENT") === "sandbox"
+    const paddleEnv = Deno.env.get("PADDLE_ENVIRONMENT");
+    console.log("PADDLE_ENVIRONMENT:", paddleEnv);
+    const paddleBaseUrl = paddleEnv === "sandbox"
       ? "https://sandbox-api.paddle.com"
       : "https://api.paddle.com";
 
@@ -164,37 +167,40 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Cancel subscription via Paddle API
-    const cancelRes = await fetch(
-      `${paddleBaseUrl}/subscriptions/${subscriptionId}/cancel`,
+    // Fetch subscription from Paddle to get management_urls
+    console.log("Fetching subscription:", subscriptionId);
+    const subRes = await fetch(
+      `${paddleBaseUrl}/subscriptions/${subscriptionId}`,
       {
-        method: "POST",
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({
-          effective_from: "next_billing_period",
-        }),
       }
     );
 
-    if (!cancelRes.ok) {
-      const errText = await cancelRes.text();
-      console.error("Paddle cancel error:", errText);
+    if (!subRes.ok) {
+      const errText = await subRes.text();
+      console.error("Paddle fetch subscription error:", errText);
       return new Response(
-        JSON.stringify({ error: "Failed to cancel subscription", details: errText }),
+        JSON.stringify({ error: "Failed to fetch subscription details", details: errText }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Update org status locally
-    await serviceClient
-      .from("organizations")
-      .update({ subscription_status: "cancelled" })
-      .eq("id", organization_id);
+    const subJson = await subRes.json();
+    const cancelUrl = subJson?.data?.management_urls?.cancel;
 
-    return new Response(JSON.stringify({ success: true }), {
+    if (!cancelUrl) {
+      console.error("No cancel URL in subscription data:", JSON.stringify(subJson?.data?.management_urls));
+      return new Response(
+        JSON.stringify({ error: "Cancel URL not available for this subscription" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    return new Response(JSON.stringify({ cancel_url: cancelUrl }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
