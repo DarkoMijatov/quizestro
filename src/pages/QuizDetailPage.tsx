@@ -371,12 +371,12 @@ export default function QuizDetailPage() {
             color: currentOrg?.branding_text_color || undefined,
           }}
         >
-          <div style={{ minWidth: `${220 + categories.length * 90 + 70}px` }}>
+          <div style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
           {/* Header row */}
           <div
             className="grid border-b-2 border-foreground/20 sticky top-0 z-10"
             style={{
-              gridTemplateColumns: `minmax(220px, 2fr) ${categories.map(() => '1fr').join(' ')} 70px`,
+              gridTemplateColumns: `140px ${categories.map(() => '1fr').join(' ')} 70px`,
               backgroundColor: currentOrg?.branding_header_color || undefined,
             }}
           >
@@ -423,13 +423,13 @@ export default function QuizDetailPage() {
                   rowIdx === 0 && 'bg-primary/[0.04]',
                 )}
                 style={{
-                  gridTemplateColumns: `minmax(220px, 2fr) ${categories.map(() => '1fr').join(' ')} 70px`,
+                  gridTemplateColumns: `140px ${categories.map(() => '1fr').join(' ')} 70px`,
                 }}
               >
                 {/* Rank + Team */}
-                <div className={cn("flex items-center gap-2", sizeClass === 'size-xs' ? 'p-0.5' : 'p-1')}>
+                <div className={cn("flex items-center gap-1.5", sizeClass === 'size-xs' ? 'p-0.5' : 'p-1')}>
                   <div className={cn("flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
-                    sizeClass === 'size-lg' ? 'w-9 h-9 text-lg' : sizeClass === 'size-md' ? 'w-8 h-8 text-base' : sizeClass === 'size-sm' ? 'w-7 h-7 text-sm' : 'w-6 h-6 text-xs'
+                    sizeClass === 'size-lg' ? 'w-8 h-8 text-base' : sizeClass === 'size-md' ? 'w-7 h-7 text-sm' : sizeClass === 'size-sm' ? 'w-6 h-6 text-xs' : 'w-5 h-5 text-[10px]'
                   )}>
                     {rowIdx + 1}
                   </div>
@@ -439,7 +439,7 @@ export default function QuizDetailPage() {
                         autoFocus
                         className={cn(
                           "w-full bg-transparent border-b border-primary outline-none font-bold text-foreground",
-                          sizeClass === 'size-lg' ? 'text-xl' : sizeClass === 'size-md' ? 'text-lg' : sizeClass === 'size-sm' ? 'text-base' : 'text-sm'
+                          sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
                         )}
                         value={editingAliasValue}
                         onChange={(e) => setEditingAliasValue(e.target.value)}
@@ -448,9 +448,9 @@ export default function QuizDetailPage() {
                       />
                     ) : (
                       <div className="flex items-center gap-1 group cursor-pointer" onClick={() => canEdit && startEditAlias(team)}>
-                      <p className="font-black text-foreground break-words leading-tight overflow-hidden text-ellipsis"
-                        style={{ fontSize: sizeClass === 'size-lg' ? 'clamp(1rem, 2.5vw, 1.35rem)' : sizeClass === 'size-md' ? 'clamp(0.875rem, 2vw, 1.15rem)' : sizeClass === 'size-sm' ? 'clamp(0.75rem, 1.5vw, 1rem)' : 'clamp(0.65rem, 1.2vw, 0.875rem)' }}
-                      >{teamName}</p>
+                        <p className={cn("font-bold text-foreground break-words leading-tight",
+                          sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
+                        )}>{teamName}</p>
                         {canEdit && <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
                       </div>
                     )}
