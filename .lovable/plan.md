@@ -1,48 +1,31 @@
 
 
-## Plan: Paddle Domain Compliance + Pricing/Copy Updates
+## Problem Analysis
 
-### Problem Summary
-Paddle requires: (1) a Refund Policy URL, (2) legal business name "DARKM SOLUTIONS" in Terms, (3) accessible homepage. Additionally: remove dinar prices, rename "Jednostavne cene", and change welcome text.
+Organization "Tesla Kviz" has `subscription_id: "sub_01kk09r3d6024rw250a9x592bc"`, `subscription_tier: "premium"`, `subscription_status: "active"`. The `billing-cancel` function reaches the `PADDLE_API_KEY` check and gets null.
 
-### Changes
+**Root cause**: `billing-cancel` is missing from `supabase/config.toml`. All other billing functions (`billing-checkout`, `billing-webhook`, `billing-confirm`) are listed there. Without the config entry, the function may not have proper access to secrets.
 
-**1. Create Refund Policy page (`src/pages/RefundPage.tsx`)**
-- Bilingual refund policy page (same structure as Terms/Privacy pages)
-- Cover: 14-day trial refund, cancellation policy, how to request refunds, contact info
-- Reference "DARKM SOLUTIONS" as the legal entity
+## Plan
 
-**2. Add `/refund` route in `src/App.tsx`**
-- Register the new route alongside `/terms` and `/privacy`
+### 1. Add `billing-cancel` to `supabase/config.toml`
 
-**3. Update `src/pages/TermsPage.tsx`**
-- Add "DARKM SOLUTIONS" as the legal business entity operating Quizestro in relevant sections (section 1 intro and section 9 contact)
+Add the missing function config entry with `verify_jwt = false` (same as other billing functions).
 
-**4. Update `src/components/Footer.tsx`**
-- Add links to Terms, Privacy, and Refund Policy pages in the footer so Paddle can find them
+### 2. Change cancellation to use Paddle management URL (redirect approach)
 
-**5. Update `src/i18n/locales/sr.json`**
-- `pricing.title`: "Jednostavne cene" → "Jednostavni paketi"
-- `pricing.free.priceDisplay`: "0 din" → "€0"
-- `pricing.free.currency`: "din" → "€"
-- `pricing.premium.priceDisplay`: "999 din" → "€9,99"
-- `pricing.premium.currency`: "din" → "€"
-- `pricing.annual.priceDisplay`: "9.999 din" → "€99"
-- `pricing.annual.currency`: "din" → "€"
-- `dashboard.welcome`: "Dobrodošli nazad" → "Kontrolna tabla"
+Instead of directly calling Paddle's cancel API, modify `billing-cancel` to:
+- Fetch the subscription via `GET /subscriptions/{subscription_id}` from Paddle API
+- Extract `management_urls.cancel` from the response
+- Return the cancel URL to the frontend
 
-**6. Update `src/i18n/locales/en.json`**
-- `pricing.title`: "Simple pricing" → "Simple plans"
-- `dashboard.welcome`: "Welcome back" → "Dashboard"
+Modify `PricingPage.tsx` to:
+- Open the Paddle cancel URL in a new tab/window when the user confirms downgrade
+- Show a toast telling the user to complete cancellation on Paddle's page
 
-**7. Update `src/pages/LandingPage.tsx`**
-- The homepage should already be accessible. No changes needed unless there's a rendering issue — will verify the hero section renders properly for crawlers (it uses framer-motion but content is in the DOM).
+This is more reliable and gives users the standard Paddle cancellation experience with confirmation.
 
-### Files affected
-- `src/pages/RefundPage.tsx` (new)
-- `src/App.tsx`
-- `src/pages/TermsPage.tsx`
-- `src/components/Footer.tsx`
-- `src/i18n/locales/sr.json`
-- `src/i18n/locales/en.json`
+### 3. Add debug logging
+
+Add `console.log` for the API key availability check so future issues are easier to diagnose.
 
