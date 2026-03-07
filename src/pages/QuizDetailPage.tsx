@@ -427,9 +427,9 @@ export default function QuizDetailPage() {
                 }}
               >
                 {/* Rank + Team */}
-                <div className={cn("flex items-center gap-1.5", sizeClass === 'size-xs' ? 'p-0.5' : 'p-1')}>
+                <div className={cn("flex items-center gap-2", sizeClass === 'size-xs' ? 'p-0.5' : 'p-1')}>
                   <div className={cn("flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
-                    sizeClass === 'size-lg' ? 'w-8 h-8 text-base' : sizeClass === 'size-md' ? 'w-7 h-7 text-sm' : sizeClass === 'size-sm' ? 'w-6 h-6 text-xs' : 'w-5 h-5 text-[10px]'
+                    sizeClass === 'size-lg' ? 'w-9 h-9 text-lg' : sizeClass === 'size-md' ? 'w-8 h-8 text-base' : sizeClass === 'size-sm' ? 'w-7 h-7 text-sm' : 'w-6 h-6 text-xs'
                   )}>
                     {rowIdx + 1}
                   </div>
@@ -439,7 +439,7 @@ export default function QuizDetailPage() {
                         autoFocus
                         className={cn(
                           "w-full bg-transparent border-b border-primary outline-none font-bold text-foreground",
-                          sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
+                          sizeClass === 'size-lg' ? 'text-xl' : sizeClass === 'size-md' ? 'text-lg' : sizeClass === 'size-sm' ? 'text-base' : 'text-sm'
                         )}
                         value={editingAliasValue}
                         onChange={(e) => setEditingAliasValue(e.target.value)}
@@ -448,8 +448,8 @@ export default function QuizDetailPage() {
                       />
                     ) : (
                       <div className="flex items-center gap-1 group cursor-pointer" onClick={() => canEdit && startEditAlias(team)}>
-                        <p className={cn("font-bold text-foreground break-words leading-tight",
-                          sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
+                        <p className={cn("font-black text-foreground break-words leading-tight",
+                          sizeClass === 'size-lg' ? 'text-xl' : sizeClass === 'size-md' ? 'text-lg' : sizeClass === 'size-sm' ? 'text-base' : 'text-sm'
                         )}>{teamName}</p>
                         {canEdit && <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
                       </div>
