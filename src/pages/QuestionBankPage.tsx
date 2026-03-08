@@ -478,6 +478,7 @@ export default function QuestionBankPage() {
   const removeMedia = () => {
     setFormMediaFile(null);
     setFormMediaType(null);
+    setFormMediaRole(null);
     setFormMediaUrl(null);
   };
 
