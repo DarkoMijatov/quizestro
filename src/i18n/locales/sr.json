@@ -187,10 +187,10 @@
     "addAnyway": "Dodaj ipak",
     "usedIn": "Korišćeno u",
     "statTotal": "Ukupno pitanja",
-    "statByType": "Tekst / Izbor / Pov.",
-    "statUnused": "Neiskorišćena",
-    "statMultiQuiz": "Više kvizova",
-    "statMultiCat": "Više oblasti"
+    "statText": "Tekstualna pitanja",
+    "statMC": "Ponuđeni odgovori",
+    "statMatching": "Povezivanje",
+    "statUnused": "Neiskorišćena"
   },
   "stats": {
     "title": "Statistike", "moreComingSoon": "Detaljnije statistike stižu uskoro.",
