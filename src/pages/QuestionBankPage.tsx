@@ -40,6 +40,7 @@ interface QuestionRow {
   type: QuestionType;
   media_url: string | null;
   media_type: MediaType | null;
+  media_role: MediaRole | null;
   organization_id: string;
   is_deleted: boolean;
   created_at: string;
