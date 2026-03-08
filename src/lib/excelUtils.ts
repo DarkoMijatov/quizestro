@@ -170,9 +170,16 @@ export interface ImportedQuestion {
   pairs: { left: string; right: string }[];
 }
 
+export interface ImportRowError {
+  sheet: string;
+  row: number;
+  message: string;
+}
+
 export interface QuestionImportResult {
   questions: ImportedQuestion[];
   newCategories: string[];
+  errors: ImportRowError[];
 }
 
 export function generateQuestionImportTemplate(lang: 'sr' | 'en' = 'sr') {
