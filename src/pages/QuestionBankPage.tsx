@@ -1221,7 +1221,7 @@ export default function QuestionBankPage() {
                 <Button variant="outline" onClick={() => { setImportDialogOpen(false); setImportResult(null); }}>
                   {t('common.cancel')}
                 </Button>
-                <Button onClick={handleConfirmImport} disabled={importingQuestions}>
+                <Button onClick={handleConfirmImport} disabled={importingQuestions || importResult?.questions.length === 0}>
                   {importingQuestions && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   {importingQuestions ? t('qb.importing') : t('qb.confirmImport')}
                 </Button>
