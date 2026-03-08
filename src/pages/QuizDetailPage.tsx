@@ -80,10 +80,69 @@ export default function QuizDetailPage() {
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
-  const canEdit = currentRole === 'owner' || currentRole === 'admin';
-  
+  // Column resize state
+  const [colWidths, setColWidths] = useState<number[]>([]);
+  const [teamColWidth, setTeamColWidth] = useState(140);
+  const [totalColWidth, setTotalColWidth] = useState(70);
+  const resizingRef = useRef<{ type: 'team' | 'cat' | 'total'; index: number; startX: number; startWidth: number } | null>(null);
 
-  
+  // Initialize column widths when categories change
+  useEffect(() => {
+    if (categories.length > 0 && colWidths.length !== categories.length) {
+      setColWidths(categories.map(() => 90));
+    }
+  }, [categories.length]);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent, type: 'team' | 'cat' | 'total', index: number) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = type === 'team' ? teamColWidth : type === 'total' ? totalColWidth : (colWidths[index] || 90);
+    resizingRef.current = { type, index, startX, startWidth };
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (!resizingRef.current) return;
+      const diff = ev.clientX - resizingRef.current.startX;
+      const newWidth = Math.max(50, resizingRef.current.startWidth + diff);
+
+      if (resizingRef.current.type === 'team') {
+        setTeamColWidth(newWidth);
+      } else if (resizingRef.current.type === 'total') {
+        setTotalColWidth(Math.max(40, resizingRef.current.startWidth + diff));
+      } else {
+        setColWidths(prev => {
+          const next = [...prev];
+          next[resizingRef.current!.index] = newWidth;
+          return next;
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      resizingRef.current = null;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [teamColWidth, totalColWidth, colWidths]);
+
+  const getGridTemplate = useCallback(() => {
+    const catCols = colWidths.length > 0 ? colWidths.map(w => `${w}px`).join(' ') : categories.map(() => '90px').join(' ');
+    return `${teamColWidth}px ${catCols} ${totalColWidth}px`;
+  }, [teamColWidth, colWidths, totalColWidth, categories.length]);
+
+  const ResizeHandle = ({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) => (
+    <div
+      onMouseDown={onMouseDown}
+      className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/40 transition-colors z-20"
+      style={{ transform: 'translateX(50%)' }}
+    />
+  );
 
   const fetchAll = useCallback(async () => {
     if (!quizId || !currentOrg) return;
