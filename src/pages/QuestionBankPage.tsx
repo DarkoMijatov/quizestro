@@ -385,6 +385,7 @@ export default function QuestionBankPage() {
           type: formType,
           media_url: mediaUrl,
           media_type: formMediaType,
+          media_role: formMediaRole,
         }).select('id').single();
 
         if (qErr || !newQ) throw qErr;
