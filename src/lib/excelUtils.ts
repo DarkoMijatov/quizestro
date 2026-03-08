@@ -232,9 +232,10 @@ export function parseQuestionExcel(file: File, existingCategories: string[]): Pr
           let type: 'text' | 'multiple_choice' | 'matching' = 'text';
           if (headers.some(h => h.includes('levo') || h.includes('left'))) {
             type = 'matching';
-          } else if (headers.some(h => h.includes('tačan') || h.includes('correct') || h.includes('tacan'))) {
-            if (headers.filter(h => h.includes('tačan') || h.includes('correct') || h.includes('tacan')).length > 0 &&
-                headers.some(h => h.includes('odgovor') || h.includes('answer'))) {
+          } else {
+            // Multiple choice has multiple "Tačan (1/0)" columns; text has only one "Tačan odgovor"
+            const correctColumns = headers.filter(h => h.includes('tačan') || h.includes('correct') || h.includes('tacan'));
+            if (correctColumns.length >= 2) {
               type = 'multiple_choice';
             }
           }
