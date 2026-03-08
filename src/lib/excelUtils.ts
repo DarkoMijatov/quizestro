@@ -259,6 +259,7 @@ export function parseQuestionExcel(file: File, existingCategories: string[]): Pr
         const wb = XLSX.read(data, { type: 'array' });
         const questions: ImportedQuestion[] = [];
         const allCategoryNames = new Set<string>();
+        const errors: ImportRowError[] = [];
 
         for (const sheetName of wb.SheetNames) {
           const ws = wb.Sheets[sheetName];
@@ -272,7 +273,6 @@ export function parseQuestionExcel(file: File, existingCategories: string[]): Pr
           if (headers.some(h => h.includes('levo') || h.includes('left'))) {
             type = 'matching';
           } else {
-            // Multiple choice has multiple "Tačan (1/0)" columns; text has only one "Tačan odgovor"
             const correctColumns = headers.filter(h => h.includes('tačan') || h.includes('correct') || h.includes('tacan'));
             if (correctColumns.length >= 2) {
               type = 'multiple_choice';
@@ -281,30 +281,57 @@ export function parseQuestionExcel(file: File, existingCategories: string[]): Pr
 
           for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
-            if (!row || !row[0] || !row[1]) continue;
+            const rowNum = i + 1; // Excel row number (1-indexed + header)
+            
+            // Skip completely empty rows
+            if (!row || row.every(cell => !cell || String(cell).trim() === '')) continue;
 
-            const categoryName = String(row[0]).trim();
-            const questionText = String(row[1]).trim();
-            if (!categoryName || !questionText) continue;
+            const categoryName = String(row[0] || '').trim();
+            const questionText = String(row[1] || '').trim();
+
+            // Validate required fields
+            if (!categoryName && !questionText) {
+              errors.push({ sheet: sheetName, row: rowNum, message: 'Missing category and question text' });
+              continue;
+            }
+            if (!categoryName) {
+              errors.push({ sheet: sheetName, row: rowNum, message: 'Missing category' });
+              continue;
+            }
+            if (!questionText) {
+              errors.push({ sheet: sheetName, row: rowNum, message: 'Missing question text' });
+              continue;
+            }
 
             allCategoryNames.add(categoryName);
 
             if (type === 'text') {
               const answer = String(row[2] || '').trim();
+              if (!answer) {
+                errors.push({ sheet: sheetName, row: rowNum, message: 'Missing correct answer' });
+                continue;
+              }
               questions.push({
                 type: 'text',
                 questionText,
                 categoryName,
-                answers: answer ? [{ text: answer, isCorrect: true }] : [],
+                answers: [{ text: answer, isCorrect: true }],
                 pairs: [],
               });
             } else if (type === 'multiple_choice') {
               const answers: { text: string; isCorrect: boolean }[] = [];
-              // Parse pairs: answer, correct flag
               for (let c = 2; c < row.length - 1; c += 2) {
                 const ansText = String(row[c] || '').trim();
                 const isCorrect = Number(row[c + 1]) === 1;
                 if (ansText) answers.push({ text: ansText, isCorrect });
+              }
+              if (answers.length < 2) {
+                errors.push({ sheet: sheetName, row: rowNum, message: 'Multiple choice needs at least 2 answers' });
+                continue;
+              }
+              if (!answers.some(a => a.isCorrect)) {
+                errors.push({ sheet: sheetName, row: rowNum, message: 'No correct answer marked (1)' });
+                continue;
               }
               questions.push({
                 type: 'multiple_choice',
@@ -320,6 +347,10 @@ export function parseQuestionExcel(file: File, existingCategories: string[]): Pr
                 const right = String(row[c + 1] || '').trim();
                 if (left && right) pairs.push({ left, right });
               }
+              if (pairs.length < 2) {
+                errors.push({ sheet: sheetName, row: rowNum, message: 'Matching needs at least 2 pairs' });
+                continue;
+              }
               questions.push({
                 type: 'matching',
                 questionText,
@@ -334,7 +365,7 @@ export function parseQuestionExcel(file: File, existingCategories: string[]): Pr
         const existingLower = new Set(existingCategories.map(c => c.toLowerCase()));
         const newCategories = [...allCategoryNames].filter(c => !existingLower.has(c.toLowerCase()));
 
-        resolve({ questions, newCategories });
+        resolve({ questions, newCategories, errors });
       } catch (err) {
         reject(err);
       }
