@@ -582,7 +582,15 @@ export default function CreateQuizPage() {
               {/* STEP 2: Categories — Dual Panel */}
               {step === 2 && (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">{t('quiz.selectCategories')}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">{t('quiz.selectCategories')}</p>
+                    <p className={cn("text-sm font-medium", selectedCats.length >= maxCategories ? "text-destructive" : "text-muted-foreground")}>
+                      {selectedCats.length} / {maxCategories}
+                    </p>
+                  </div>
+                  {selectedCats.length >= maxCategories && (
+                    <p className="text-xs text-destructive">{t('quiz.maxCategoriesReached', { max: maxCategories })}</p>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Left: Available */}
                     <div className="border border-border rounded-lg p-3 space-y-3">
@@ -601,7 +609,11 @@ export default function CreateQuizPage() {
                           <button
                             key={cat.id}
                             onClick={() => addCategory(cat.id)}
-                            className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-accent text-left text-sm transition-colors"
+                            disabled={selectedCats.length >= maxCategories}
+                            className={cn(
+                              "w-full flex items-center gap-2 p-2 rounded-md text-left text-sm transition-colors",
+                              selectedCats.length >= maxCategories ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"
+                            )}
                           >
                             <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                             <FolderOpen className="h-3.5 w-3.5 text-primary" />
