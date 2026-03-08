@@ -144,6 +144,8 @@ export default function QuizDetailPage() {
     />
   );
 
+  const canEdit = currentRole === 'owner' || currentRole === 'admin';
+
   const fetchAll = useCallback(async () => {
     if (!quizId || !currentOrg) return;
     setLoading(true);
