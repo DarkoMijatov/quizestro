@@ -433,22 +433,23 @@ export default function QuizDetailPage() {
             color: currentOrg?.branding_text_color || undefined,
           }}
         >
-          <div style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
+          <div style={{ minWidth: `${teamColWidth + colWidths.reduce((a, b) => a + b, 0) + totalColWidth}px` }}>
           {/* Header row */}
           <div
             className="grid border-b-2 border-foreground/20 sticky top-0 z-10"
             style={{
-              gridTemplateColumns: `140px ${categories.map(() => '1fr').join(' ')} 70px`,
+              gridTemplateColumns: getGridTemplate(),
               backgroundColor: currentOrg?.branding_header_color || undefined,
             }}
           >
-            <div className={cn("p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}
+            <div className={cn("p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center relative", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}
               style={{ color: currentOrg?.branding_text_color || undefined }}
             >
               {t('scoring.team')}
+              <ResizeHandle onMouseDown={(e) => handleResizeStart(e, 'team', 0)} />
             </div>
             {categories.map((cat, catIdx) => (
-              <div key={cat.id} className={cn("p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center gap-0.5", sizeClass === 'size-xs' ? 'text-[9px]' : 'text-[10px]')}
+              <div key={cat.id} className={cn("p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center gap-0.5 relative", sizeClass === 'size-xs' ? 'text-[9px]' : 'text-[10px]')}
                 style={{ color: currentOrg?.branding_text_color || undefined }}
               >
                 {canReorder && categories.length > 1 && (
@@ -462,9 +463,10 @@ export default function QuizDetailPage() {
                   </div>
                 )}
                 {(cat.category as any)?.name || cat.category_id}
+                <ResizeHandle onMouseDown={(e) => handleResizeStart(e, 'cat', catIdx)} />
               </div>
             ))}
-            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}
+            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center relative", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}
               style={{ color: currentOrg?.branding_text_color || undefined }}
             >
               Σ
