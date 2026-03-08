@@ -74,7 +74,6 @@ export default function LandingPage() {
     { icon: Users, key: 'teams' },
     { icon: Trophy, key: 'leagues' },
     { icon: BarChart3, key: 'stats' },
-    { icon: HelpCircle, key: 'helps' },
     { icon: Share2, key: 'export' },
     { icon: BookOpen, key: 'questionBank' },
   ];
