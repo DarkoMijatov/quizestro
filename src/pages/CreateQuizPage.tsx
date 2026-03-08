@@ -171,8 +171,12 @@ export default function CreateQuizPage() {
     setLeaguePrefillApplied(true);
   };
 
+  const maxCategories = currentOrg?.default_categories_count ?? 6;
+
   const addCategory = (id: string) => {
-    if (!selectedCats.includes(id)) setSelectedCats(prev => [...prev, id]);
+    if (!selectedCats.includes(id) && selectedCats.length < maxCategories) {
+      setSelectedCats(prev => [...prev, id]);
+    }
   };
   const removeCategory = (id: string) => {
     setSelectedCats(prev => prev.filter(c => c !== id));
