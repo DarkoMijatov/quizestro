@@ -23,10 +23,12 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import {
   BookOpen, Plus, Eye, Pencil, Trash2, Loader2, Upload, X,
   FileText, ListChecks, Link2, Image, Video, Music,
-  HelpCircle, Hash,
+  HelpCircle, Hash, Check, ChevronsUpDown, Search,
 } from 'lucide-react';
 
 type QuestionType = 'text' | 'multiple_choice' | 'matching';
