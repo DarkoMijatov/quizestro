@@ -95,7 +95,6 @@ export default function OnboardingPage() {
     navigate("/dashboard");
   };
 
-  const { memberships } = useOrganizations();
   const isOwnerOfAny = memberships.some((m) => m.role === 'owner');
 
   // Show org picker if user has multiple orgs without saved preference
