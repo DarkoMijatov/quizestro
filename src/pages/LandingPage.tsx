@@ -10,7 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { CookieBanner } from '@/components/CookieBanner';
-import { Users, BarChart3, Zap, HelpCircle, Share2, Check, ArrowRight, Trophy, UserPlus, FolderOpen, PlayCircle, TrendingUp, Send, Loader2, MessageCircle, BookOpen } from 'lucide-react';
+import { Users, BarChart3, Zap, Share2, Check, ArrowRight, Trophy, UserPlus, FolderOpen, PlayCircle, TrendingUp, Send, Loader2, MessageCircle, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import heroBg from '@/assets/hero-bg.jpg';
 
