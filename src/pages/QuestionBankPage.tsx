@@ -782,7 +782,25 @@ export default function QuestionBankPage() {
               )}
             </div>
 
-            {/* Answers (text / multiple choice) */}
+            {/* Media Role */}
+            {formMediaUrl && (
+              <div className="space-y-2">
+                <Label>{t('qb.mediaRole')}</Label>
+                <Select value={formMediaRole || ''} onValueChange={(v) => setFormMediaRole(v as MediaRole)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('qb.selectMediaRole')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="supplementary">{t('qb.mediaRoleSupplementary')}</SelectItem>
+                    <SelectItem value="key">{t('qb.mediaRoleKey')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {formMediaRole === 'key' ? t('qb.mediaRoleKeyHint') : t('qb.mediaRoleSupplementaryHint')}
+                </p>
+              </div>
+            )}
+
             {(formType === 'text' || formType === 'multiple_choice') && (
               <div className="space-y-2">
                 <Label>{formType === 'text' ? t('qb.correctAnswer') : t('qb.answers')}</Label>
