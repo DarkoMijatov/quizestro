@@ -1142,6 +1142,77 @@ export default function QuestionBankPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import Preview Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={(o) => { if (!o) { setImportDialogOpen(false); setImportResult(null); } }}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('qb.importTitle')}</DialogTitle>
+            <DialogDescription>{t('qb.importDesc')}</DialogDescription>
+          </DialogHeader>
+          {importResult && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <FileSpreadsheet className="h-4 w-4 text-primary" />
+                {importResult.questions.length} {t('qb.questionsToImport')}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {(['text', 'multiple_choice', 'matching'] as const).map(type => {
+                  const count = importResult.questions.filter(q => q.type === type).length;
+                  if (count === 0) return null;
+                  return (
+                    <div key={type} className="flex items-center gap-1.5 text-sm border border-border rounded-md px-3 py-2">
+                      {type === 'text' ? <FileText className="h-3.5 w-3.5 text-primary" /> :
+                       type === 'multiple_choice' ? <ListChecks className="h-3.5 w-3.5 text-primary" /> :
+                       <Link2 className="h-3.5 w-3.5 text-primary" />}
+                      <span>{count} {t(`qb.type_${type}`)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {importResult.newCategories.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-primary">{t('qb.newCategoriesWillCreate')}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {importResult.newCategories.map(c => (
+                      <Badge key={c} variant="secondary">{c}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="border border-border rounded-md max-h-48 overflow-y-auto">
+                {importResult.questions.slice(0, 20).map((q, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 text-sm border-b border-border last:border-0">
+                    {q.type === 'text' ? <FileText className="h-3 w-3 text-muted-foreground shrink-0" /> :
+                     q.type === 'multiple_choice' ? <ListChecks className="h-3 w-3 text-muted-foreground shrink-0" /> :
+                     <Link2 className="h-3 w-3 text-muted-foreground shrink-0" />}
+                    <span className="truncate flex-1">{q.questionText}</span>
+                    <Badge variant="outline" className="text-[10px] shrink-0">{q.categoryName}</Badge>
+                  </div>
+                ))}
+                {importResult.questions.length > 20 && (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    +{importResult.questions.length - 20} ...
+                  </p>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setImportDialogOpen(false); setImportResult(null); }}>
+                  {t('common.cancel')}
+                </Button>
+                <Button onClick={handleConfirmImport} disabled={importingQuestions}>
+                  {importingQuestions && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {importingQuestions ? t('qb.importing') : t('qb.confirmImport')}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
