@@ -14,8 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      answers: {
+        Row: {
+          answer_text: string
+          created_at: string
+          id: string
+          is_correct: boolean
+          organization_id: string
+          question_id: string
+          sort_order: number
+        }
+        Insert: {
+          answer_text: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          organization_id: string
+          question_id: string
+          sort_order?: number
+        }
+        Update: {
+          answer_text?: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          organization_id?: string
+          question_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
+          code: string | null
           created_at: string
           id: string
           is_default: boolean
@@ -25,6 +71,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          code?: string | null
           created_at?: string
           id?: string
           is_default?: boolean
@@ -34,6 +81,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          code?: string | null
           created_at?: string
           id?: string
           is_default?: boolean
@@ -295,6 +343,51 @@ export type Database = {
           },
         ]
       }
+      matching_pairs: {
+        Row: {
+          created_at: string
+          id: string
+          left_value: string
+          organization_id: string
+          question_id: string
+          right_value: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          left_value: string
+          organization_id: string
+          question_id: string
+          right_value: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          left_value?: string
+          organization_id?: string
+          question_id?: string
+          right_value?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matching_pairs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matching_pairs_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memberships: {
         Row: {
           created_at: string
@@ -482,6 +575,99 @@ export type Database = {
         }
         Relationships: []
       }
+      question_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          question_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          question_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_categories_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_categories_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_deleted: boolean
+          media_type: Database["public"]["Enums"]["media_type"] | null
+          media_url: string | null
+          organization_id: string
+          question_text: string
+          type: Database["public"]["Enums"]["question_type"]
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          media_type?: Database["public"]["Enums"]["media_type"] | null
+          media_url?: string | null
+          organization_id: string
+          question_text: string
+          type?: Database["public"]["Enums"]["question_type"]
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          media_type?: Database["public"]["Enums"]["media_type"] | null
+          media_url?: string | null
+          organization_id?: string
+          question_text?: string
+          type?: Database["public"]["Enums"]["question_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_categories: {
         Row: {
           category_id: string
@@ -524,6 +710,65 @@ export type Database = {
           },
           {
             foreignKeyName: "quiz_categories_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          question_id: string
+          question_order: number
+          quiz_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          question_id: string
+          question_order?: number
+          quiz_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          question_id?: string
+          question_order?: number
+          quiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
             columns: ["quiz_id"]
             isOneToOne: false
             referencedRelation: "quizzes"
@@ -588,6 +833,7 @@ export type Database = {
       }
       quizzes: {
         Row: {
+          code: string | null
           created_at: string
           created_by: string | null
           date: string
@@ -603,6 +849,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          code?: string | null
           created_at?: string
           created_by?: string | null
           date?: string
@@ -618,6 +865,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          code?: string | null
           created_at?: string
           created_by?: string | null
           date?: string
@@ -840,9 +1088,12 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      next_question_id: { Args: never; Returns: number }
     }
     Enums: {
+      media_type: "image" | "video" | "audio"
       org_role: "owner" | "admin" | "user"
+      question_type: "text" | "multiple_choice" | "matching"
       quiz_status: "draft" | "live" | "finished"
     }
     CompositeTypes: {
@@ -971,7 +1222,9 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      media_type: ["image", "video", "audio"],
       org_role: ["owner", "admin", "user"],
+      question_type: ["text", "multiple_choice", "matching"],
       quiz_status: ["draft", "live", "finished"],
     },
   },
