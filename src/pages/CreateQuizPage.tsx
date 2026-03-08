@@ -171,8 +171,12 @@ export default function CreateQuizPage() {
     setLeaguePrefillApplied(true);
   };
 
+  const maxCategories = currentOrg?.default_categories_count ?? 6;
+
   const addCategory = (id: string) => {
-    if (!selectedCats.includes(id)) setSelectedCats(prev => [...prev, id]);
+    if (!selectedCats.includes(id) && selectedCats.length < maxCategories) {
+      setSelectedCats(prev => [...prev, id]);
+    }
   };
   const removeCategory = (id: string) => {
     setSelectedCats(prev => prev.filter(c => c !== id));
@@ -578,7 +582,15 @@ export default function CreateQuizPage() {
               {/* STEP 2: Categories — Dual Panel */}
               {step === 2 && (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">{t('quiz.selectCategories')}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">{t('quiz.selectCategories')}</p>
+                    <p className={cn("text-sm font-medium", selectedCats.length >= maxCategories ? "text-destructive" : "text-muted-foreground")}>
+                      {selectedCats.length} / {maxCategories}
+                    </p>
+                  </div>
+                  {selectedCats.length >= maxCategories && (
+                    <p className="text-xs text-destructive">{t('quiz.maxCategoriesReached', { max: maxCategories })}</p>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Left: Available */}
                     <div className="border border-border rounded-lg p-3 space-y-3">
@@ -597,7 +609,11 @@ export default function CreateQuizPage() {
                           <button
                             key={cat.id}
                             onClick={() => addCategory(cat.id)}
-                            className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-accent text-left text-sm transition-colors"
+                            disabled={selectedCats.length >= maxCategories}
+                            className={cn(
+                              "w-full flex items-center gap-2 p-2 rounded-md text-left text-sm transition-colors",
+                              selectedCats.length >= maxCategories ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"
+                            )}
                           >
                             <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                             <FolderOpen className="h-3.5 w-3.5 text-primary" />
@@ -621,7 +637,7 @@ export default function CreateQuizPage() {
 
                     {/* Right: Selected (ordered) */}
                     <div className="border border-border rounded-lg p-3 space-y-3">
-                      <h4 className="text-sm font-semibold text-muted-foreground">{t('quiz.selectedCategories')} ({selectedCats.length})</h4>
+                      <h4 className="text-sm font-semibold text-muted-foreground">{t('quiz.selectedCategories')} ({selectedCats.length}/{maxCategories})</h4>
                       <div className="space-y-1 max-h-72 overflow-y-auto">
                         {selectedCats.map((id, idx) => {
                           const cat = categories.find(c => c.id === id);

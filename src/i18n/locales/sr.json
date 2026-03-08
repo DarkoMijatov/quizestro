@@ -99,6 +99,7 @@
     "searchCategories": "Pretražite kategorije...",
     "createCategoryPrompt": "Nema rezultata. Kreirajte \"{{name}}\"?",
     "categoryAdded": "Kategorija dodata",
+    "maxCategoriesReached": "Dostignut je maksimalan broj kategorija ({{max}}) prema podešavanjima organizacije",
     "selectTeams": "Izaberite timove koji učestvuju",
     "availableTeams": "Dostupni",
     "selectedTeams": "Izabrani",
