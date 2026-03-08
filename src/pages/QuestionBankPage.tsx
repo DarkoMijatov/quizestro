@@ -231,6 +231,7 @@ export default function QuestionBankPage() {
     setFormQuizId(q.quizzes[0]?.id || '');
     setFormMediaFile(null);
     setFormMediaType(q.media_type);
+    setFormMediaRole((q as any).media_role || null);
     setFormMediaUrl(q.media_url);
 
     // Fetch answers/pairs
