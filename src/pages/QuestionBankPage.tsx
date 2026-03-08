@@ -311,6 +311,7 @@ export default function QuestionBankPage() {
           type: formType,
           media_url: mediaUrl,
           media_type: formMediaType,
+          media_role: formMediaRole,
         }).eq('id', editing.id);
 
         // Update categories - delete old, insert new
