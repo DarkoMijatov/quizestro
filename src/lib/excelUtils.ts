@@ -159,3 +159,147 @@ export function parseQuizExcel(file: File): Promise<ImportResult> {
     reader.readAsArrayBuffer(file);
   });
 }
+
+// ========== Question Bank Import ==========
+
+export interface ImportedQuestion {
+  type: 'text' | 'multiple_choice' | 'matching';
+  questionText: string;
+  categoryName: string;
+  answers: { text: string; isCorrect: boolean }[];
+  pairs: { left: string; right: string }[];
+}
+
+export interface QuestionImportResult {
+  questions: ImportedQuestion[];
+  newCategories: string[];
+}
+
+export function generateQuestionImportTemplate() {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Text questions
+  const textData: (string | number)[][] = [
+    ['Kategorija', 'Tekst pitanja', 'Tačan odgovor'],
+    ['Istorija', 'Ko je bio prvi predsednik SAD?', 'Džordž Vašington'],
+    ['Geografija', 'Koji je glavni grad Francuske?', 'Pariz'],
+  ];
+  const wsText = XLSX.utils.aoa_to_sheet(textData);
+  wsText['!cols'] = [{ wch: 18 }, { wch: 45 }, { wch: 30 }];
+  XLSX.utils.book_append_sheet(wb, wsText, 'Tekstualna');
+
+  // Sheet 2: Multiple choice
+  const mcData: (string | number)[][] = [
+    ['Kategorija', 'Tekst pitanja', 'Odgovor 1', 'Tačan (1/0)', 'Odgovor 2', 'Tačan (1/0)', 'Odgovor 3', 'Tačan (1/0)', 'Odgovor 4', 'Tačan (1/0)'],
+    ['Nauka', 'Koji planet je najbliži Suncu?', 'Merkur', 1, 'Venera', 0, 'Zemlja', 0, 'Mars', 0],
+    ['Sport', 'Koliko igrača ima fudbalski tim?', '9', 0, '10', 0, '11', 1, '12', 0],
+  ];
+  const wsMC = XLSX.utils.aoa_to_sheet(mcData);
+  wsMC['!cols'] = [{ wch: 18 }, { wch: 40 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 10 }];
+  XLSX.utils.book_append_sheet(wb, wsMC, 'Ponudjeni odgovori');
+
+  // Sheet 3: Matching
+  const matchData: (string | number)[][] = [
+    ['Kategorija', 'Tekst pitanja', 'Levo 1', 'Desno 1', 'Levo 2', 'Desno 2', 'Levo 3', 'Desno 3', 'Levo 4', 'Desno 4'],
+    ['Geografija', 'Poveži državu sa glavnim gradom', 'Srbija', 'Beograd', 'Hrvatska', 'Zagreb', 'Slovenija', 'Ljubljana', '', ''],
+    ['Istorija', 'Poveži bitku sa godinom', 'Kosovska bitka', '1389', 'Mohačka bitka', '1526', '', '', '', ''],
+  ];
+  const wsMatch = XLSX.utils.aoa_to_sheet(matchData);
+  wsMatch['!cols'] = [{ wch: 18 }, { wch: 40 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, wsMatch, 'Povezivanje');
+
+  XLSX.writeFile(wb, 'question_import_template.xlsx');
+}
+
+export function parseQuestionExcel(file: File, existingCategories: string[]): Promise<QuestionImportResult> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const wb = XLSX.read(data, { type: 'array' });
+        const questions: ImportedQuestion[] = [];
+        const allCategoryNames = new Set<string>();
+
+        for (const sheetName of wb.SheetNames) {
+          const ws = wb.Sheets[sheetName];
+          const rows: (string | number)[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+          if (rows.length < 2) continue;
+
+          // Detect type based on headers
+          const headers = rows[0].map(h => String(h || '').toLowerCase().trim());
+          
+          let type: 'text' | 'multiple_choice' | 'matching' = 'text';
+          if (headers.some(h => h.includes('levo') || h.includes('left'))) {
+            type = 'matching';
+          } else if (headers.some(h => h.includes('tačan') || h.includes('correct') || h.includes('tacan'))) {
+            if (headers.filter(h => h.includes('tačan') || h.includes('correct') || h.includes('tacan')).length > 0 &&
+                headers.some(h => h.includes('odgovor') || h.includes('answer'))) {
+              type = 'multiple_choice';
+            }
+          }
+
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || !row[0] || !row[1]) continue;
+
+            const categoryName = String(row[0]).trim();
+            const questionText = String(row[1]).trim();
+            if (!categoryName || !questionText) continue;
+
+            allCategoryNames.add(categoryName);
+
+            if (type === 'text') {
+              const answer = String(row[2] || '').trim();
+              questions.push({
+                type: 'text',
+                questionText,
+                categoryName,
+                answers: answer ? [{ text: answer, isCorrect: true }] : [],
+                pairs: [],
+              });
+            } else if (type === 'multiple_choice') {
+              const answers: { text: string; isCorrect: boolean }[] = [];
+              // Parse pairs: answer, correct flag
+              for (let c = 2; c < row.length - 1; c += 2) {
+                const ansText = String(row[c] || '').trim();
+                const isCorrect = Number(row[c + 1]) === 1;
+                if (ansText) answers.push({ text: ansText, isCorrect });
+              }
+              questions.push({
+                type: 'multiple_choice',
+                questionText,
+                categoryName,
+                answers,
+                pairs: [],
+              });
+            } else if (type === 'matching') {
+              const pairs: { left: string; right: string }[] = [];
+              for (let c = 2; c < row.length - 1; c += 2) {
+                const left = String(row[c] || '').trim();
+                const right = String(row[c + 1] || '').trim();
+                if (left && right) pairs.push({ left, right });
+              }
+              questions.push({
+                type: 'matching',
+                questionText,
+                categoryName,
+                answers: [],
+                pairs,
+              });
+            }
+          }
+        }
+
+        const existingLower = new Set(existingCategories.map(c => c.toLowerCase()));
+        const newCategories = [...allCategoryNames].filter(c => !existingLower.has(c.toLowerCase()));
+
+        resolve({ questions, newCategories });
+      } catch (err) {
+        reject(err);
+      }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsArrayBuffer(file);
+  });
+}

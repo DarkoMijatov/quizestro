@@ -209,7 +209,18 @@
     "allQuizzes": "Svi kvizovi",
     "allQuestions": "Sva pitanja",
     "usedOnly": "Korišćena",
-    "unusedOnly": "Nekorišćena"
+    "unusedOnly": "Nekorišćena",
+    "importTitle": "Uvoz pitanja iz Excel-a",
+    "importDesc": "Uvezite pitanja iz Excel fajla. Koristite šablon za ispravan format.",
+    "downloadTemplate": "Preuzmi šablon",
+    "importQuestions": "Uvezi pitanja",
+    "importSuccess": "Pitanja uspešno uvezena!",
+    "importError": "Greška pri uvozu",
+    "importPreview": "Pregled uvoza",
+    "questionsToImport": "pitanja za uvoz",
+    "newCategoriesWillCreate": "Nove kategorije koje će biti kreirane:",
+    "confirmImport": "Potvrdi uvoz",
+    "importing": "Uvoz u toku..."
   },
   "stats": {
     "title": "Statistike", "moreComingSoon": "Detaljnije statistike stižu uskoro.",
