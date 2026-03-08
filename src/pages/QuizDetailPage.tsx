@@ -487,7 +487,7 @@ export default function QuizDetailPage() {
                   rowIdx === 0 && 'bg-primary/[0.04]',
                 )}
                 style={{
-                  gridTemplateColumns: `140px ${categories.map(() => '1fr').join(' ')} 70px`,
+                  gridTemplateColumns: getGridTemplate(),
                 }}
               >
                 {/* Rank + Team */}
@@ -512,9 +512,12 @@ export default function QuizDetailPage() {
                       />
                     ) : (
                       <div className="flex items-center gap-1 group cursor-pointer" onClick={() => canEdit && startEditAlias(team)}>
-                        <p className={cn("font-bold text-foreground break-words leading-tight",
-                          sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
-                        )}>{teamName}</p>
+                        <AutoFitText
+                          text={teamName}
+                          className="flex-1"
+                          minFontSize={8}
+                          maxFontSize={sizeClass === 'size-lg' ? 20 : sizeClass === 'size-md' ? 16 : 12}
+                        />
                         {canEdit && <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
                       </div>
                     )}
