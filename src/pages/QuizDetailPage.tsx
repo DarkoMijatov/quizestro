@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { exportQuizToExcel } from '@/lib/excelUtils';
 import { QuizDraftManager } from '@/components/QuizDraftManager';
+import { AutoFitText } from '@/components/AutoFitText';
 
 interface QuizData {
   id: string;
@@ -79,10 +80,71 @@ export default function QuizDetailPage() {
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
-  const canEdit = currentRole === 'owner' || currentRole === 'admin';
-  
+  // Column resize state
+  const [colWidths, setColWidths] = useState<number[]>([]);
+  const [teamColWidth, setTeamColWidth] = useState(140);
+  const [totalColWidth, setTotalColWidth] = useState(70);
+  const resizingRef = useRef<{ type: 'team' | 'cat' | 'total'; index: number; startX: number; startWidth: number } | null>(null);
 
-  
+  // Initialize column widths when categories change
+  useEffect(() => {
+    if (categories.length > 0 && colWidths.length !== categories.length) {
+      setColWidths(categories.map(() => 90));
+    }
+  }, [categories.length]);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent, type: 'team' | 'cat' | 'total', index: number) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = type === 'team' ? teamColWidth : type === 'total' ? totalColWidth : (colWidths[index] || 90);
+    resizingRef.current = { type, index, startX, startWidth };
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (!resizingRef.current) return;
+      const diff = ev.clientX - resizingRef.current.startX;
+      const newWidth = Math.max(50, resizingRef.current.startWidth + diff);
+
+      if (resizingRef.current.type === 'team') {
+        setTeamColWidth(newWidth);
+      } else if (resizingRef.current.type === 'total') {
+        setTotalColWidth(Math.max(40, resizingRef.current.startWidth + diff));
+      } else {
+        setColWidths(prev => {
+          const next = [...prev];
+          next[resizingRef.current!.index] = newWidth;
+          return next;
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      resizingRef.current = null;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [teamColWidth, totalColWidth, colWidths]);
+
+  const getGridTemplate = useCallback(() => {
+    const catCols = colWidths.length > 0 ? colWidths.map(w => `${w}px`).join(' ') : categories.map(() => '90px').join(' ');
+    return `${teamColWidth}px ${catCols} ${totalColWidth}px`;
+  }, [teamColWidth, colWidths, totalColWidth, categories.length]);
+
+  const ResizeHandle = ({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) => (
+    <div
+      onMouseDown={onMouseDown}
+      className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/40 transition-colors z-20"
+      style={{ transform: 'translateX(50%)' }}
+    />
+  );
+
+  const canEdit = currentRole === 'owner' || currentRole === 'admin';
 
   const fetchAll = useCallback(async () => {
     if (!quizId || !currentOrg) return;
@@ -371,22 +433,23 @@ export default function QuizDetailPage() {
             color: currentOrg?.branding_text_color || undefined,
           }}
         >
-          <div style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
+          <div style={{ minWidth: `${teamColWidth + colWidths.reduce((a, b) => a + b, 0) + totalColWidth}px` }}>
           {/* Header row */}
           <div
             className="grid border-b-2 border-foreground/20 sticky top-0 z-10"
             style={{
-              gridTemplateColumns: `140px ${categories.map(() => '1fr').join(' ')} 70px`,
+              gridTemplateColumns: getGridTemplate(),
               backgroundColor: currentOrg?.branding_header_color || undefined,
             }}
           >
-            <div className={cn("p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}
+            <div className={cn("p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center relative", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}
               style={{ color: currentOrg?.branding_text_color || undefined }}
             >
               {t('scoring.team')}
+              <ResizeHandle onMouseDown={(e) => handleResizeStart(e, 'team', 0)} />
             </div>
             {categories.map((cat, catIdx) => (
-              <div key={cat.id} className={cn("p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center gap-0.5", sizeClass === 'size-xs' ? 'text-[9px]' : 'text-[10px]')}
+              <div key={cat.id} className={cn("p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center gap-0.5 relative", sizeClass === 'size-xs' ? 'text-[9px]' : 'text-[10px]')}
                 style={{ color: currentOrg?.branding_text_color || undefined }}
               >
                 {canReorder && categories.length > 1 && (
@@ -400,9 +463,10 @@ export default function QuizDetailPage() {
                   </div>
                 )}
                 {(cat.category as any)?.name || cat.category_id}
+                <ResizeHandle onMouseDown={(e) => handleResizeStart(e, 'cat', catIdx)} />
               </div>
             ))}
-            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}
+            <div className={cn("p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center relative", sizeClass === 'size-xs' ? 'text-[10px]' : 'text-xs')}
               style={{ color: currentOrg?.branding_text_color || undefined }}
             >
               Σ
@@ -423,7 +487,7 @@ export default function QuizDetailPage() {
                   rowIdx === 0 && 'bg-primary/[0.04]',
                 )}
                 style={{
-                  gridTemplateColumns: `140px ${categories.map(() => '1fr').join(' ')} 70px`,
+                  gridTemplateColumns: getGridTemplate(),
                 }}
               >
                 {/* Rank + Team */}
@@ -448,9 +512,12 @@ export default function QuizDetailPage() {
                       />
                     ) : (
                       <div className="flex items-center gap-1 group cursor-pointer" onClick={() => canEdit && startEditAlias(team)}>
-                        <p className={cn("font-bold text-foreground break-words leading-tight",
-                          sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
-                        )}>{teamName}</p>
+                        <AutoFitText
+                          text={teamName}
+                          className="flex-1"
+                          minFontSize={8}
+                          maxFontSize={sizeClass === 'size-lg' ? 20 : sizeClass === 'size-md' ? 16 : 12}
+                        />
                         {canEdit && <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
                       </div>
                     )}
