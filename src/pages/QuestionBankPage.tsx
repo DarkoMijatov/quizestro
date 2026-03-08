@@ -491,7 +491,101 @@ export default function QuestionBankPage() {
     setFormMediaUrl(null);
   };
 
-  // Answer helpers
+  // Import handlers
+  const handleImportFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const existingCatNames = categories.map(c => c.name);
+      const result = await parseQuestionExcel(file, existingCatNames);
+      setImportResult(result);
+      setImportDialogOpen(true);
+    } catch (err: any) {
+      toast({ title: t('qb.importError'), description: err.message, variant: 'destructive' });
+    }
+    if (importFileRef.current) importFileRef.current.value = '';
+  };
+
+  const handleConfirmImport = async () => {
+    if (!importResult || !currentOrg) return;
+    setImportingQuestions(true);
+    try {
+      // 1. Create new categories
+      const catMap = new Map<string, string>();
+      for (const c of categories) catMap.set(c.name.toLowerCase(), c.id);
+
+      for (const newCat of importResult.newCategories) {
+        const { data } = await supabase.from('categories').insert({
+          name: newCat, organization_id: currentOrg.id,
+        }).select('id').single();
+        if (data) catMap.set(newCat.toLowerCase(), data.id);
+      }
+
+      // 2. Import each question
+      for (const q of importResult.questions) {
+        const catId = catMap.get(q.categoryName.toLowerCase());
+        if (!catId) continue;
+
+        const catObj = categories.find(c => c.id === catId);
+        const catCode = catObj?.code || catObj?.name?.substring(0, 3).toUpperCase() || 'GEN';
+        const { data: seqData } = await supabase.rpc('next_question_id');
+        const globalId = seqData || Date.now();
+        const code = `${catCode}-GEN-${globalId}`;
+
+        const { data: newQ, error: qErr } = await supabase.from('questions').insert({
+          organization_id: currentOrg.id,
+          code,
+          question_text: q.questionText,
+          type: q.type,
+        }).select('id').single();
+
+        if (qErr || !newQ) continue;
+
+        // Link category
+        await supabase.from('question_categories').insert({
+          question_id: newQ.id,
+          category_id: catId,
+          organization_id: currentOrg.id,
+        });
+
+        // Insert answers
+        if ((q.type === 'text' || q.type === 'multiple_choice') && q.answers.length > 0) {
+          await supabase.from('answers').insert(
+            q.answers.map((a, i) => ({
+              question_id: newQ.id,
+              answer_text: a.text,
+              is_correct: a.isCorrect,
+              sort_order: i,
+              organization_id: currentOrg.id,
+            }))
+          );
+        }
+
+        // Insert matching pairs
+        if (q.type === 'matching' && q.pairs.length > 0) {
+          await supabase.from('matching_pairs').insert(
+            q.pairs.map((p, i) => ({
+              question_id: newQ.id,
+              left_value: p.left,
+              right_value: p.right,
+              sort_order: i,
+              organization_id: currentOrg.id,
+            }))
+          );
+        }
+      }
+
+      toast({ title: '✓', description: t('qb.importSuccess') });
+      setImportDialogOpen(false);
+      setImportResult(null);
+      fetchAll();
+    } catch (err: any) {
+      toast({ title: t('qb.importError'), description: err?.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setImportingQuestions(false);
+    }
+  };
+
   const addAnswer = () => setFormAnswers([...formAnswers, { answer_text: '', is_correct: false }]);
   const removeAnswer = (idx: number) => setFormAnswers(formAnswers.filter((_, i) => i !== idx));
   const updateAnswer = (idx: number, field: keyof AnswerInput, value: any) => {
