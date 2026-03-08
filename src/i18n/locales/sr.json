@@ -190,7 +190,13 @@
     "statText": "Tekstualna pitanja",
     "statMC": "Ponuđeni odgovori",
     "statMatching": "Povezivanje",
-    "statUnused": "Neiskorišćena"
+    "statUnused": "Neiskorišćena",
+    "mediaRole": "Uloga medija",
+    "selectMediaRole": "Izaberite ulogu medija",
+    "mediaRoleSupplementary": "Propratni sadržaj",
+    "mediaRoleKey": "Ključ pitanja",
+    "mediaRoleSupplementaryHint": "Medij je propratni sadržaj — pitanje funkcioniše i bez njega",
+    "mediaRoleKeyHint": "Medij je ključ pitanja — npr. prepoznaj ličnost sa slike, pogodi pesmu iz audio snimka"
   },
   "stats": {
     "title": "Statistike", "moreComingSoon": "Detaljnije statistike stižu uskoro.",

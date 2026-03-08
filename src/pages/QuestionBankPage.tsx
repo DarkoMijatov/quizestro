@@ -31,6 +31,7 @@ import {
 
 type QuestionType = 'text' | 'multiple_choice' | 'matching';
 type MediaType = 'image' | 'video' | 'audio';
+type MediaRole = 'supplementary' | 'key';
 
 interface QuestionRow {
   id: string;
@@ -39,6 +40,7 @@ interface QuestionRow {
   type: QuestionType;
   media_url: string | null;
   media_type: MediaType | null;
+  media_role: MediaRole | null;
   organization_id: string;
   is_deleted: boolean;
   created_at: string;
@@ -100,6 +102,7 @@ export default function QuestionBankPage() {
   const [formPairs, setFormPairs] = useState<MatchingPairInput[]>([{ left_value: '', right_value: '' }]);
   const [formMediaFile, setFormMediaFile] = useState<File | null>(null);
   const [formMediaType, setFormMediaType] = useState<MediaType | null>(null);
+  const [formMediaRole, setFormMediaRole] = useState<MediaRole | null>(null);
   const [formMediaUrl, setFormMediaUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -214,6 +217,7 @@ export default function QuestionBankPage() {
     setFormPairs([{ left_value: '', right_value: '' }]);
     setFormMediaFile(null);
     setFormMediaType(null);
+    setFormMediaRole(null);
     setFormMediaUrl(null);
     setDialogOpen(true);
   };
@@ -227,6 +231,7 @@ export default function QuestionBankPage() {
     setFormQuizId(q.quizzes[0]?.id || '');
     setFormMediaFile(null);
     setFormMediaType(q.media_type);
+    setFormMediaRole((q as any).media_role || null);
     setFormMediaUrl(q.media_url);
 
     // Fetch answers/pairs
@@ -306,6 +311,7 @@ export default function QuestionBankPage() {
           type: formType,
           media_url: mediaUrl,
           media_type: formMediaType,
+          media_role: formMediaRole,
         }).eq('id', editing.id);
 
         // Update categories - delete old, insert new
@@ -379,6 +385,7 @@ export default function QuestionBankPage() {
           type: formType,
           media_url: mediaUrl,
           media_type: formMediaType,
+          media_role: formMediaRole,
         }).select('id').single();
 
         if (qErr || !newQ) throw qErr;
@@ -471,6 +478,7 @@ export default function QuestionBankPage() {
   const removeMedia = () => {
     setFormMediaFile(null);
     setFormMediaType(null);
+    setFormMediaRole(null);
     setFormMediaUrl(null);
   };
 
@@ -774,7 +782,25 @@ export default function QuestionBankPage() {
               )}
             </div>
 
-            {/* Answers (text / multiple choice) */}
+            {/* Media Role */}
+            {formMediaUrl && (
+              <div className="space-y-2">
+                <Label>{t('qb.mediaRole')}</Label>
+                <Select value={formMediaRole || ''} onValueChange={(v) => setFormMediaRole(v as MediaRole)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('qb.selectMediaRole')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="supplementary">{t('qb.mediaRoleSupplementary')}</SelectItem>
+                    <SelectItem value="key">{t('qb.mediaRoleKey')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {formMediaRole === 'key' ? t('qb.mediaRoleKeyHint') : t('qb.mediaRoleSupplementaryHint')}
+                </p>
+              </div>
+            )}
+
             {(formType === 'text' || formType === 'multiple_choice') && (
               <div className="space-y-2">
                 <Label>{formType === 'text' ? t('qb.correctAnswer') : t('qb.answers')}</Label>
