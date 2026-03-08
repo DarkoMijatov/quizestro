@@ -26,7 +26,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import {
   BookOpen, Plus, Eye, Pencil, Trash2, Loader2, Upload, X,
   FileText, ListChecks, Link2, Image, Video, Music,
-  HelpCircle, BarChart3, Layers, Hash,
+  HelpCircle, Hash,
 } from 'lucide-react';
 
 type QuestionType = 'text' | 'multiple_choice' | 'matching';
