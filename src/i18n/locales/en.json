@@ -204,7 +204,10 @@
     "filterType": "Question type",
     "filterUsed": "Usage status",
     "allCategories": "All categories",
-    "allQuizzes": "All quizzes"
+    "allQuizzes": "All quizzes",
+    "allQuestions": "All questions",
+    "usedOnly": "Used",
+    "unusedOnly": "Unused"
   },
   "stats": {
     "title": "Analytics", "moreComingSoon": "More detailed analytics coming soon.",

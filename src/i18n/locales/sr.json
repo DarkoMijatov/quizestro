@@ -204,7 +204,10 @@
     "filterType": "Tip pitanja",
     "filterUsed": "Status korišćenja",
     "allCategories": "Sve oblasti",
-    "allQuizzes": "Svi kvizovi"
+    "allQuizzes": "Svi kvizovi",
+    "allQuestions": "Sva pitanja",
+    "usedOnly": "Korišćena",
+    "unusedOnly": "Nekorišćena"
   },
   "stats": {
     "title": "Statistike", "moreComingSoon": "Detaljnije statistike stižu uskoro.",
