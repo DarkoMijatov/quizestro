@@ -1183,6 +1183,23 @@ export default function QuestionBankPage() {
                 </div>
               )}
 
+              {importResult.errors.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-destructive flex items-center gap-1.5">
+                    <AlertTriangle className="h-4 w-4" />
+                    {importResult.errors.length} {t('qb.importErrors')}
+                  </p>
+                  <div className="border border-destructive/30 bg-destructive/5 rounded-md max-h-36 overflow-y-auto">
+                    {importResult.errors.map((err, i) => (
+                      <div key={i} className="flex items-start gap-2 px-3 py-1.5 text-xs border-b border-destructive/10 last:border-0">
+                        <span className="text-destructive font-medium shrink-0">{err.sheet} #{err.row}</span>
+                        <span className="text-muted-foreground">{err.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="border border-border rounded-md max-h-48 overflow-y-auto">
                 {importResult.questions.slice(0, 20).map((q, i) => (
                   <div key={i} className="flex items-center gap-2 px-3 py-2 text-sm border-b border-border last:border-0">
