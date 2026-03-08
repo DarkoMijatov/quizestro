@@ -613,7 +613,7 @@ export default function QuestionBankPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Stats dashboard */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
           <Card>
             <CardContent className="p-4 text-center">
               <Hash className="h-5 w-5 mx-auto text-primary mb-1" />
@@ -642,8 +642,6 @@ export default function QuestionBankPage() {
               <p className="text-xs text-muted-foreground">{t('qb.statMatching')}</p>
             </CardContent>
           </Card>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card>
             <CardContent className="p-4 text-center">
               <HelpCircle className="h-5 w-5 mx-auto text-muted-foreground mb-1" />
