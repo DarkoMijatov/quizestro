@@ -668,7 +668,7 @@ export default function QuestionBankPage() {
           filters={[
             {
               key: 'type',
-              label: t('qb.typeCol'),
+              label: t('qb.filterType'),
               allLabel: t('filters.allTypes'),
               options: [
                 { value: 'text', label: t('qb.type_text') },
@@ -677,8 +677,20 @@ export default function QuestionBankPage() {
               ],
             },
             {
+              key: 'category',
+              label: t('qb.filterCategory'),
+              allLabel: t('qb.allCategories'),
+              options: categories.map(c => ({ value: c.id, label: c.name })),
+            },
+            {
+              key: 'quiz',
+              label: t('qb.filterQuiz'),
+              allLabel: t('qb.allQuizzes'),
+              options: quizzes.map(q => ({ value: q.id, label: q.name })),
+            },
+            {
               key: 'used',
-              label: t('qb.usedCol'),
+              label: t('qb.filterUsed'),
               allLabel: t('filters.all'),
               options: [
                 { value: 'yes', label: t('qb.yes') },
@@ -688,6 +700,8 @@ export default function QuestionBankPage() {
           ]}
           filterFn={(row, filters) => {
             if (filters.type && filters.type !== 'all' && row.type !== filters.type) return false;
+            if (filters.category && filters.category !== 'all' && !row.categories.some(c => c.id === filters.category)) return false;
+            if (filters.quiz && filters.quiz !== 'all' && !row.quizzes.some(q => q.id === filters.quiz)) return false;
             if (filters.used === 'yes' && !row.used) return false;
             if (filters.used === 'no' && row.used) return false;
             return true;
