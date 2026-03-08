@@ -764,7 +764,18 @@ export default function QuestionBankPage() {
           emptyIcon={<BookOpen className="h-12 w-12 text-muted-foreground/30 mx-auto" />}
           emptyMessage={t('qb.empty')}
           emptyAction={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('qb.add')}</Button> : undefined}
-          headerActions={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('qb.add')}</Button> : undefined}
+          headerActions={canEdit ? (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => generateQuestionImportTemplate()} className="gap-2">
+                <Download className="h-4 w-4" />{t('qb.downloadTemplate')}
+              </Button>
+              <input ref={importFileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportFileSelect} />
+              <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" />{t('qb.importQuestions')}
+              </Button>
+              <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('qb.add')}</Button>
+            </div>
+          ) : undefined}
           searchFn={(row, q) => row.code.toLowerCase().includes(q) || row.question_text.toLowerCase().includes(q)}
           filters={[
             {
