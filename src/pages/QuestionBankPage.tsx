@@ -687,6 +687,7 @@ export default function QuestionBankPage() {
               key: 'quiz',
               label: t('qb.filterQuiz'),
               allLabel: t('qb.allQuizzes'),
+              searchable: true,
               options: quizzes.map(q => ({ value: q.id, label: q.name })),
             },
             {
