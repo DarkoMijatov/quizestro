@@ -15,7 +15,8 @@
     "leagues": { "title": "Lige i sezone", "description": "Kreirajte lige sa automatskim agregatnim rang listama." },
     "stats": { "title": "Statistike", "description": "Detaljne analitike po kategoriji, timu i periodu." },
     "helps": { "title": "Džoker i pomoći", "description": "Konfigurisane pomoći sa automatskom primenom na bodove." },
-    "export": { "title": "Izvoz i deljenje", "description": "PDF, Excel izvoz i javne rang liste za projektore." }
+    "export": { "title": "Izvoz i deljenje", "description": "PDF, Excel izvoz i javne rang liste za projektore." },
+    "questionBank": { "title": "Banka pitanja", "description": "Centralizovano upravljanje pitanjima sa više tipova, podrškom za medije i grupnim Excel importom." }
   },
   "pricing": {
     "title": "Jednostavni paketi", "subtitle": "Započnite besplatno, nadogradite kada budete spremni",

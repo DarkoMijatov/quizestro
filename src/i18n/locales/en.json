@@ -15,7 +15,8 @@
     "leagues": { "title": "Leagues & Seasons", "description": "Create leagues with automatic aggregate leaderboards." },
     "stats": { "title": "Analytics", "description": "Detailed analytics by category, team, and time period." },
     "helps": { "title": "Joker & Helps", "description": "Configurable helps with automatic score application." },
-    "export": { "title": "Export & Share", "description": "PDF, Excel exports and public leaderboards for projectors." }
+    "export": { "title": "Export & Share", "description": "PDF, Excel exports and public leaderboards for projectors." },
+    "questionBank": { "title": "Question Bank", "description": "Centralized question management with multiple types, media support, and bulk Excel import." }
   },
   "pricing": {
     "title": "Simple plans", "subtitle": "Start free, upgrade when ready",
