@@ -77,7 +77,7 @@ interface QuizOption {
 }
 
 export default function QuestionBankPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { currentOrg, currentRole } = useOrganizations();
   const { toast } = useToast();
 
