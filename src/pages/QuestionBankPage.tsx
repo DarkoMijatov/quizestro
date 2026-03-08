@@ -217,6 +217,7 @@ export default function QuestionBankPage() {
     setFormPairs([{ left_value: '', right_value: '' }]);
     setFormMediaFile(null);
     setFormMediaType(null);
+    setFormMediaRole(null);
     setFormMediaUrl(null);
     setDialogOpen(true);
   };
