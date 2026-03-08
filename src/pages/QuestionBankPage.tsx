@@ -693,10 +693,10 @@ export default function QuestionBankPage() {
             {
               key: 'used',
               label: t('qb.filterUsed'),
-              allLabel: t('filters.all'),
+              allLabel: t('qb.allQuestions'),
               options: [
-                { value: 'yes', label: t('qb.yes') },
-                { value: 'no', label: t('qb.no') },
+                { value: 'yes', label: t('qb.usedOnly') },
+                { value: 'no', label: t('qb.unusedOnly') },
               ],
             },
           ]}
