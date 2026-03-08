@@ -246,7 +246,8 @@
     "note": "You can change the name later in settings.",
     "selectOrg": "Select organization",
     "selectOrgSubtitle": "You belong to multiple organizations. Choose the one you want to work in.",
-    "createNew": "Create a new organization"
+    "createNew": "Create a new organization",
+    "yourOrg": "Yours"
   },
   "footer": { "tagline": "The quiz management platform", "rights": "All rights reserved.", "createdBy": "Created by" },
   "cookies": { "message": "We use essential cookies to ensure the platform works properly.", "learnMore": "Learn more", "accept": "Accept", "decline": "Decline" },

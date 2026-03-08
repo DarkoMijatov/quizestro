@@ -246,7 +246,8 @@
     "note": "Možete kasnije promeniti naziv u podešavanjima.",
     "selectOrg": "Izaberite organizaciju",
     "selectOrgSubtitle": "Pripadate više organizacija. Izaberite onu u kojoj želite da radite.",
-    "createNew": "Kreirajte novu organizaciju"
+    "createNew": "Kreirajte novu organizaciju",
+    "yourOrg": "Vaša"
   },
   "footer": { "tagline": "Platforma za organizovanje kvizova", "rights": "Sva prava zadržana.", "createdBy": "Kreirao" },
   "cookies": { "message": "Koristimo samo neophodne kolačiće za pravilno funkcionisanje platforme.", "learnMore": "Saznajte više", "accept": "Prihvatam", "decline": "Odbijam" },
