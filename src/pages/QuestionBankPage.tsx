@@ -28,8 +28,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import {
   BookOpen, Plus, Eye, Pencil, Trash2, Loader2, Upload, X,
   FileText, ListChecks, Link2, Image, Video, Music,
-  HelpCircle, Hash, Check, ChevronsUpDown, Search,
+  HelpCircle, Hash, Check, ChevronsUpDown, Search, Download, FileSpreadsheet,
 } from 'lucide-react';
+import { generateQuestionImportTemplate, parseQuestionExcel, type ImportedQuestion, type QuestionImportResult } from '@/lib/excelUtils';
 
 type QuestionType = 'text' | 'multiple_choice' | 'matching';
 type MediaType = 'image' | 'video' | 'audio';
@@ -107,6 +108,12 @@ export default function QuestionBankPage() {
   const [formMediaRole, setFormMediaRole] = useState<MediaRole | null>(null);
   const [formMediaUrl, setFormMediaUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  // Import state
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importResult, setImportResult] = useState<QuestionImportResult | null>(null);
+  const [importingQuestions, setImportingQuestions] = useState(false);
 
   // View answers/pairs for viewing dialog
   const [viewAnswers, setViewAnswers] = useState<AnswerInput[]>([]);
@@ -484,7 +491,101 @@ export default function QuestionBankPage() {
     setFormMediaUrl(null);
   };
 
-  // Answer helpers
+  // Import handlers
+  const handleImportFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const existingCatNames = categories.map(c => c.name);
+      const result = await parseQuestionExcel(file, existingCatNames);
+      setImportResult(result);
+      setImportDialogOpen(true);
+    } catch (err: any) {
+      toast({ title: t('qb.importError'), description: err.message, variant: 'destructive' });
+    }
+    if (importFileRef.current) importFileRef.current.value = '';
+  };
+
+  const handleConfirmImport = async () => {
+    if (!importResult || !currentOrg) return;
+    setImportingQuestions(true);
+    try {
+      // 1. Create new categories
+      const catMap = new Map<string, string>();
+      for (const c of categories) catMap.set(c.name.toLowerCase(), c.id);
+
+      for (const newCat of importResult.newCategories) {
+        const { data } = await supabase.from('categories').insert({
+          name: newCat, organization_id: currentOrg.id,
+        }).select('id').single();
+        if (data) catMap.set(newCat.toLowerCase(), data.id);
+      }
+
+      // 2. Import each question
+      for (const q of importResult.questions) {
+        const catId = catMap.get(q.categoryName.toLowerCase());
+        if (!catId) continue;
+
+        const catObj = categories.find(c => c.id === catId);
+        const catCode = catObj?.code || catObj?.name?.substring(0, 3).toUpperCase() || 'GEN';
+        const { data: seqData } = await supabase.rpc('next_question_id');
+        const globalId = seqData || Date.now();
+        const code = `${catCode}-GEN-${globalId}`;
+
+        const { data: newQ, error: qErr } = await supabase.from('questions').insert({
+          organization_id: currentOrg.id,
+          code,
+          question_text: q.questionText,
+          type: q.type,
+        }).select('id').single();
+
+        if (qErr || !newQ) continue;
+
+        // Link category
+        await supabase.from('question_categories').insert({
+          question_id: newQ.id,
+          category_id: catId,
+          organization_id: currentOrg.id,
+        });
+
+        // Insert answers
+        if ((q.type === 'text' || q.type === 'multiple_choice') && q.answers.length > 0) {
+          await supabase.from('answers').insert(
+            q.answers.map((a, i) => ({
+              question_id: newQ.id,
+              answer_text: a.text,
+              is_correct: a.isCorrect,
+              sort_order: i,
+              organization_id: currentOrg.id,
+            }))
+          );
+        }
+
+        // Insert matching pairs
+        if (q.type === 'matching' && q.pairs.length > 0) {
+          await supabase.from('matching_pairs').insert(
+            q.pairs.map((p, i) => ({
+              question_id: newQ.id,
+              left_value: p.left,
+              right_value: p.right,
+              sort_order: i,
+              organization_id: currentOrg.id,
+            }))
+          );
+        }
+      }
+
+      toast({ title: '✓', description: t('qb.importSuccess') });
+      setImportDialogOpen(false);
+      setImportResult(null);
+      fetchAll();
+    } catch (err: any) {
+      toast({ title: t('qb.importError'), description: err?.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setImportingQuestions(false);
+    }
+  };
+
   const addAnswer = () => setFormAnswers([...formAnswers, { answer_text: '', is_correct: false }]);
   const removeAnswer = (idx: number) => setFormAnswers(formAnswers.filter((_, i) => i !== idx));
   const updateAnswer = (idx: number, field: keyof AnswerInput, value: any) => {
@@ -663,7 +764,18 @@ export default function QuestionBankPage() {
           emptyIcon={<BookOpen className="h-12 w-12 text-muted-foreground/30 mx-auto" />}
           emptyMessage={t('qb.empty')}
           emptyAction={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('qb.add')}</Button> : undefined}
-          headerActions={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('qb.add')}</Button> : undefined}
+          headerActions={canEdit ? (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => generateQuestionImportTemplate()} className="gap-2">
+                <Download className="h-4 w-4" />{t('qb.downloadTemplate')}
+              </Button>
+              <input ref={importFileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportFileSelect} />
+              <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" />{t('qb.importQuestions')}
+              </Button>
+              <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('qb.add')}</Button>
+            </div>
+          ) : undefined}
           searchFn={(row, q) => row.code.toLowerCase().includes(q) || row.question_text.toLowerCase().includes(q)}
           filters={[
             {
@@ -1030,6 +1142,77 @@ export default function QuestionBankPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import Preview Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={(o) => { if (!o) { setImportDialogOpen(false); setImportResult(null); } }}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('qb.importTitle')}</DialogTitle>
+            <DialogDescription>{t('qb.importDesc')}</DialogDescription>
+          </DialogHeader>
+          {importResult && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <FileSpreadsheet className="h-4 w-4 text-primary" />
+                {importResult.questions.length} {t('qb.questionsToImport')}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {(['text', 'multiple_choice', 'matching'] as const).map(type => {
+                  const count = importResult.questions.filter(q => q.type === type).length;
+                  if (count === 0) return null;
+                  return (
+                    <div key={type} className="flex items-center gap-1.5 text-sm border border-border rounded-md px-3 py-2">
+                      {type === 'text' ? <FileText className="h-3.5 w-3.5 text-primary" /> :
+                       type === 'multiple_choice' ? <ListChecks className="h-3.5 w-3.5 text-primary" /> :
+                       <Link2 className="h-3.5 w-3.5 text-primary" />}
+                      <span>{count} {t(`qb.type_${type}`)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {importResult.newCategories.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-primary">{t('qb.newCategoriesWillCreate')}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {importResult.newCategories.map(c => (
+                      <Badge key={c} variant="secondary">{c}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="border border-border rounded-md max-h-48 overflow-y-auto">
+                {importResult.questions.slice(0, 20).map((q, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 text-sm border-b border-border last:border-0">
+                    {q.type === 'text' ? <FileText className="h-3 w-3 text-muted-foreground shrink-0" /> :
+                     q.type === 'multiple_choice' ? <ListChecks className="h-3 w-3 text-muted-foreground shrink-0" /> :
+                     <Link2 className="h-3 w-3 text-muted-foreground shrink-0" />}
+                    <span className="truncate flex-1">{q.questionText}</span>
+                    <Badge variant="outline" className="text-[10px] shrink-0">{q.categoryName}</Badge>
+                  </div>
+                ))}
+                {importResult.questions.length > 20 && (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    +{importResult.questions.length - 20} ...
+                  </p>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setImportDialogOpen(false); setImportResult(null); }}>
+                  {t('common.cancel')}
+                </Button>
+                <Button onClick={handleConfirmImport} disabled={importingQuestions}>
+                  {importingQuestions && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {importingQuestions ? t('qb.importing') : t('qb.confirmImport')}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

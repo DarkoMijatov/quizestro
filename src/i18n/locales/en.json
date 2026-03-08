@@ -209,7 +209,18 @@
     "allQuizzes": "All quizzes",
     "allQuestions": "All questions",
     "usedOnly": "Used",
-    "unusedOnly": "Unused"
+    "unusedOnly": "Unused",
+    "importTitle": "Import questions from Excel",
+    "importDesc": "Import questions from an Excel file. Use the template for the correct format.",
+    "downloadTemplate": "Download template",
+    "importQuestions": "Import questions",
+    "importSuccess": "Questions imported successfully!",
+    "importError": "Import error",
+    "importPreview": "Import preview",
+    "questionsToImport": "questions to import",
+    "newCategoriesWillCreate": "New categories that will be created:",
+    "confirmImport": "Confirm import",
+    "importing": "Importing..."
   },
   "stats": {
     "title": "Analytics", "moreComingSoon": "More detailed analytics coming soon.",
