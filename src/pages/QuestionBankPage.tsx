@@ -28,8 +28,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import {
   BookOpen, Plus, Eye, Pencil, Trash2, Loader2, Upload, X,
   FileText, ListChecks, Link2, Image, Video, Music,
-  HelpCircle, Hash, Check, ChevronsUpDown, Search,
+  HelpCircle, Hash, Check, ChevronsUpDown, Search, Download, FileSpreadsheet,
 } from 'lucide-react';
+import { generateQuestionImportTemplate, parseQuestionExcel, type ImportedQuestion, type QuestionImportResult } from '@/lib/excelUtils';
 
 type QuestionType = 'text' | 'multiple_choice' | 'matching';
 type MediaType = 'image' | 'video' | 'audio';
