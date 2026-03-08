@@ -99,6 +99,7 @@
     "searchCategories": "Search categories...",
     "createCategoryPrompt": "No results. Create \"{{name}}\"?",
     "categoryAdded": "Category added",
+    "maxCategoriesReached": "Maximum number of categories ({{max}}) reached per organization settings",
     "selectTeams": "Select participating teams",
     "availableTeams": "Available",
     "selectedTeams": "Selected",
