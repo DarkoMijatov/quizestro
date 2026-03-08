@@ -29,6 +29,7 @@ export interface FilterConfig {
   label: string;
   options: { value: string; label: string }[];
   allLabel?: string;
+  searchable?: boolean;
 }
 
 interface DataTableProps<T> {
