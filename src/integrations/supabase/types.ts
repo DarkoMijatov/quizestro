@@ -627,6 +627,7 @@ export type Database = {
           created_at: string
           id: string
           is_deleted: boolean
+          media_role: Database["public"]["Enums"]["media_role"] | null
           media_type: Database["public"]["Enums"]["media_type"] | null
           media_url: string | null
           organization_id: string
@@ -639,6 +640,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_deleted?: boolean
+          media_role?: Database["public"]["Enums"]["media_role"] | null
           media_type?: Database["public"]["Enums"]["media_type"] | null
           media_url?: string | null
           organization_id: string
@@ -651,6 +653,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_deleted?: boolean
+          media_role?: Database["public"]["Enums"]["media_role"] | null
           media_type?: Database["public"]["Enums"]["media_type"] | null
           media_url?: string | null
           organization_id?: string
@@ -1091,6 +1094,7 @@ export type Database = {
       next_question_id: { Args: never; Returns: number }
     }
     Enums: {
+      media_role: "supplementary" | "key"
       media_type: "image" | "video" | "audio"
       org_role: "owner" | "admin" | "user"
       question_type: "text" | "multiple_choice" | "matching"
@@ -1222,6 +1226,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      media_role: ["supplementary", "key"],
       media_type: ["image", "video", "audio"],
       org_role: ["owner", "admin", "user"],
       question_type: ["text", "multiple_choice", "matching"],
