@@ -680,6 +680,7 @@ export default function QuestionBankPage() {
               key: 'category',
               label: t('qb.filterCategory'),
               allLabel: t('qb.allCategories'),
+              searchable: true,
               options: categories.map(c => ({ value: c.id, label: c.name })),
             },
             {
