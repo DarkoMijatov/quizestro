@@ -14,7 +14,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 export default function OnboardingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { organizations, loading: orgLoading, hasFetchedForCurrentUser, switchOrg, refetch } = useOrganizations();
+  const { organizations, memberships, loading: orgLoading, hasFetchedForCurrentUser, switchOrg, refetch } = useOrganizations();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [orgName, setOrgName] = useState("");
@@ -95,6 +95,8 @@ export default function OnboardingPage() {
     navigate("/dashboard");
   };
 
+  const isOwnerOfAny = memberships.some((m) => m.role === 'owner');
+
   // Show org picker if user has multiple orgs without saved preference
   const showPicker = hasFetchedForCurrentUser && organizations.length > 1 && !showCreate;
 
@@ -120,32 +122,44 @@ export default function OnboardingPage() {
             </div>
 
             <div className="space-y-2">
-              {organizations.map((org) => (
-                <button
-                  key={org.id}
-                  onClick={() => handleSelectOrg(org.id)}
-                  className="w-full flex items-center gap-3 rounded-xl border-2 border-border bg-card p-4 text-left hover:border-primary transition-colors"
-                >
-                  {org.logo_url ? (
-                    <img src={org.logo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Building2 className="h-5 w-5 text-primary" />
+              {organizations.map((org) => {
+                const isOwner = memberships.some((m) => m.organization_id === org.id && m.role === 'owner');
+                return (
+                  <button
+                    key={org.id}
+                    onClick={() => handleSelectOrg(org.id)}
+                    className="w-full flex items-center gap-3 rounded-xl border-2 border-border bg-card p-4 text-left hover:border-primary transition-colors"
+                  >
+                    {org.logo_url ? (
+                      <img src={org.logo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Building2 className="h-5 w-5 text-primary" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium truncate">{org.name}</p>
+                        {isOwner && (
+                          <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary shrink-0">
+                            {t('onboarding.yourOrg', 'Vaša')}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground capitalize">{org.subscription_tier}</p>
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{org.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{org.subscription_tier}</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-                </button>
-              ))}
+                    <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+                  </button>
+                );
+              })}
             </div>
 
-            <Button variant="outline" className="w-full gap-2" onClick={() => setShowCreate(true)}>
-              <Plus className="h-4 w-4" />
-              {t("onboarding.createNew")}
-            </Button>
+            {!isOwnerOfAny && (
+              <Button variant="outline" className="w-full gap-2" onClick={() => setShowCreate(true)}>
+                <Plus className="h-4 w-4" />
+                {t("onboarding.createNew")}
+              </Button>
+            )}
           </>
         ) : (
           <>

@@ -43,7 +43,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { currentOrg, organizations, switchOrg, currentRole } = useOrganizations();
+  const { currentOrg, organizations, memberships, switchOrg, currentRole } = useOrganizations();
 
   const isPremium = isOrgPremium(currentOrg);
 
@@ -199,16 +199,24 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <ChevronsUpDown className="h-3.5 w-3.5 text-sidebar-foreground/50 shrink-0" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
-                {organizations.map((org) => (
-                  <DropdownMenuItem
-                    key={org.id}
-                    onClick={() => switchOrg(org.id)}
-                    className={currentOrg?.id === org.id ? 'bg-accent' : ''}
-                  >
-                    <Building2 className="h-4 w-4 mr-2" />
-                    {org.name}
-                  </DropdownMenuItem>
-                ))}
+                {organizations.map((org) => {
+                  const isOwner = memberships.some((m) => m.organization_id === org.id && m.role === 'owner');
+                  return (
+                    <DropdownMenuItem
+                      key={org.id}
+                      onClick={() => switchOrg(org.id)}
+                      className={currentOrg?.id === org.id ? 'bg-accent' : ''}
+                    >
+                      <Building2 className="h-4 w-4 mr-2" />
+                      <span className="flex-1 truncate">{org.name}</span>
+                      {isOwner && (
+                        <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary ml-1 shrink-0">
+                          {t('onboarding.yourOrg', 'Vaša')}
+                        </span>
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
