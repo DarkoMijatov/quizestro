@@ -73,7 +73,8 @@
     "title": "Kategorije", "addCategory": "Dodaj kategoriju", "categoryName": "Naziv kategorije",
     "categoryNamePlaceholder": "npr. Istorija", "noCategories": "Još nema kategorija. Dodajte prvu!",
     "deleteConfirm": "Da li ste sigurni da želite da obrišete ovu kategoriju?",
-    "created": "Kategorija kreirana uspešno!", "updated": "Kategorija ažurirana uspešno!", "deleted": "Kategorija obrisana uspešno!"
+    "created": "Kategorija kreirana uspešno!", "updated": "Kategorija ažurirana uspešno!", "deleted": "Kategorija obrisana uspešno!",
+    "allCategories": "Sve kategorije", "defaultType": "Podrazumevana", "customType": "Posebna"
   },
   "categoriesTable": {
     "avgPoints": "Prosek bodova", "isDefault": "Podrazumevana", "default": "Da", "notDefault": "Ne"
