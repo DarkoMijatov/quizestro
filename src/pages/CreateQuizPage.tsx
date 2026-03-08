@@ -637,7 +637,7 @@ export default function CreateQuizPage() {
 
                     {/* Right: Selected (ordered) */}
                     <div className="border border-border rounded-lg p-3 space-y-3">
-                      <h4 className="text-sm font-semibold text-muted-foreground">{t('quiz.selectedCategories')} ({selectedCats.length})</h4>
+                      <h4 className="text-sm font-semibold text-muted-foreground">{t('quiz.selectedCategories')} ({selectedCats.length}/{maxCategories})</h4>
                       <div className="space-y-1 max-h-72 overflow-y-auto">
                         {selectedCats.map((id, idx) => {
                           const cat = categories.find(c => c.id === id);
