@@ -12,7 +12,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Search, ArrowUp, ArrowDown, ArrowUpDown, Loader2, Filter } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Search, ArrowUp, ArrowDown, ArrowUpDown, Loader2, Filter, Check, ChevronsUpDown } from 'lucide-react';
 
 export interface Column<T> {
   key: string;
@@ -27,6 +29,7 @@ export interface FilterConfig {
   label: string;
   options: { value: string; label: string }[];
   allLabel?: string;
+  searchable?: boolean;
 }
 
 interface DataTableProps<T> {
@@ -198,24 +201,67 @@ export function DataTable<T>({
             className="pl-9"
           />
         </div>
-        {filters && filters.map((filter) => (
-          <Select
-            key={filter.key}
-            value={activeFilters[filter.key] || 'all'}
-            onValueChange={(v) => handleFilterChange(filter.key, v)}
-          >
-            <SelectTrigger className="w-[160px]">
-              <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-              <SelectValue placeholder={filter.label} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{filter.allLabel || t('filters.all')}</SelectItem>
-              {filter.options.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ))}
+        {filters && filters.map((filter) => 
+          filter.searchable ? (
+            <Popover key={filter.key}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" className="w-[180px] justify-between font-normal text-sm">
+                  <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground shrink-0" />
+                  <span className="truncate">
+                    {activeFilters[filter.key] && activeFilters[filter.key] !== 'all'
+                      ? filter.options.find(o => o.value === activeFilters[filter.key])?.label || filter.label
+                      : filter.allLabel || filter.label}
+                  </span>
+                  <ChevronsUpDown className="ml-1 h-3.5 w-3.5 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[220px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder={`${filter.label}...`} />
+                  <CommandList>
+                    <CommandEmpty>{t('common.noResults')}</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        value="__all__"
+                        onSelect={() => handleFilterChange(filter.key, 'all')}
+                      >
+                        <Check className={`mr-2 h-4 w-4 ${(!activeFilters[filter.key] || activeFilters[filter.key] === 'all') ? 'opacity-100' : 'opacity-0'}`} />
+                        {filter.allLabel || t('filters.all')}
+                      </CommandItem>
+                      {filter.options.map((opt) => (
+                        <CommandItem
+                          key={opt.value}
+                          value={opt.label}
+                          onSelect={() => handleFilterChange(filter.key, opt.value)}
+                        >
+                          <Check className={`mr-2 h-4 w-4 ${activeFilters[filter.key] === opt.value ? 'opacity-100' : 'opacity-0'}`} />
+                          {opt.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <Select
+              key={filter.key}
+              value={activeFilters[filter.key] || 'all'}
+              onValueChange={(v) => handleFilterChange(filter.key, v)}
+            >
+              <SelectTrigger className="w-[160px]">
+                <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue placeholder={filter.label} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{filter.allLabel || t('filters.all')}</SelectItem>
+                {filter.options.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )
+        )}
       </div>
 
       {loading ? (

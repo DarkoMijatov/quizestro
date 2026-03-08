@@ -23,10 +23,12 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import {
   BookOpen, Plus, Eye, Pencil, Trash2, Loader2, Upload, X,
   FileText, ListChecks, Link2, Image, Video, Music,
-  HelpCircle, Hash,
+  HelpCircle, Hash, Check, ChevronsUpDown, Search,
 } from 'lucide-react';
 
 type QuestionType = 'text' | 'multiple_choice' | 'matching';
@@ -611,7 +613,7 @@ export default function QuestionBankPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Stats dashboard */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
           <Card>
             <CardContent className="p-4 text-center">
               <Hash className="h-5 w-5 mx-auto text-primary mb-1" />
@@ -640,8 +642,6 @@ export default function QuestionBankPage() {
               <p className="text-xs text-muted-foreground">{t('qb.statMatching')}</p>
             </CardContent>
           </Card>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card>
             <CardContent className="p-4 text-center">
               <HelpCircle className="h-5 w-5 mx-auto text-muted-foreground mb-1" />
@@ -668,7 +668,7 @@ export default function QuestionBankPage() {
           filters={[
             {
               key: 'type',
-              label: t('qb.typeCol'),
+              label: t('qb.filterType'),
               allLabel: t('filters.allTypes'),
               options: [
                 { value: 'text', label: t('qb.type_text') },
@@ -677,8 +677,22 @@ export default function QuestionBankPage() {
               ],
             },
             {
+              key: 'category',
+              label: t('qb.filterCategory'),
+              allLabel: t('qb.allCategories'),
+              searchable: true,
+              options: categories.map(c => ({ value: c.id, label: c.name })),
+            },
+            {
+              key: 'quiz',
+              label: t('qb.filterQuiz'),
+              allLabel: t('qb.allQuizzes'),
+              searchable: true,
+              options: quizzes.map(q => ({ value: q.id, label: q.name })),
+            },
+            {
               key: 'used',
-              label: t('qb.usedCol'),
+              label: t('qb.filterUsed'),
               allLabel: t('filters.all'),
               options: [
                 { value: 'yes', label: t('qb.yes') },
@@ -688,6 +702,8 @@ export default function QuestionBankPage() {
           ]}
           filterFn={(row, filters) => {
             if (filters.type && filters.type !== 'all' && row.type !== filters.type) return false;
+            if (filters.category && filters.category !== 'all' && !row.categories.some(c => c.id === filters.category)) return false;
+            if (filters.quiz && filters.quiz !== 'all' && !row.quizzes.some(q => q.id === filters.quiz)) return false;
             if (filters.used === 'yes' && !row.used) return false;
             if (filters.used === 'no' && row.used) return false;
             return true;
@@ -716,38 +732,82 @@ export default function QuestionBankPage() {
               </Select>
             </div>
 
-            {/* Categories (multi-select via checkboxes) */}
+            {/* Categories (searchable multi-select) */}
             <div className="space-y-2">
               <Label>{t('qb.categoriesCol')}</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-border rounded-md p-3">
-                {categories.map(cat => (
-                  <label key={cat.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                    <Checkbox
-                      checked={formCategoryIds.includes(cat.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) setFormCategoryIds([...formCategoryIds, cat.id]);
-                        else setFormCategoryIds(formCategoryIds.filter(id => id !== cat.id));
-                      }}
-                    />
-                    {cat.name}
-                  </label>
-                ))}
-                {categories.length === 0 && <p className="text-sm text-muted-foreground col-span-2">{t('qb.noCategories')}</p>}
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                    {formCategoryIds.length > 0
+                      ? formCategoryIds.map(id => categories.find(c => c.id === id)?.name).filter(Boolean).join(', ')
+                      : t('qb.noCategories')}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder={t('qb.searchCategories')} />
+                    <CommandList>
+                      <CommandEmpty>{t('qb.noCategories')}</CommandEmpty>
+                      <CommandGroup>
+                        {categories.map(cat => (
+                          <CommandItem
+                            key={cat.id}
+                            value={cat.name}
+                            onSelect={() => {
+                              if (formCategoryIds.includes(cat.id)) {
+                                setFormCategoryIds(formCategoryIds.filter(id => id !== cat.id));
+                              } else {
+                                setFormCategoryIds([...formCategoryIds, cat.id]);
+                              }
+                            }}
+                          >
+                            <Check className={`mr-2 h-4 w-4 ${formCategoryIds.includes(cat.id) ? 'opacity-100' : 'opacity-0'}`} />
+                            {cat.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
-            {/* Quiz (optional) */}
+            {/* Quiz (searchable select) */}
             <div className="space-y-2">
               <Label>{t('qb.quizOptional')}</Label>
-              <Select value={formQuizId || '_none'} onValueChange={(v) => setFormQuizId(v === '_none' ? '' : v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_none">{t('qb.noQuiz')}</SelectItem>
-                  {quizzes.map(q => (
-                    <SelectItem key={q.id} value={q.id}>{q.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                    {formQuizId ? quizzes.find(q => q.id === formQuizId)?.name || t('qb.noQuiz') : t('qb.noQuiz')}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder={t('qb.searchQuizzes')} />
+                    <CommandList>
+                      <CommandEmpty>{t('common.noResults')}</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem value="__none__" onSelect={() => setFormQuizId('')}>
+                          <Check className={`mr-2 h-4 w-4 ${!formQuizId ? 'opacity-100' : 'opacity-0'}`} />
+                          {t('qb.noQuiz')}
+                        </CommandItem>
+                        {quizzes.map(q => (
+                          <CommandItem
+                            key={q.id}
+                            value={q.name}
+                            onSelect={() => setFormQuizId(q.id)}
+                          >
+                            <Check className={`mr-2 h-4 w-4 ${formQuizId === q.id ? 'opacity-100' : 'opacity-0'}`} />
+                            {q.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Question text */}

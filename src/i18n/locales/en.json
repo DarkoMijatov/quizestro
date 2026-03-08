@@ -196,7 +196,15 @@
     "mediaRoleSupplementary": "Supplementary",
     "mediaRoleKey": "Key to the question",
     "mediaRoleSupplementaryHint": "Media is supplementary — the question works without it",
-    "mediaRoleKeyHint": "Media is the key — e.g. identify a person from the image, guess a song from audio"
+    "mediaRoleKeyHint": "Media is the key — e.g. identify a person from the image, guess a song from audio",
+    "searchCategories": "Search categories...",
+    "searchQuizzes": "Search quizzes...",
+    "filterCategory": "Category",
+    "filterQuiz": "Quiz",
+    "filterType": "Question type",
+    "filterUsed": "Usage status",
+    "allCategories": "All categories",
+    "allQuizzes": "All quizzes"
   },
   "stats": {
     "title": "Analytics", "moreComingSoon": "More detailed analytics coming soon.",
