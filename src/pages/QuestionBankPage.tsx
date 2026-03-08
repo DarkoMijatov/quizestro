@@ -102,6 +102,7 @@ export default function QuestionBankPage() {
   const [formPairs, setFormPairs] = useState<MatchingPairInput[]>([{ left_value: '', right_value: '' }]);
   const [formMediaFile, setFormMediaFile] = useState<File | null>(null);
   const [formMediaType, setFormMediaType] = useState<MediaType | null>(null);
+  const [formMediaRole, setFormMediaRole] = useState<MediaRole | null>(null);
   const [formMediaUrl, setFormMediaUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
