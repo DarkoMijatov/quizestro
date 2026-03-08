@@ -77,7 +77,7 @@ interface QuizOption {
 }
 
 export default function QuestionBankPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { currentOrg, currentRole } = useOrganizations();
   const { toast } = useToast();
 
@@ -766,7 +766,7 @@ export default function QuestionBankPage() {
           emptyAction={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('qb.add')}</Button> : undefined}
           headerActions={canEdit ? (
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => generateQuestionImportTemplate()} className="gap-2">
+              <Button variant="outline" size="sm" onClick={() => generateQuestionImportTemplate(i18n.language === 'en' ? 'en' : 'sr')} className="gap-2">
                 <Download className="h-4 w-4" />{t('qb.downloadTemplate')}
               </Button>
               <input ref={importFileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportFileSelect} />

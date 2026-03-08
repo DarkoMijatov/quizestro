@@ -175,38 +175,70 @@ export interface QuestionImportResult {
   newCategories: string[];
 }
 
-export function generateQuestionImportTemplate() {
+export function generateQuestionImportTemplate(lang: 'sr' | 'en' = 'sr') {
   const wb = XLSX.utils.book_new();
 
-  // Sheet 1: Text questions
-  const textData: (string | number)[][] = [
-    ['Kategorija', 'Tekst pitanja', 'Tačan odgovor'],
-    ['Istorija', 'Ko je bio prvi predsednik SAD?', 'Džordž Vašington'],
-    ['Geografija', 'Koji je glavni grad Francuske?', 'Pariz'],
-  ];
-  const wsText = XLSX.utils.aoa_to_sheet(textData);
-  wsText['!cols'] = [{ wch: 18 }, { wch: 45 }, { wch: 30 }];
-  XLSX.utils.book_append_sheet(wb, wsText, 'Tekstualna');
+  if (lang === 'en') {
+    // Sheet 1: Text questions
+    const textData: (string | number)[][] = [
+      ['Category', 'Question text', 'Correct answer'],
+      ['History', 'Who was the first president of the USA?', 'George Washington'],
+      ['Geography', 'What is the capital of France?', 'Paris'],
+    ];
+    const wsText = XLSX.utils.aoa_to_sheet(textData);
+    wsText['!cols'] = [{ wch: 18 }, { wch: 45 }, { wch: 30 }];
+    XLSX.utils.book_append_sheet(wb, wsText, 'Text');
 
-  // Sheet 2: Multiple choice
-  const mcData: (string | number)[][] = [
-    ['Kategorija', 'Tekst pitanja', 'Odgovor 1', 'Tačan (1/0)', 'Odgovor 2', 'Tačan (1/0)', 'Odgovor 3', 'Tačan (1/0)', 'Odgovor 4', 'Tačan (1/0)'],
-    ['Nauka', 'Koji planet je najbliži Suncu?', 'Merkur', 1, 'Venera', 0, 'Zemlja', 0, 'Mars', 0],
-    ['Sport', 'Koliko igrača ima fudbalski tim?', '9', 0, '10', 0, '11', 1, '12', 0],
-  ];
-  const wsMC = XLSX.utils.aoa_to_sheet(mcData);
-  wsMC['!cols'] = [{ wch: 18 }, { wch: 40 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 10 }];
-  XLSX.utils.book_append_sheet(wb, wsMC, 'Ponudjeni odgovori');
+    // Sheet 2: Multiple choice
+    const mcData: (string | number)[][] = [
+      ['Category', 'Question text', 'Answer 1', 'Correct (1/0)', 'Answer 2', 'Correct (1/0)', 'Answer 3', 'Correct (1/0)', 'Answer 4', 'Correct (1/0)'],
+      ['Science', 'Which planet is closest to the Sun?', 'Mercury', 1, 'Venus', 0, 'Earth', 0, 'Mars', 0],
+      ['Sports', 'How many players are on a football team?', '9', 0, '10', 0, '11', 1, '12', 0],
+    ];
+    const wsMC = XLSX.utils.aoa_to_sheet(mcData);
+    wsMC['!cols'] = [{ wch: 18 }, { wch: 40 }, { wch: 18 }, { wch: 12 }, { wch: 18 }, { wch: 12 }, { wch: 18 }, { wch: 12 }, { wch: 18 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsMC, 'Multiple choice');
 
-  // Sheet 3: Matching
-  const matchData: (string | number)[][] = [
-    ['Kategorija', 'Tekst pitanja', 'Levo 1', 'Desno 1', 'Levo 2', 'Desno 2', 'Levo 3', 'Desno 3', 'Levo 4', 'Desno 4'],
-    ['Geografija', 'Poveži državu sa glavnim gradom', 'Srbija', 'Beograd', 'Hrvatska', 'Zagreb', 'Slovenija', 'Ljubljana', '', ''],
-    ['Istorija', 'Poveži bitku sa godinom', 'Kosovska bitka', '1389', 'Mohačka bitka', '1526', '', '', '', ''],
-  ];
-  const wsMatch = XLSX.utils.aoa_to_sheet(matchData);
-  wsMatch['!cols'] = [{ wch: 18 }, { wch: 40 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
-  XLSX.utils.book_append_sheet(wb, wsMatch, 'Povezivanje');
+    // Sheet 3: Matching
+    const matchData: (string | number)[][] = [
+      ['Category', 'Question text', 'Left 1', 'Right 1', 'Left 2', 'Right 2', 'Left 3', 'Right 3', 'Left 4', 'Right 4'],
+      ['Geography', 'Match the country with its capital', 'Serbia', 'Belgrade', 'Croatia', 'Zagreb', 'Slovenia', 'Ljubljana', '', ''],
+      ['History', 'Match the battle with the year', 'Battle of Kosovo', '1389', 'Battle of Mohács', '1526', '', '', '', ''],
+    ];
+    const wsMatch = XLSX.utils.aoa_to_sheet(matchData);
+    wsMatch['!cols'] = [{ wch: 18 }, { wch: 40 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, wsMatch, 'Matching');
+  } else {
+    // Sheet 1: Text questions
+    const textData: (string | number)[][] = [
+      ['Kategorija', 'Tekst pitanja', 'Tačan odgovor'],
+      ['Istorija', 'Ko je bio prvi predsednik SAD?', 'Džordž Vašington'],
+      ['Geografija', 'Koji je glavni grad Francuske?', 'Pariz'],
+    ];
+    const wsText = XLSX.utils.aoa_to_sheet(textData);
+    wsText['!cols'] = [{ wch: 18 }, { wch: 45 }, { wch: 30 }];
+    XLSX.utils.book_append_sheet(wb, wsText, 'Tekstualna');
+
+    // Sheet 2: Multiple choice
+    const mcData: (string | number)[][] = [
+      ['Kategorija', 'Tekst pitanja', 'Odgovor 1', 'Tačan (1/0)', 'Odgovor 2', 'Tačan (1/0)', 'Odgovor 3', 'Tačan (1/0)', 'Odgovor 4', 'Tačan (1/0)'],
+      ['Nauka', 'Koja planeta je najbliža Suncu?', 'Merkur', 1, 'Venera', 0, 'Zemlja', 0, 'Mars', 0],
+      ['Sport', 'Koliko igrača ima fudbalski tim?', '9', 0, '10', 0, '11', 1, '12', 0],
+    ];
+    const wsMC = XLSX.utils.aoa_to_sheet(mcData);
+    wsMC['!cols'] = [{ wch: 18 }, { wch: 40 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 10 }];
+    XLSX.utils.book_append_sheet(wb, wsMC, 'Ponudjeni odgovori');
+
+    // Sheet 3: Matching
+    const matchData: (string | number)[][] = [
+      ['Kategorija', 'Tekst pitanja', 'Levo 1', 'Desno 1', 'Levo 2', 'Desno 2', 'Levo 3', 'Desno 3', 'Levo 4', 'Desno 4'],
+      ['Geografija', 'Poveži državu sa glavnim gradom', 'Srbija', 'Beograd', 'Hrvatska', 'Zagreb', 'Slovenija', 'Ljubljana', '', ''],
+      ['Istorija', 'Poveži bitku sa godinom', 'Kosovska bitka', '1389', 'Mohačka bitka', '1526', '', '', '', ''],
+    ];
+    const wsMatch = XLSX.utils.aoa_to_sheet(matchData);
+    wsMatch['!cols'] = [{ wch: 18 }, { wch: 40 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, wsMatch, 'Povezivanje');
+  }
 
   XLSX.writeFile(wb, 'question_import_template.xlsx');
 }
