@@ -730,38 +730,82 @@ export default function QuestionBankPage() {
               </Select>
             </div>
 
-            {/* Categories (multi-select via checkboxes) */}
+            {/* Categories (searchable multi-select) */}
             <div className="space-y-2">
               <Label>{t('qb.categoriesCol')}</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-border rounded-md p-3">
-                {categories.map(cat => (
-                  <label key={cat.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                    <Checkbox
-                      checked={formCategoryIds.includes(cat.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) setFormCategoryIds([...formCategoryIds, cat.id]);
-                        else setFormCategoryIds(formCategoryIds.filter(id => id !== cat.id));
-                      }}
-                    />
-                    {cat.name}
-                  </label>
-                ))}
-                {categories.length === 0 && <p className="text-sm text-muted-foreground col-span-2">{t('qb.noCategories')}</p>}
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                    {formCategoryIds.length > 0
+                      ? formCategoryIds.map(id => categories.find(c => c.id === id)?.name).filter(Boolean).join(', ')
+                      : t('qb.noCategories')}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder={t('qb.searchCategories')} />
+                    <CommandList>
+                      <CommandEmpty>{t('qb.noCategories')}</CommandEmpty>
+                      <CommandGroup>
+                        {categories.map(cat => (
+                          <CommandItem
+                            key={cat.id}
+                            value={cat.name}
+                            onSelect={() => {
+                              if (formCategoryIds.includes(cat.id)) {
+                                setFormCategoryIds(formCategoryIds.filter(id => id !== cat.id));
+                              } else {
+                                setFormCategoryIds([...formCategoryIds, cat.id]);
+                              }
+                            }}
+                          >
+                            <Check className={`mr-2 h-4 w-4 ${formCategoryIds.includes(cat.id) ? 'opacity-100' : 'opacity-0'}`} />
+                            {cat.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
-            {/* Quiz (optional) */}
+            {/* Quiz (searchable select) */}
             <div className="space-y-2">
               <Label>{t('qb.quizOptional')}</Label>
-              <Select value={formQuizId || '_none'} onValueChange={(v) => setFormQuizId(v === '_none' ? '' : v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_none">{t('qb.noQuiz')}</SelectItem>
-                  {quizzes.map(q => (
-                    <SelectItem key={q.id} value={q.id}>{q.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                    {formQuizId ? quizzes.find(q => q.id === formQuizId)?.name || t('qb.noQuiz') : t('qb.noQuiz')}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder={t('qb.searchQuizzes')} />
+                    <CommandList>
+                      <CommandEmpty>{t('common.noResults')}</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem value="__none__" onSelect={() => setFormQuizId('')}>
+                          <Check className={`mr-2 h-4 w-4 ${!formQuizId ? 'opacity-100' : 'opacity-0'}`} />
+                          {t('qb.noQuiz')}
+                        </CommandItem>
+                        {quizzes.map(q => (
+                          <CommandItem
+                            key={q.id}
+                            value={q.name}
+                            onSelect={() => setFormQuizId(q.id)}
+                          >
+                            <Check className={`mr-2 h-4 w-4 ${formQuizId === q.id ? 'opacity-100' : 'opacity-0'}`} />
+                            {q.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Question text */}
