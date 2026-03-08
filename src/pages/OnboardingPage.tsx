@@ -14,7 +14,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 export default function OnboardingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { organizations, loading: orgLoading, hasFetchedForCurrentUser, switchOrg, refetch } = useOrganizations();
+  const { organizations, memberships, loading: orgLoading, hasFetchedForCurrentUser, switchOrg, refetch } = useOrganizations();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [orgName, setOrgName] = useState("");
@@ -94,6 +94,9 @@ export default function OnboardingPage() {
     await refetch();
     navigate("/dashboard");
   };
+
+  const { memberships } = useOrganizations();
+  const isOwnerOfAny = memberships.some((m) => m.role === 'owner');
 
   // Show org picker if user has multiple orgs without saved preference
   const showPicker = hasFetchedForCurrentUser && organizations.length > 1 && !showCreate;
