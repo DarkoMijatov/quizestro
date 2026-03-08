@@ -31,6 +31,7 @@ import {
 
 type QuestionType = 'text' | 'multiple_choice' | 'matching';
 type MediaType = 'image' | 'video' | 'audio';
+type MediaRole = 'supplementary' | 'key';
 
 interface QuestionRow {
   id: string;
