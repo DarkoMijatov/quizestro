@@ -223,10 +223,10 @@ export default function CategoriesPage() {
           {
             key: 'is_default',
             label: t('filters.type'),
-            allLabel: t('filters.allTypes'),
+            allLabel: t('categories.allCategories'),
             options: [
-              { value: 'true', label: t('categoriesTable.default') },
-              { value: 'false', label: t('filters.custom') },
+              { value: 'true', label: t('categories.defaultType') },
+              { value: 'false', label: t('categories.customType') },
             ],
           },
         ]}
