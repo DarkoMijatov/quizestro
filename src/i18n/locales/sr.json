@@ -48,7 +48,8 @@
     "noAccount": "Nemate nalog?", "hasAccount": "Već imate nalog?", "loginCta": "Prijavite se",
     "registerCta": "Registrujte se", "resetPassword": "Resetujte lozinku", "resetCta": "Pošaljite link",
     "acceptTerms": "Prihvatam", "termsOfService": "Uslove korišćenja", "privacyPolicy": "Politiku privatnosti",
-    "resetSuccess": "Proverite vaš email za link za resetovanje lozinke.", "backToLogin": "Nazad na prijavu"
+    "resetSuccess": "Proverite vaš email za link za resetovanje lozinke.", "backToLogin": "Nazad na prijavu",
+    "continueWithGoogle": "Nastavite sa Google-om", "or": "ili"
   },
   "dashboard": {
     "title": "Kontrolna tabla", "welcome": "Kontrolna tabla", "quizzes": "Kvizovi", "teams": "Timovi",

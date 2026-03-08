@@ -48,7 +48,8 @@
     "noAccount": "Don't have an account?", "hasAccount": "Already have an account?", "loginCta": "Sign in",
     "registerCta": "Create account", "resetPassword": "Reset password", "resetCta": "Send reset link",
     "acceptTerms": "I accept the", "termsOfService": "Terms of Service", "privacyPolicy": "Privacy Policy",
-    "resetSuccess": "Check your email for the password reset link.", "backToLogin": "Back to login"
+    "resetSuccess": "Check your email for the password reset link.", "backToLogin": "Back to login",
+    "continueWithGoogle": "Continue with Google", "or": "or"
   },
   "dashboard": {
     "title": "Dashboard", "welcome": "Dashboard", "quizzes": "Quizzes", "teams": "Teams",
