@@ -190,7 +190,13 @@
     "statText": "Text questions",
     "statMC": "Multiple choice",
     "statMatching": "Matching",
-    "statUnused": "Unused"
+    "statUnused": "Unused",
+    "mediaRole": "Media role",
+    "selectMediaRole": "Select media role",
+    "mediaRoleSupplementary": "Supplementary",
+    "mediaRoleKey": "Key to the question",
+    "mediaRoleSupplementaryHint": "Media is supplementary — the question works without it",
+    "mediaRoleKeyHint": "Media is the key — e.g. identify a person from the image, guess a song from audio"
   },
   "stats": {
     "title": "Analytics", "moreComingSoon": "More detailed analytics coming soon.",
