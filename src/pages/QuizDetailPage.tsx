@@ -448,7 +448,7 @@ export default function QuizDetailPage() {
 
 
                         <div className="flex items-center gap-1 group cursor-pointer" onClick={() => canEdit && startEditAlias(team)}>
-                        <p className={cn("font-bold text-foreground break-words leading-tight text-base",
+                        <p className={cn("font-bold text-foreground break-words leading-tight text-lg",
                           sizeClass === 'size-lg' ? 'text-sm' : sizeClass === 'size-md' ? 'text-xs' : 'text-[10px]'
                           )}>{teamName}</p>
                         {canEdit && <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
