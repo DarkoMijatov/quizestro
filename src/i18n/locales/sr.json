@@ -220,7 +220,8 @@
     "questionsToImport": "pitanja za uvoz",
     "newCategoriesWillCreate": "Nove kategorije koje će biti kreirane:",
     "confirmImport": "Potvrdi uvoz",
-    "importing": "Uvoz u toku..."
+    "importing": "Uvoz u toku...",
+    "importErrors": "grešaka u redovima"
   },
   "stats": {
     "title": "Statistike", "moreComingSoon": "Detaljnije statistike stižu uskoro.",

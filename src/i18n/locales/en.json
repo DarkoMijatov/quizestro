@@ -220,7 +220,8 @@
     "questionsToImport": "questions to import",
     "newCategoriesWillCreate": "New categories that will be created:",
     "confirmImport": "Confirm import",
-    "importing": "Importing..."
+    "importing": "Importing...",
+    "importErrors": "row errors"
   },
   "stats": {
     "title": "Analytics", "moreComingSoon": "More detailed analytics coming soon.",
