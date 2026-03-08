@@ -603,7 +603,7 @@ export default function QuestionBankPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Stats dashboard */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card>
             <CardContent className="p-4 text-center">
               <Hash className="h-5 w-5 mx-auto text-primary mb-1" />
@@ -614,29 +614,31 @@ export default function QuestionBankPage() {
           <Card>
             <CardContent className="p-4 text-center">
               <FileText className="h-5 w-5 mx-auto text-primary mb-1" />
-              <p className="text-2xl font-bold">{stats.byType.text}/{stats.byType.multiple_choice}/{stats.byType.matching}</p>
-              <p className="text-xs text-muted-foreground">{t('qb.statByType')}</p>
+              <p className="text-2xl font-bold">{stats.byType.text}</p>
+              <p className="text-xs text-muted-foreground">{t('qb.statText')}</p>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <ListChecks className="h-5 w-5 mx-auto text-primary mb-1" />
+              <p className="text-2xl font-bold">{stats.byType.multiple_choice}</p>
+              <p className="text-xs text-muted-foreground">{t('qb.statMC')}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <Link2 className="h-5 w-5 mx-auto text-primary mb-1" />
+              <p className="text-2xl font-bold">{stats.byType.matching}</p>
+              <p className="text-xs text-muted-foreground">{t('qb.statMatching')}</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card>
             <CardContent className="p-4 text-center">
               <HelpCircle className="h-5 w-5 mx-auto text-muted-foreground mb-1" />
               <p className="text-2xl font-bold">{stats.unused}</p>
               <p className="text-xs text-muted-foreground">{t('qb.statUnused')}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <BarChart3 className="h-5 w-5 mx-auto text-primary mb-1" />
-              <p className="text-2xl font-bold">{stats.multiQuiz}</p>
-              <p className="text-xs text-muted-foreground">{t('qb.statMultiQuiz')}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Layers className="h-5 w-5 mx-auto text-primary mb-1" />
-              <p className="text-2xl font-bold">{stats.multiCat}</p>
-              <p className="text-xs text-muted-foreground">{t('qb.statMultiCat')}</p>
             </CardContent>
           </Card>
         </div>

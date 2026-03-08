@@ -187,10 +187,10 @@
     "addAnyway": "Add anyway",
     "usedIn": "Used in",
     "statTotal": "Total questions",
-    "statByType": "Text / MC / Match",
-    "statUnused": "Unused",
-    "statMultiQuiz": "Multi-quiz",
-    "statMultiCat": "Multi-category"
+    "statText": "Text questions",
+    "statMC": "Multiple choice",
+    "statMatching": "Matching",
+    "statUnused": "Unused"
   },
   "stats": {
     "title": "Analytics", "moreComingSoon": "More detailed analytics coming soon.",
