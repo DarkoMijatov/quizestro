@@ -108,6 +108,12 @@ export default function QuestionBankPage() {
   const [formMediaRole, setFormMediaRole] = useState<MediaRole | null>(null);
   const [formMediaUrl, setFormMediaUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  // Import state
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importResult, setImportResult] = useState<QuestionImportResult | null>(null);
+  const [importingQuestions, setImportingQuestions] = useState(false);
 
   // View answers/pairs for viewing dialog
   const [viewAnswers, setViewAnswers] = useState<AnswerInput[]>([]);
