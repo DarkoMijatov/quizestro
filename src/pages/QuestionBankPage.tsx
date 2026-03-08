@@ -28,7 +28,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import {
   BookOpen, Plus, Eye, Pencil, Trash2, Loader2, Upload, X,
   FileText, ListChecks, Link2, Image, Video, Music,
-  HelpCircle, Hash, Check, ChevronsUpDown, Search, Download, FileSpreadsheet,
+  HelpCircle, Hash, Check, ChevronsUpDown, Search, Download, FileSpreadsheet, AlertTriangle,
 } from 'lucide-react';
 import { generateQuestionImportTemplate, parseQuestionExcel, type ImportedQuestion, type QuestionImportResult } from '@/lib/excelUtils';
 
