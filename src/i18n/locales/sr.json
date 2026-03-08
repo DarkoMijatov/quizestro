@@ -196,7 +196,15 @@
     "mediaRoleSupplementary": "Propratni sadržaj",
     "mediaRoleKey": "Ključ pitanja",
     "mediaRoleSupplementaryHint": "Medij je propratni sadržaj — pitanje funkcioniše i bez njega",
-    "mediaRoleKeyHint": "Medij je ključ pitanja — npr. prepoznaj ličnost sa slike, pogodi pesmu iz audio snimka"
+    "mediaRoleKeyHint": "Medij je ključ pitanja — npr. prepoznaj ličnost sa slike, pogodi pesmu iz audio snimka",
+    "searchCategories": "Pretraži oblasti...",
+    "searchQuizzes": "Pretraži kvizove...",
+    "filterCategory": "Oblast",
+    "filterQuiz": "Kviz",
+    "filterType": "Tip pitanja",
+    "filterUsed": "Status korišćenja",
+    "allCategories": "Sve oblasti",
+    "allQuizzes": "Svi kvizovi"
   },
   "stats": {
     "title": "Statistike", "moreComingSoon": "Detaljnije statistike stižu uskoro.",
