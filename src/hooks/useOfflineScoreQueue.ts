@@ -153,6 +153,10 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
     setSyncing(false);
 
     if (failed.length === 0) {
+      toast({
+        title: 'Sinhronizovano ✓',
+        description: `Svi offline podaci su uspešno sačuvani.`,
+      });
       onSynced?.();
     }
   }, [quizId, onSynced]);
