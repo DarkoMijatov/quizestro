@@ -92,6 +92,7 @@ export default function QuizDetailPage() {
   const [scores, setScores] = useState<Score[]>([]);
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
   const [helpUsages, setHelpUsages] = useState<HelpUsage[]>([]);
+  const [categoryBonuses, setCategoryBonuses] = useState<CategoryBonus[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingAliasTeamId, setEditingAliasTeamId] = useState<string | null>(null);
   const [editingAliasValue, setEditingAliasValue] = useState("");
