@@ -137,9 +137,15 @@ export default function QuizDetailPage() {
     helpUsages.some((h) => h.quiz_team_id === teamId && h.help_type_id === helpTypeId);
 
   const updateScore = async (scoreId: string, field: "points" | "bonus_points", value: number) => {
-    const update: any = { [field]: value };
-    await supabase.from("scores").update(update).eq("id", scoreId);
+    // Optimistic local update
     setScores((prev) => prev.map((s) => (s.id === scoreId ? { ...s, [field]: value } : s)));
+
+    if (isOnline) {
+      const update: any = { [field]: value };
+      await supabase.from("scores").update(update).eq("id", scoreId);
+    } else {
+      enqueueScoreUpdate(scoreId, field, value);
+    }
   };
 
   const startEditAlias = (team: QuizTeam) => {
