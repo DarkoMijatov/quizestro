@@ -655,6 +655,8 @@ export default function QuizDetailPage() {
                       const score = getScore(team.id, cat.id);
                       const hasJoker = jokerType && getHelpUsage(team.id, cat.id, jokerType.id);
                       const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
+                      const hasBonusPt = hasCategoryBonus(team.id, cat.id);
+                      const displayPts = getDisplayPoints(team.id, cat.id);
 
                       // Disable help if team already used it in another category
                       const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
@@ -667,6 +669,7 @@ export default function QuizDetailPage() {
                           className={cn(
                             "p-1 flex flex-col items-center justify-center gap-0.5 border-l-2 border-foreground/20",
                             hasJoker && "bg-primary/[0.08]",
+                            hasBonusPt && !hasJoker && "bg-yellow-500/[0.06]",
                           )}
                         >
                           {canScore ? (
@@ -693,7 +696,7 @@ export default function QuizDetailPage() {
                                 )}
                               />
 
-                              {/* Help initials */}
+                              {/* Help initials + category bonus */}
                               <div className="flex items-center gap-0.5">
                                 {jokerType && (
                                   <button
@@ -729,6 +732,19 @@ export default function QuizDetailPage() {
                                     {getInitials(markerType.name)}
                                   </button>
                                 )}
+                                <button
+                                  onClick={() => toggleCategoryBonus(team.id, cat.id)}
+                                  tabIndex={-1}
+                                  title={t("scoring.categoryBonus")}
+                                  className={cn(
+                                    "w-6 h-5 rounded text-[9px] font-black border transition-colors",
+                                    hasBonusPt
+                                      ? "bg-yellow-500 text-white border-yellow-500"
+                                      : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
+                                  )}
+                                >
+                                  <Crown className="h-3 w-3 mx-auto" />
+                                </button>
                               </div>
                             </>
                           ) : (
@@ -745,9 +761,12 @@ export default function QuizDetailPage() {
                                         : "text-base",
                                 )}
                               >
-                                {score?.points ?? 0}
+                                {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
                               </p>
-                              {hasJoker && <span className="text-[10px] text-primary font-black">×2</span>}
+                              <div className="flex items-center gap-0.5">
+                                {hasJoker && <span className="text-[10px] text-primary font-black">×2</span>}
+                                {hasBonusPt && <Crown className="h-3 w-3 text-yellow-500" />}
+                              </div>
                             </div>
                           )}
                         </div>
