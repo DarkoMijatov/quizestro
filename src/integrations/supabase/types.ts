@@ -100,6 +100,62 @@ export type Database = {
           },
         ]
       }
+      category_bonuses: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          quiz_category_id: string
+          quiz_id: string
+          quiz_team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          quiz_category_id: string
+          quiz_id: string
+          quiz_team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          quiz_category_id?: string
+          quiz_id?: string
+          quiz_team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_bonuses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_bonuses_quiz_category_id_fkey"
+            columns: ["quiz_category_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_bonuses_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_bonuses_quiz_team_id_fkey"
+            columns: ["quiz_team_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_submissions: {
         Row: {
           created_at: string
