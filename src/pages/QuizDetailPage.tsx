@@ -3,8 +3,10 @@ import { useTranslation } from "react-i18next";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganizations } from "@/hooks/useOrganizations";
+import { useOfflineScoreQueue } from "@/hooks/useOfflineScoreQueue";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -89,6 +91,9 @@ export default function QuizDetailPage() {
 
   const canEdit = currentRole === "owner" || currentRole === "admin";
 
+  const { isOnline, pendingCount, syncing, enqueueScoreUpdate, enqueueHelpToggle } =
+    useOfflineScoreQueue({ quizId, onSynced: () => fetchAll() });
+
   const fetchAll = useCallback(async () => {
     if (!quizId || !currentOrg) return;
     setLoading(true);
@@ -132,9 +137,15 @@ export default function QuizDetailPage() {
     helpUsages.some((h) => h.quiz_team_id === teamId && h.help_type_id === helpTypeId);
 
   const updateScore = async (scoreId: string, field: "points" | "bonus_points", value: number) => {
-    const update: any = { [field]: value };
-    await supabase.from("scores").update(update).eq("id", scoreId);
+    // Optimistic local update
     setScores((prev) => prev.map((s) => (s.id === scoreId ? { ...s, [field]: value } : s)));
+
+    if (isOnline) {
+      const update: any = { [field]: value };
+      await supabase.from("scores").update(update).eq("id", scoreId);
+    } else {
+      enqueueScoreUpdate(scoreId, field, value);
+    }
   };
 
   const startEditAlias = (team: QuizTeam) => {
@@ -177,25 +188,52 @@ export default function QuizDetailPage() {
     const existing = getHelpUsage(teamId, catId, helpType.id);
 
     if (existing) {
-      await supabase.from("help_usages").delete().eq("id", existing.id);
+      // Optimistic remove
       setHelpUsages((prev) => prev.filter((h) => h.id !== existing.id));
+      if (isOnline) {
+        await supabase.from("help_usages").delete().eq("id", existing.id);
+      } else {
+        enqueueHelpToggle({ action: 'remove', helpUsageId: existing.id });
+      }
     } else {
       if (hasTeamUsedHelp(teamId, helpType.id)) {
         toast({ title: t("scoring.helpAlreadyUsed"), variant: "destructive" });
         return;
       }
-      const { data } = await supabase
-        .from("help_usages")
-        .insert({
-          help_type_id: helpType.id,
-          quiz_team_id: teamId,
-          quiz_category_id: catId,
-          quiz_id: quizId,
-          organization_id: currentOrg.id,
-        })
-        .select()
-        .single();
-      if (data) setHelpUsages((prev) => [...prev, data as any]);
+
+      if (isOnline) {
+        const { data } = await supabase
+          .from("help_usages")
+          .insert({
+            help_type_id: helpType.id,
+            quiz_team_id: teamId,
+            quiz_category_id: catId,
+            quiz_id: quizId,
+            organization_id: currentOrg.id,
+          })
+          .select()
+          .single();
+        if (data) setHelpUsages((prev) => [...prev, data as any]);
+      } else {
+        const localId = enqueueHelpToggle({
+          action: 'add',
+          helpTypeId: helpType.id,
+          quizTeamId: teamId,
+          quizCategoryId: catId,
+          quizId,
+          organizationId: currentOrg.id,
+        });
+        // Optimistic add with local id
+        setHelpUsages((prev) => [
+          ...prev,
+          {
+            id: localId,
+            help_type_id: helpType.id,
+            quiz_team_id: teamId,
+            quiz_category_id: catId,
+          } as any,
+        ]);
+      }
     }
   };
 
@@ -374,6 +412,7 @@ export default function QuizDetailPage() {
             <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{quiz.name}</h1>
           </div>
           <div className="flex items-center gap-2">
+            <OfflineIndicator isOnline={isOnline} pendingCount={pendingCount} syncing={syncing} />
             {currentOrg?.logo_url && <img src={currentOrg.logo_url} alt="" className="h-8 w-auto object-contain" />}
             {canReorder && (
               <QuizDraftManager

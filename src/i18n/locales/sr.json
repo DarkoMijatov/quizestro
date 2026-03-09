@@ -135,6 +135,11 @@
     "statusUpdated": "Status kviza ažuriran.", "helpAlreadyUsed": "Ovaj tim je već iskoristio ovu pomoć.",
     "manageDraft": "Upravljaj"
   },
+  "offline": {
+    "pending": "na čekanju",
+    "syncing": "Sinhronizacija...",
+    "synced": "Sinhronizovano ✓"
+  },
   "leagues": {
     "title": "Lige", "addLeague": "Dodaj ligu", "leagueName": "Naziv lige",
     "leagueNamePlaceholder": "npr. Prolećna sezona 2026", "season": "Sezona",
