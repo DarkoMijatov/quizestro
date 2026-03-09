@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Pencil,
+  Crown,
 } from "lucide-react";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
