@@ -83,10 +83,10 @@ export default function OnboardingPage() {
       {
         organization_id: org.id,
         name: "Joker",
-        effect: "marker",
-        description: "Doubles points + bonus points for the category",
+        effect: "double",
+        description: "Doubles points for the category",
       },
-      { organization_id: org.id, name: "Double Chance", effect: "marker", description: "Marker only, no score effect" },
+      { organization_id: org.id, name: "Double Chance", effect: "second_chance", description: "Allows two answers per question in a category" },
     ]);
 
     localStorage.setItem("quizory-current-org", org.id);

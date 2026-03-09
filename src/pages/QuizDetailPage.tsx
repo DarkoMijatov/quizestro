@@ -126,7 +126,7 @@ export default function QuizDetailPage() {
     helpUsages.find((h) => h.quiz_team_id === teamId && h.quiz_category_id === catId && h.help_type_id === helpTypeId);
 
   const jokerType = helpTypes.find((h) => h.effect === "double");
-  const markerType = helpTypes.find((h) => h.effect === "marker");
+  const markerType = helpTypes.find((h) => h.effect === "second_chance" || h.effect === "marker");
 
   const hasTeamUsedHelp = (teamId: string, helpTypeId: string) =>
     helpUsages.some((h) => h.quiz_team_id === teamId && h.help_type_id === helpTypeId);
