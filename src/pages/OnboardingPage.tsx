@@ -67,17 +67,6 @@ export default function OnboardingPage() {
       return;
     }
 
-    const { error: memError } = await supabase.from("memberships").insert({
-      user_id: user.id,
-      organization_id: org.id,
-      role: "owner",
-    });
-
-    if (memError) {
-      toast({ title: "Error", description: memError.message, variant: "destructive" });
-      setLoading(false);
-      return;
-    }
 
     await supabase.from("help_types").insert([
       {
