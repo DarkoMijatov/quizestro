@@ -29,7 +29,22 @@ interface HelpToggle {
   localId: string;
 }
 
-type QueueItem = ScoreUpdate | HelpToggle;
+interface CategoryBonusToggle {
+  type: 'category_bonus';
+  action: 'set' | 'remove';
+  // For remove — delete by quiz_category_id (unique per quiz)
+  quizCategoryId: string;
+  // For set
+  quizTeamId?: string;
+  quizId?: string;
+  organizationId?: string;
+  /** If switching from another team, old record id to delete first */
+  previousId?: string;
+  timestamp: number;
+  localId: string;
+}
+
+type QueueItem = ScoreUpdate | HelpToggle | CategoryBonusToggle;
 
 const STORAGE_KEY_PREFIX = 'quizory-offline-queue-';
 
