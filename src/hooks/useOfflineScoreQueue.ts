@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOnlineStatus } from './useOnlineStatus';
+import { toast } from '@/hooks/use-toast';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -152,6 +153,10 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
     setSyncing(false);
 
     if (failed.length === 0) {
+      toast({
+        title: 'Sinhronizovano ✓',
+        description: `Svi offline podaci su uspešno sačuvani.`,
+      });
       onSynced?.();
     }
   }, [quizId, onSynced]);
