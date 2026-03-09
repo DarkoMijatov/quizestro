@@ -101,7 +101,7 @@ export default function QuizDetailPage() {
 
   const canEdit = currentRole === "owner" || currentRole === "admin";
 
-  const { isOnline, pendingCount, syncing, enqueueScoreUpdate, enqueueHelpToggle } =
+  const { isOnline, pendingCount, syncing, enqueueScoreUpdate, enqueueHelpToggle, enqueueCategoryBonus } =
     useOfflineScoreQueue({ quizId, onSynced: () => fetchAll() });
 
   const fetchAll = useCallback(async () => {
@@ -190,11 +190,45 @@ export default function QuizDetailPage() {
       if (existing.quiz_team_id === teamId) {
         // Remove bonus from this team
         setCategoryBonuses((prev) => prev.filter((cb) => cb.id !== existing.id));
-        await supabase.from("category_bonuses").delete().eq("id", existing.id);
+        if (isOnline) {
+          await supabase.from("category_bonuses").delete().eq("id", existing.id);
+        } else {
+          enqueueCategoryBonus({ action: 'remove', quizCategoryId: catId });
+        }
       } else {
-        // Switch bonus to this team (delete old, insert new)
+        // Switch bonus to this team
         setCategoryBonuses((prev) => prev.filter((cb) => cb.id !== existing.id));
-        await supabase.from("category_bonuses").delete().eq("id", existing.id);
+        if (isOnline) {
+          await supabase.from("category_bonuses").delete().eq("id", existing.id);
+          const { data } = await supabase
+            .from("category_bonuses")
+            .insert({
+              quiz_id: quizId,
+              quiz_category_id: catId,
+              quiz_team_id: teamId,
+              organization_id: currentOrg.id,
+            })
+            .select()
+            .single();
+          if (data) setCategoryBonuses((prev) => [...prev, data as any]);
+        } else {
+          const localId = enqueueCategoryBonus({
+            action: 'set',
+            quizCategoryId: catId,
+            quizTeamId: teamId,
+            quizId,
+            organizationId: currentOrg.id,
+            previousId: existing.id,
+          });
+          setCategoryBonuses((prev) => [
+            ...prev,
+            { id: localId, quiz_id: quizId, quiz_category_id: catId, quiz_team_id: teamId, organization_id: currentOrg.id } as any,
+          ]);
+        }
+      }
+    } else {
+      // Award bonus to this team
+      if (isOnline) {
         const { data } = await supabase
           .from("category_bonuses")
           .insert({
@@ -206,20 +240,19 @@ export default function QuizDetailPage() {
           .select()
           .single();
         if (data) setCategoryBonuses((prev) => [...prev, data as any]);
+      } else {
+        const localId = enqueueCategoryBonus({
+          action: 'set',
+          quizCategoryId: catId,
+          quizTeamId: teamId,
+          quizId,
+          organizationId: currentOrg.id,
+        });
+        setCategoryBonuses((prev) => [
+          ...prev,
+          { id: localId, quiz_id: quizId, quiz_category_id: catId, quiz_team_id: teamId, organization_id: currentOrg.id } as any,
+        ]);
       }
-    } else {
-      // Award bonus to this team
-      const { data } = await supabase
-        .from("category_bonuses")
-        .insert({
-          quiz_id: quizId,
-          quiz_category_id: catId,
-          quiz_team_id: teamId,
-          organization_id: currentOrg.id,
-        })
-        .select()
-        .single();
-      if (data) setCategoryBonuses((prev) => [...prev, data as any]);
     }
   };
 

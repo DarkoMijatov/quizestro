@@ -29,7 +29,22 @@ interface HelpToggle {
   localId: string;
 }
 
-type QueueItem = ScoreUpdate | HelpToggle;
+interface CategoryBonusToggle {
+  type: 'category_bonus';
+  action: 'set' | 'remove';
+  // For remove — delete by quiz_category_id (unique per quiz)
+  quizCategoryId: string;
+  // For set
+  quizTeamId?: string;
+  quizId?: string;
+  organizationId?: string;
+  /** If switching from another team, old record id to delete first */
+  previousId?: string;
+  timestamp: number;
+  localId: string;
+}
+
+type QueueItem = ScoreUpdate | HelpToggle | CategoryBonusToggle;
 
 const STORAGE_KEY_PREFIX = 'quizory-offline-queue-';
 
@@ -103,6 +118,22 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
     [],
   );
 
+  const enqueueCategoryBonus = useCallback(
+    (item: Omit<CategoryBonusToggle, 'type' | 'timestamp' | 'localId'>) => {
+      const localId = `local-cb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const entry: CategoryBonusToggle = { ...item, type: 'category_bonus', timestamp: Date.now(), localId };
+      setQueue((prev) => {
+        // Dedupe: replace existing category_bonus for same quizCategoryId
+        const filtered = prev.filter(
+          (i) => !(i.type === 'category_bonus' && (i as CategoryBonusToggle).quizCategoryId === item.quizCategoryId),
+        );
+        return [...filtered, entry];
+      });
+      return localId;
+    },
+    [],
+  );
+
   // ── Sync logic ──
 
   const flushQueue = useCallback(async () => {
@@ -136,6 +167,29 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
               quiz_category_id: h.quizCategoryId!,
               quiz_id: h.quizId!,
               organization_id: h.organizationId!,
+            });
+            if (error) throw error;
+          }
+        } else if (item.type === 'category_bonus') {
+          const cb = item as CategoryBonusToggle;
+          if (cb.action === 'remove') {
+            // Delete by quiz_category_id (unique constraint ensures one per category)
+            const { error } = await supabase
+              .from('category_bonuses')
+              .delete()
+              .eq('quiz_category_id', cb.quizCategoryId)
+              .eq('quiz_id', quizId);
+            if (error) throw error;
+          } else if (cb.action === 'set') {
+            // First remove any existing for this category
+            if (cb.previousId) {
+              await supabase.from('category_bonuses').delete().eq('id', cb.previousId);
+            }
+            const { error } = await supabase.from('category_bonuses').insert({
+              quiz_id: cb.quizId!,
+              quiz_category_id: cb.quizCategoryId,
+              quiz_team_id: cb.quizTeamId!,
+              organization_id: cb.organizationId!,
             });
             if (error) throw error;
           }
@@ -174,6 +228,7 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
     syncing,
     enqueueScoreUpdate,
     enqueueHelpToggle,
+    enqueueCategoryBonus,
     flushQueue,
   };
 }
