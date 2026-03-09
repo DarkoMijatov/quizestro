@@ -148,6 +148,28 @@ export default function QuizDetailPage() {
   const hasTeamUsedHelp = (teamId: string, helpTypeId: string) =>
     helpUsages.some((h) => h.quiz_team_id === teamId && h.help_type_id === helpTypeId);
 
+  const getCategoryBonus = (catId: string) =>
+    categoryBonuses.find((cb) => cb.quiz_category_id === catId);
+
+  const hasCategoryBonus = (teamId: string, catId: string) => {
+    const bonus = getCategoryBonus(catId);
+    return bonus && bonus.quiz_team_id === teamId;
+  };
+
+  /** Get display points for a cell (with joker doubling + category bonus, but joker doesn't double the bonus) */
+  const getDisplayPoints = (teamId: string, catId: string) => {
+    const score = getScore(teamId, catId);
+    if (!score) return 0;
+    let catPoints = score.points + score.bonus_points;
+    if (jokerType && getHelpUsage(teamId, catId, jokerType.id)) {
+      catPoints *= 2;
+    }
+    if (hasCategoryBonus(teamId, catId)) {
+      catPoints += 1;
+    }
+    return catPoints;
+  };
+
   const updateScore = async (scoreId: string, field: "points" | "bonus_points", value: number) => {
     // Optimistic local update
     setScores((prev) => prev.map((s) => (s.id === scoreId ? { ...s, [field]: value } : s)));
@@ -157,6 +179,47 @@ export default function QuizDetailPage() {
       await supabase.from("scores").update(update).eq("id", scoreId);
     } else {
       enqueueScoreUpdate(scoreId, field, value);
+    }
+  };
+
+  const toggleCategoryBonus = async (teamId: string, catId: string) => {
+    if (!currentOrg || !quizId) return;
+    const existing = getCategoryBonus(catId);
+
+    if (existing) {
+      if (existing.quiz_team_id === teamId) {
+        // Remove bonus from this team
+        setCategoryBonuses((prev) => prev.filter((cb) => cb.id !== existing.id));
+        await supabase.from("category_bonuses").delete().eq("id", existing.id);
+      } else {
+        // Switch bonus to this team (delete old, insert new)
+        setCategoryBonuses((prev) => prev.filter((cb) => cb.id !== existing.id));
+        await supabase.from("category_bonuses").delete().eq("id", existing.id);
+        const { data } = await supabase
+          .from("category_bonuses")
+          .insert({
+            quiz_id: quizId,
+            quiz_category_id: catId,
+            quiz_team_id: teamId,
+            organization_id: currentOrg.id,
+          })
+          .select()
+          .single();
+        if (data) setCategoryBonuses((prev) => [...prev, data as any]);
+      }
+    } else {
+      // Award bonus to this team
+      const { data } = await supabase
+        .from("category_bonuses")
+        .insert({
+          quiz_id: quizId,
+          quiz_category_id: catId,
+          quiz_team_id: teamId,
+          organization_id: currentOrg.id,
+        })
+        .select()
+        .single();
+      if (data) setCategoryBonuses((prev) => [...prev, data as any]);
     }
   };
 
@@ -252,13 +315,7 @@ export default function QuizDetailPage() {
   const getTeamTotal = (teamId: string) => {
     let total = 0;
     for (const cat of categories) {
-      const score = getScore(teamId, cat.id);
-      if (!score) continue;
-      let catPoints = score.points + score.bonus_points;
-      if (jokerType && getHelpUsage(teamId, cat.id, jokerType.id)) {
-        catPoints *= 2;
-      }
-      total += catPoints;
+      total += getDisplayPoints(teamId, cat.id);
     }
     return total;
   };
