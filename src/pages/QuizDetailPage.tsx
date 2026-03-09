@@ -71,6 +71,14 @@ interface HelpUsage {
   quiz_category_id: string;
 }
 
+interface CategoryBonus {
+  id: string;
+  quiz_id: string;
+  quiz_category_id: string;
+  quiz_team_id: string;
+  organization_id: string;
+}
+
 export default function QuizDetailPage() {
   const { t } = useTranslation();
   const { id: quizId } = useParams<{ id: string }>();
