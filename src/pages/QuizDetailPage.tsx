@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Pencil,
+  Crown,
 } from "lucide-react";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
@@ -70,6 +71,14 @@ interface HelpUsage {
   quiz_category_id: string;
 }
 
+interface CategoryBonus {
+  id: string;
+  quiz_id: string;
+  quiz_category_id: string;
+  quiz_team_id: string;
+  organization_id: string;
+}
+
 export default function QuizDetailPage() {
   const { t } = useTranslation();
   const { id: quizId } = useParams<{ id: string }>();
@@ -83,6 +92,7 @@ export default function QuizDetailPage() {
   const [scores, setScores] = useState<Score[]>([]);
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
   const [helpUsages, setHelpUsages] = useState<HelpUsage[]>([]);
+  const [categoryBonuses, setCategoryBonuses] = useState<CategoryBonus[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingAliasTeamId, setEditingAliasTeamId] = useState<string | null>(null);
   const [editingAliasValue, setEditingAliasValue] = useState("");
@@ -98,7 +108,7 @@ export default function QuizDetailPage() {
     if (!quizId || !currentOrg) return;
     setLoading(true);
 
-    const [quizRes, catRes, teamRes, scoreRes, helpTypeRes, helpUsageRes] = await Promise.all([
+    const [quizRes, catRes, teamRes, scoreRes, helpTypeRes, helpUsageRes, catBonusRes] = await Promise.all([
       supabase.from("quizzes").select("*").eq("id", quizId).single(),
       supabase.from("quiz_categories").select("*, category:categories(name)").eq("quiz_id", quizId).order("sort_order"),
       supabase
@@ -109,6 +119,7 @@ export default function QuizDetailPage() {
       supabase.from("scores").select("*").eq("quiz_id", quizId),
       supabase.from("help_types").select("*").eq("organization_id", currentOrg.id),
       supabase.from("help_usages").select("*").eq("quiz_id", quizId),
+      supabase.from("category_bonuses").select("*").eq("quiz_id", quizId),
     ]);
 
     setQuiz(quizRes.data as any);
@@ -117,6 +128,7 @@ export default function QuizDetailPage() {
     setScores((scoreRes.data as any) || []);
     setHelpTypes((helpTypeRes.data as any) || []);
     setHelpUsages((helpUsageRes.data as any) || []);
+    setCategoryBonuses((catBonusRes.data as any) || []);
     setLoading(false);
   }, [quizId, currentOrg?.id]);
 
@@ -136,6 +148,28 @@ export default function QuizDetailPage() {
   const hasTeamUsedHelp = (teamId: string, helpTypeId: string) =>
     helpUsages.some((h) => h.quiz_team_id === teamId && h.help_type_id === helpTypeId);
 
+  const getCategoryBonus = (catId: string) =>
+    categoryBonuses.find((cb) => cb.quiz_category_id === catId);
+
+  const hasCategoryBonus = (teamId: string, catId: string) => {
+    const bonus = getCategoryBonus(catId);
+    return bonus && bonus.quiz_team_id === teamId;
+  };
+
+  /** Get display points for a cell (with joker doubling + category bonus, but joker doesn't double the bonus) */
+  const getDisplayPoints = (teamId: string, catId: string) => {
+    const score = getScore(teamId, catId);
+    if (!score) return 0;
+    let catPoints = score.points + score.bonus_points;
+    if (jokerType && getHelpUsage(teamId, catId, jokerType.id)) {
+      catPoints *= 2;
+    }
+    if (hasCategoryBonus(teamId, catId)) {
+      catPoints += 1;
+    }
+    return catPoints;
+  };
+
   const updateScore = async (scoreId: string, field: "points" | "bonus_points", value: number) => {
     // Optimistic local update
     setScores((prev) => prev.map((s) => (s.id === scoreId ? { ...s, [field]: value } : s)));
@@ -145,6 +179,47 @@ export default function QuizDetailPage() {
       await supabase.from("scores").update(update).eq("id", scoreId);
     } else {
       enqueueScoreUpdate(scoreId, field, value);
+    }
+  };
+
+  const toggleCategoryBonus = async (teamId: string, catId: string) => {
+    if (!currentOrg || !quizId) return;
+    const existing = getCategoryBonus(catId);
+
+    if (existing) {
+      if (existing.quiz_team_id === teamId) {
+        // Remove bonus from this team
+        setCategoryBonuses((prev) => prev.filter((cb) => cb.id !== existing.id));
+        await supabase.from("category_bonuses").delete().eq("id", existing.id);
+      } else {
+        // Switch bonus to this team (delete old, insert new)
+        setCategoryBonuses((prev) => prev.filter((cb) => cb.id !== existing.id));
+        await supabase.from("category_bonuses").delete().eq("id", existing.id);
+        const { data } = await supabase
+          .from("category_bonuses")
+          .insert({
+            quiz_id: quizId,
+            quiz_category_id: catId,
+            quiz_team_id: teamId,
+            organization_id: currentOrg.id,
+          })
+          .select()
+          .single();
+        if (data) setCategoryBonuses((prev) => [...prev, data as any]);
+      }
+    } else {
+      // Award bonus to this team
+      const { data } = await supabase
+        .from("category_bonuses")
+        .insert({
+          quiz_id: quizId,
+          quiz_category_id: catId,
+          quiz_team_id: teamId,
+          organization_id: currentOrg.id,
+        })
+        .select()
+        .single();
+      if (data) setCategoryBonuses((prev) => [...prev, data as any]);
     }
   };
 
@@ -240,13 +315,7 @@ export default function QuizDetailPage() {
   const getTeamTotal = (teamId: string) => {
     let total = 0;
     for (const cat of categories) {
-      const score = getScore(teamId, cat.id);
-      if (!score) continue;
-      let catPoints = score.points + score.bonus_points;
-      if (jokerType && getHelpUsage(teamId, cat.id, jokerType.id)) {
-        catPoints *= 2;
-      }
-      total += catPoints;
+      total += getDisplayPoints(teamId, cat.id);
     }
     return total;
   };
@@ -586,6 +655,8 @@ export default function QuizDetailPage() {
                       const score = getScore(team.id, cat.id);
                       const hasJoker = jokerType && getHelpUsage(team.id, cat.id, jokerType.id);
                       const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
+                      const hasBonusPt = hasCategoryBonus(team.id, cat.id);
+                      const displayPts = getDisplayPoints(team.id, cat.id);
 
                       // Disable help if team already used it in another category
                       const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
@@ -598,6 +669,7 @@ export default function QuizDetailPage() {
                           className={cn(
                             "p-1 flex flex-col items-center justify-center gap-0.5 border-l-2 border-foreground/20",
                             hasJoker && "bg-primary/[0.08]",
+                            hasBonusPt && !hasJoker && "bg-yellow-500/[0.06]",
                           )}
                         >
                           {canScore ? (
@@ -624,7 +696,7 @@ export default function QuizDetailPage() {
                                 )}
                               />
 
-                              {/* Help initials */}
+                              {/* Help initials + category bonus */}
                               <div className="flex items-center gap-0.5">
                                 {jokerType && (
                                   <button
@@ -660,6 +732,19 @@ export default function QuizDetailPage() {
                                     {getInitials(markerType.name)}
                                   </button>
                                 )}
+                                <button
+                                  onClick={() => toggleCategoryBonus(team.id, cat.id)}
+                                  tabIndex={-1}
+                                  title={t("scoring.categoryBonus")}
+                                  className={cn(
+                                    "w-6 h-5 rounded text-[9px] font-black border transition-colors",
+                                    hasBonusPt
+                                      ? "bg-yellow-500 text-white border-yellow-500"
+                                      : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
+                                  )}
+                                >
+                                  <Crown className="h-3 w-3 mx-auto" />
+                                </button>
                               </div>
                             </>
                           ) : (
@@ -676,9 +761,12 @@ export default function QuizDetailPage() {
                                         : "text-base",
                                 )}
                               >
-                                {score?.points ?? 0}
+                                {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
                               </p>
-                              {hasJoker && <span className="text-[10px] text-primary font-black">×2</span>}
+                              <div className="flex items-center gap-0.5">
+                                {hasJoker && <span className="text-[10px] text-primary font-black">×2</span>}
+                                {hasBonusPt && <Crown className="h-3 w-3 text-yellow-500" />}
+                              </div>
                             </div>
                           )}
                         </div>
