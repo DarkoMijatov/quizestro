@@ -170,6 +170,29 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
             });
             if (error) throw error;
           }
+        } else if (item.type === 'category_bonus') {
+          const cb = item as CategoryBonusToggle;
+          if (cb.action === 'remove') {
+            // Delete by quiz_category_id (unique constraint ensures one per category)
+            const { error } = await supabase
+              .from('category_bonuses')
+              .delete()
+              .eq('quiz_category_id', cb.quizCategoryId)
+              .eq('quiz_id', quizId);
+            if (error) throw error;
+          } else if (cb.action === 'set') {
+            // First remove any existing for this category
+            if (cb.previousId) {
+              await supabase.from('category_bonuses').delete().eq('id', cb.previousId);
+            }
+            const { error } = await supabase.from('category_bonuses').insert({
+              quiz_id: cb.quizId!,
+              quiz_category_id: cb.quizCategoryId,
+              quiz_team_id: cb.quizTeamId!,
+              organization_id: cb.organizationId!,
+            });
+            if (error) throw error;
+          }
         }
       } catch (err) {
         console.warn('[offline-queue] failed to sync item, will retry', item, err);
