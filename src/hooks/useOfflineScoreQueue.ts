@@ -228,6 +228,7 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
     syncing,
     enqueueScoreUpdate,
     enqueueHelpToggle,
+    enqueueCategoryBonus,
     flushQueue,
   };
 }
