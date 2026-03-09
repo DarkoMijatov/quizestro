@@ -188,25 +188,52 @@ export default function QuizDetailPage() {
     const existing = getHelpUsage(teamId, catId, helpType.id);
 
     if (existing) {
-      await supabase.from("help_usages").delete().eq("id", existing.id);
+      // Optimistic remove
       setHelpUsages((prev) => prev.filter((h) => h.id !== existing.id));
+      if (isOnline) {
+        await supabase.from("help_usages").delete().eq("id", existing.id);
+      } else {
+        enqueueHelpToggle({ action: 'remove', helpUsageId: existing.id });
+      }
     } else {
       if (hasTeamUsedHelp(teamId, helpType.id)) {
         toast({ title: t("scoring.helpAlreadyUsed"), variant: "destructive" });
         return;
       }
-      const { data } = await supabase
-        .from("help_usages")
-        .insert({
-          help_type_id: helpType.id,
-          quiz_team_id: teamId,
-          quiz_category_id: catId,
-          quiz_id: quizId,
-          organization_id: currentOrg.id,
-        })
-        .select()
-        .single();
-      if (data) setHelpUsages((prev) => [...prev, data as any]);
+
+      if (isOnline) {
+        const { data } = await supabase
+          .from("help_usages")
+          .insert({
+            help_type_id: helpType.id,
+            quiz_team_id: teamId,
+            quiz_category_id: catId,
+            quiz_id: quizId,
+            organization_id: currentOrg.id,
+          })
+          .select()
+          .single();
+        if (data) setHelpUsages((prev) => [...prev, data as any]);
+      } else {
+        const localId = enqueueHelpToggle({
+          action: 'add',
+          helpTypeId: helpType.id,
+          quizTeamId: teamId,
+          quizCategoryId: catId,
+          quizId,
+          organizationId: currentOrg.id,
+        });
+        // Optimistic add with local id
+        setHelpUsages((prev) => [
+          ...prev,
+          {
+            id: localId,
+            help_type_id: helpType.id,
+            quiz_team_id: teamId,
+            quiz_category_id: catId,
+          } as any,
+        ]);
+      }
     }
   };
 
