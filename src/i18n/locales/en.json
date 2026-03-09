@@ -135,6 +135,11 @@
     "statusUpdated": "Quiz status updated.", "helpAlreadyUsed": "This help has already been used by this team.",
     "manageDraft": "Manage"
   },
+  "offline": {
+    "pending": "pending",
+    "syncing": "Syncing...",
+    "synced": "Synced ✓"
+  },
   "leagues": {
     "title": "Leagues", "addLeague": "Add league", "leagueName": "League name",
     "leagueNamePlaceholder": "e.g. Spring Season 2026", "season": "Season",
