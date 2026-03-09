@@ -14,7 +14,14 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 export default function OnboardingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { organizations, memberships, loading: orgLoading, hasFetchedForCurrentUser, switchOrg, refetch } = useOrganizations();
+  const {
+    organizations,
+    memberships,
+    loading: orgLoading,
+    hasFetchedForCurrentUser,
+    switchOrg,
+    refetch,
+  } = useOrganizations();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [orgName, setOrgName] = useState("");
@@ -25,7 +32,10 @@ export default function OnboardingPage() {
   if (hasFetchedForCurrentUser && organizations.length > 0) {
     const savedOrgId = localStorage.getItem("quizory-current-org");
     // If they have a saved org that still exists, or only 1 org, skip picker
-    if (organizations.length === 1 || (savedOrgId && organizations.some((o) => o.id === savedOrgId))) {
+    if (
+      organizations.length === 1 ||
+      (savedOrgId && organizations.some((o) => o.id === savedOrgId))
+    ) {
       return <Navigate to="/dashboard" replace />;
     }
     // Multiple orgs, no saved preference → show picker (handled below)
@@ -42,41 +52,25 @@ export default function OnboardingPage() {
 
     setLoading(true);
 
-    const slug = orgName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+    // Create org server-side (avoids any client-side RLS edge cases)
+    const { data, error } = await supabase.functions.invoke(
+      "create-organization",
+      {
+        body: { name: orgName.trim() },
+      },
+    );
 
-    const { data: org, error: orgError } = await supabase
-      .from("organizations")
-      .insert({
-        name: orgName.trim(),
-        slug: slug + "-" + Date.now().toString(36),
-        subscription_tier: "free",
-      })
-      .select()
-      .single();
+    const org = (data as any)?.organization as { id: string } | undefined;
 
-    if (orgError || !org) {
+    if (error || !org) {
       toast({
         title: "Error",
-        description: orgError?.message || "Failed to create organization",
+        description: error?.message || "Failed to create organization",
         variant: "destructive",
       });
       setLoading(false);
       return;
     }
-
-
-    await supabase.from("help_types").insert([
-      {
-        organization_id: org.id,
-        name: "Joker",
-        effect: "double",
-        description: "Doubles points for the category",
-      },
-      { organization_id: org.id, name: "Double Chance", effect: "second_chance", description: "Allows two answers per question in a category" },
-    ]);
 
     localStorage.setItem("quizory-current-org", org.id);
     toast({ title: "✓", description: t("onboarding.success") });
@@ -84,7 +78,7 @@ export default function OnboardingPage() {
     navigate("/dashboard");
   };
 
-  const isOwnerOfAny = memberships.some((m) => m.role === 'owner');
+  const isOwnerOfAny = memberships.some((m) => m.role === "owner");
 
   // Show org picker if user has multiple orgs without saved preference
   const showPicker = hasFetchedForCurrentUser && organizations.length > 1 && !showCreate;
@@ -112,7 +106,9 @@ export default function OnboardingPage() {
 
             <div className="space-y-2">
               {organizations.map((org) => {
-                const isOwner = memberships.some((m) => m.organization_id === org.id && m.role === 'owner');
+                const isOwner = memberships.some(
+                  (m) => m.organization_id === org.id && m.role === "owner",
+                );
                 return (
                   <button
                     key={org.id}
@@ -120,7 +116,11 @@ export default function OnboardingPage() {
                     className="w-full flex items-center gap-3 rounded-xl border-2 border-border bg-card p-4 text-left hover:border-primary transition-colors"
                   >
                     {org.logo_url ? (
-                      <img src={org.logo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                      <img
+                        src={org.logo_url}
+                        alt=""
+                        className="h-10 w-10 rounded-lg object-cover"
+                      />
                     ) : (
                       <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                         <Building2 className="h-5 w-5 text-primary" />
@@ -131,7 +131,7 @@ export default function OnboardingPage() {
                         <p className="font-medium truncate">{org.name}</p>
                         {isOwner && (
                           <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary shrink-0">
-                            {t('onboarding.yourOrg', 'Vaša')}
+                            {t("onboarding.yourOrg", "Vaša")}
                           </span>
                         )}
                       </div>
@@ -144,7 +144,11 @@ export default function OnboardingPage() {
             </div>
 
             {!isOwnerOfAny && (
-              <Button variant="outline" className="w-full gap-2" onClick={() => setShowCreate(true)}>
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => setShowCreate(true)}
+              >
                 <Plus className="h-4 w-4" />
                 {t("onboarding.createNew")}
               </Button>
@@ -171,16 +175,26 @@ export default function OnboardingPage() {
                   value={orgName}
                   onChange={(e) => setOrgName(e.target.value)}
                   className="text-base"
+                  disabled={orgLoading}
                 />
               </div>
-              <Button type="submit" className="w-full" size="lg" disabled={loading || !orgName.trim()}>
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={loading || !orgName.trim() || orgLoading}
+              >
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {t("onboarding.cta")}
               </Button>
             </form>
 
             {organizations.length > 0 && (
-              <Button variant="ghost" className="w-full" onClick={() => setShowCreate(false)}>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => setShowCreate(false)}
+              >
                 {t("common.back")}
               </Button>
             )}
