@@ -412,6 +412,7 @@ export default function QuizDetailPage() {
             <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{quiz.name}</h1>
           </div>
           <div className="flex items-center gap-2">
+            <OfflineIndicator isOnline={isOnline} pendingCount={pendingCount} syncing={syncing} />
             {currentOrg?.logo_url && <img src={currentOrg.logo_url} alt="" className="h-8 w-auto object-contain" />}
             {canReorder && (
               <QuizDraftManager
