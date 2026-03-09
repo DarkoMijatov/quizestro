@@ -108,7 +108,7 @@ export default function QuizDetailPage() {
     if (!quizId || !currentOrg) return;
     setLoading(true);
 
-    const [quizRes, catRes, teamRes, scoreRes, helpTypeRes, helpUsageRes] = await Promise.all([
+    const [quizRes, catRes, teamRes, scoreRes, helpTypeRes, helpUsageRes, catBonusRes] = await Promise.all([
       supabase.from("quizzes").select("*").eq("id", quizId).single(),
       supabase.from("quiz_categories").select("*, category:categories(name)").eq("quiz_id", quizId).order("sort_order"),
       supabase
@@ -119,6 +119,7 @@ export default function QuizDetailPage() {
       supabase.from("scores").select("*").eq("quiz_id", quizId),
       supabase.from("help_types").select("*").eq("organization_id", currentOrg.id),
       supabase.from("help_usages").select("*").eq("quiz_id", quizId),
+      supabase.from("category_bonuses").select("*").eq("quiz_id", quizId),
     ]);
 
     setQuiz(quizRes.data as any);
@@ -127,6 +128,7 @@ export default function QuizDetailPage() {
     setScores((scoreRes.data as any) || []);
     setHelpTypes((helpTypeRes.data as any) || []);
     setHelpUsages((helpUsageRes.data as any) || []);
+    setCategoryBonuses((catBonusRes.data as any) || []);
     setLoading(false);
   }, [quizId, currentOrg?.id]);
 
