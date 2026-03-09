@@ -101,7 +101,7 @@ export default function QuizDetailPage() {
 
   const canEdit = currentRole === "owner" || currentRole === "admin";
 
-  const { isOnline, pendingCount, syncing, enqueueScoreUpdate, enqueueHelpToggle } =
+  const { isOnline, pendingCount, syncing, enqueueScoreUpdate, enqueueHelpToggle, enqueueCategoryBonus } =
     useOfflineScoreQueue({ quizId, onSynced: () => fetchAll() });
 
   const fetchAll = useCallback(async () => {
