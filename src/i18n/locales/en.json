@@ -133,7 +133,10 @@
     "team": "Team", "total": "Total", "points": "points", "notFound": "Quiz not found.",
     "goLive": "Go Live", "finish": "Finish Quiz", "reopen": "Reopen",
     "statusUpdated": "Quiz status updated.", "helpAlreadyUsed": "This help has already been used by this team.",
-    "manageDraft": "Manage"
+    "manageDraft": "Manage",
+    "categoryBonus": "Category bonus point",
+    "categoryBonusAwarded": "Bonus point awarded",
+    "categoryBonusRemoved": "Bonus point removed"
   },
   "offline": {
     "pending": "pending",

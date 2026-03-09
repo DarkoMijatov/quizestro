@@ -133,7 +133,10 @@
     "team": "Tim", "total": "Ukupno", "points": "bodova", "notFound": "Kviz nije pronađen.",
     "goLive": "Pokreni", "finish": "Završi kviz", "reopen": "Ponovo otvori",
     "statusUpdated": "Status kviza ažuriran.", "helpAlreadyUsed": "Ovaj tim je već iskoristio ovu pomoć.",
-    "manageDraft": "Upravljaj"
+    "manageDraft": "Upravljaj",
+    "categoryBonus": "Bonus poen za kategoriju",
+    "categoryBonusAwarded": "Bonus poen dodeljen",
+    "categoryBonusRemoved": "Bonus poen uklonjen"
   },
   "offline": {
     "pending": "na čekanju",
