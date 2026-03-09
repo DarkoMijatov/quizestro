@@ -118,6 +118,22 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
     [],
   );
 
+  const enqueueCategoryBonus = useCallback(
+    (item: Omit<CategoryBonusToggle, 'type' | 'timestamp' | 'localId'>) => {
+      const localId = `local-cb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const entry: CategoryBonusToggle = { ...item, type: 'category_bonus', timestamp: Date.now(), localId };
+      setQueue((prev) => {
+        // Dedupe: replace existing category_bonus for same quizCategoryId
+        const filtered = prev.filter(
+          (i) => !(i.type === 'category_bonus' && (i as CategoryBonusToggle).quizCategoryId === item.quizCategoryId),
+        );
+        return [...filtered, entry];
+      });
+      return localId;
+    },
+    [],
+  );
+
   // ── Sync logic ──
 
   const flushQueue = useCallback(async () => {
