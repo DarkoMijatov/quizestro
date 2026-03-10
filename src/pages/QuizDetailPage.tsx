@@ -749,22 +749,6 @@ export default function QuizDetailPage() {
                                 )}
                               />
 
-                              {/* Effective points display when joker/bonus active */}
-                              {(hasJoker || hasBonusPt) && (
-                                <span
-                                  className={cn(
-                                    "font-black text-primary/80",
-                                    sizeClass === "size-lg"
-                                      ? "text-lg"
-                                      : sizeClass === "size-md"
-                                        ? "text-base"
-                                        : "text-xs",
-                                  )}
-                                >
-                                  = {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
-                                </span>
-                              )}
-
                               {/* Help initials + category bonus */}
                               <div className="flex items-center gap-0.5">
                                 {jokerType && (
