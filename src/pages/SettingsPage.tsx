@@ -106,6 +106,7 @@ export default function SettingsPage() {
       setHelpTypes(helps);
       setJokerEnabled(helps.some(h => h.name.toLowerCase() === 'joker'));
       setDoubleChanceEnabled(helps.some(h => h.name.toLowerCase() === 'double chance'));
+      setCategoryBonusEnabled(helps.some(h => h.effect === 'category_bonus'));
       setHelpLoading(false);
     };
     loadHelps();
