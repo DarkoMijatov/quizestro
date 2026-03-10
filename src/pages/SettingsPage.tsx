@@ -112,18 +112,25 @@ export default function SettingsPage() {
     loadHelps();
   }, [currentOrg?.id]);
 
-  const toggleHelp = async (name: string, enabled: boolean) => {
+  const toggleHelp = async (name: string, enabled: boolean, effect?: string) => {
     if (!currentOrg) return;
     if (enabled) {
-      const effect = name.toLowerCase() === 'joker' ? 'double' : 'second_chance';
+      const eff = effect || (name.toLowerCase() === 'joker' ? 'double' : 'second_chance');
+      const desc = name.toLowerCase() === 'joker' 
+        ? 'Duplira poene za jednu kategoriju' 
+        : eff === 'category_bonus'
+          ? 'Dodaje bonus poen pobedniku kategorije'
+          : 'Omogućava dva odgovora po pitanju u jednoj kategoriji';
       await supabase.from('help_types').insert({
         name,
-        effect,
+        effect: eff,
         organization_id: currentOrg.id,
-        description: name.toLowerCase() === 'joker' ? 'Duplira poene za jednu kategoriju' : 'Omogućava dva odgovora po pitanju u jednoj kategoriji',
+        description: desc,
       });
     } else {
-      const help = helpTypes.find(h => h.name.toLowerCase() === name.toLowerCase());
+      const help = effect 
+        ? helpTypes.find(h => h.effect === effect)
+        : helpTypes.find(h => h.name.toLowerCase() === name.toLowerCase());
       if (help) await supabase.from('help_types').delete().eq('id', help.id);
     }
     // Refresh
@@ -132,6 +139,7 @@ export default function SettingsPage() {
     setHelpTypes(helps);
     setJokerEnabled(helps.some(h => h.name.toLowerCase() === 'joker'));
     setDoubleChanceEnabled(helps.some(h => h.name.toLowerCase() === 'double chance'));
+    setCategoryBonusEnabled(helps.some(h => h.effect === 'category_bonus'));
     toast({ title: '✓', description: t('settings.saved') });
   };
 
