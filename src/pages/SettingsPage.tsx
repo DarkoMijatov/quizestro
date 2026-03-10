@@ -69,6 +69,7 @@ export default function SettingsPage() {
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
   const [jokerEnabled, setJokerEnabled] = useState(false);
   const [doubleChanceEnabled, setDoubleChanceEnabled] = useState(false);
+  const [categoryBonusEnabled, setCategoryBonusEnabled] = useState(false);
   const [helpLoading, setHelpLoading] = useState(true);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
 
