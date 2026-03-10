@@ -149,8 +149,7 @@ export default function QuizDetailPage() {
   const hasTeamUsedHelp = (teamId: string, helpTypeId: string) =>
     helpUsages.some((h) => h.quiz_team_id === teamId && h.help_type_id === helpTypeId);
 
-  const getCategoryBonus = (catId: string) =>
-    categoryBonuses.find((cb) => cb.quiz_category_id === catId);
+  const getCategoryBonus = (catId: string) => categoryBonuses.find((cb) => cb.quiz_category_id === catId);
 
   const hasCategoryBonus = (teamId: string, catId: string) => {
     const bonus = getCategoryBonus(catId);
@@ -194,7 +193,7 @@ export default function QuizDetailPage() {
         if (isOnline) {
           await supabase.from("category_bonuses").delete().eq("id", existing.id);
         } else {
-          enqueueCategoryBonus({ action: 'remove', quizCategoryId: catId });
+          enqueueCategoryBonus({ action: "remove", quizCategoryId: catId });
         }
       } else {
         // Switch bonus to this team
@@ -214,7 +213,7 @@ export default function QuizDetailPage() {
           if (data) setCategoryBonuses((prev) => [...prev, data as any]);
         } else {
           const localId = enqueueCategoryBonus({
-            action: 'set',
+            action: "set",
             quizCategoryId: catId,
             quizTeamId: teamId,
             quizId,
@@ -223,7 +222,13 @@ export default function QuizDetailPage() {
           });
           setCategoryBonuses((prev) => [
             ...prev,
-            { id: localId, quiz_id: quizId, quiz_category_id: catId, quiz_team_id: teamId, organization_id: currentOrg.id } as any,
+            {
+              id: localId,
+              quiz_id: quizId,
+              quiz_category_id: catId,
+              quiz_team_id: teamId,
+              organization_id: currentOrg.id,
+            } as any,
           ]);
         }
       }
@@ -243,7 +248,7 @@ export default function QuizDetailPage() {
         if (data) setCategoryBonuses((prev) => [...prev, data as any]);
       } else {
         const localId = enqueueCategoryBonus({
-          action: 'set',
+          action: "set",
           quizCategoryId: catId,
           quizTeamId: teamId,
           quizId,
@@ -251,7 +256,13 @@ export default function QuizDetailPage() {
         });
         setCategoryBonuses((prev) => [
           ...prev,
-          { id: localId, quiz_id: quizId, quiz_category_id: catId, quiz_team_id: teamId, organization_id: currentOrg.id } as any,
+          {
+            id: localId,
+            quiz_id: quizId,
+            quiz_category_id: catId,
+            quiz_team_id: teamId,
+            organization_id: currentOrg.id,
+          } as any,
         ]);
       }
     }
@@ -302,7 +313,7 @@ export default function QuizDetailPage() {
       if (isOnline) {
         await supabase.from("help_usages").delete().eq("id", existing.id);
       } else {
-        enqueueHelpToggle({ action: 'remove', helpUsageId: existing.id });
+        enqueueHelpToggle({ action: "remove", helpUsageId: existing.id });
       }
     } else {
       if (hasTeamUsedHelp(teamId, helpType.id)) {
@@ -325,7 +336,7 @@ export default function QuizDetailPage() {
         if (data) setHelpUsages((prev) => [...prev, data as any]);
       } else {
         const localId = enqueueHelpToggle({
-          action: 'add',
+          action: "add",
           helpTypeId: helpType.id,
           quizTeamId: teamId,
           quizCategoryId: catId,
@@ -715,7 +726,13 @@ export default function QuizDetailPage() {
                                 type="number"
                                 min={0}
                                 step={0.5}
-                                value={score?.points ?? 0}
+                                value={
+                                  hasJoker || hasBonusPt
+                                    ? displayPts % 1 === 0
+                                      ? displayPts
+                                      : displayPts.toFixed(1)
+                                    : (score?.points ?? 0)
+                                }
                                 onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
                                 onFocus={(e) => e.target.select()}
                                 onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
@@ -734,10 +751,16 @@ export default function QuizDetailPage() {
 
                               {/* Effective points display when joker/bonus active */}
                               {(hasJoker || hasBonusPt) && (
-                                <span className={cn(
-                                  "font-black text-primary/80",
-                                  sizeClass === "size-lg" ? "text-lg" : sizeClass === "size-md" ? "text-base" : "text-xs",
-                                )}>
+                                <span
+                                  className={cn(
+                                    "font-black text-primary/80",
+                                    sizeClass === "size-lg"
+                                      ? "text-lg"
+                                      : sizeClass === "size-md"
+                                        ? "text-base"
+                                        : "text-xs",
+                                  )}
+                                >
                                   = {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
                                 </span>
                               )}
