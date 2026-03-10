@@ -20,8 +20,6 @@ import {
   ChevronRight,
   Pencil,
   Crown,
-  Dice,
-  Joker,
 } from "lucide-react";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
@@ -785,7 +783,6 @@ export default function QuizDetailPage() {
                                     )}
                                   >
                                     {getInitials(markerType.name)}
-                                    <Dice></Dice>
                                   </button>
                                 )}
                                 {categoryBonusEnabled && (
