@@ -691,6 +691,8 @@ export default function QuizDetailPage() {
                       const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
                       const hasBonusPt = hasCategoryBonus(team.id, cat.id);
                       const displayPts = getDisplayPoints(team.id, cat.id);
+                      const catBonusExisting = getCategoryBonus(cat.id);
+                      const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
 
                       // Disable help if team already used it in another category
                       const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
