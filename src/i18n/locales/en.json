@@ -272,7 +272,6 @@
     "brandingProOnly": "Full branding customization available on Pro plan only",
     "helpTypes": "Help Types", "helpTypesDescription": "Enable or disable helps for your quizzes.",
     "jokerDescription": "Doubles points for one category.", "doubleChanceDescription": "Allows two answers per question in one category.",
-    "categoryBonusName": "Bonus Point", "categoryBonusDescription": "Awards +1 point to the category winner. Joker does not double this bonus.",
     "theme": "Theme", "darkTheme": "Dark theme", "lightTheme": "Light theme", "themeDescription": "Choose the application theme.",
     "manageSubscription": "Manage Subscription",
     "currentPlan": "Current Plan",

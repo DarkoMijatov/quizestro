@@ -69,7 +69,6 @@ export default function SettingsPage() {
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
   const [jokerEnabled, setJokerEnabled] = useState(false);
   const [doubleChanceEnabled, setDoubleChanceEnabled] = useState(false);
-  const [categoryBonusEnabled, setCategoryBonusEnabled] = useState(false);
   const [helpLoading, setHelpLoading] = useState(true);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
 
@@ -106,40 +105,23 @@ export default function SettingsPage() {
       setHelpTypes(helps);
       setJokerEnabled(helps.some(h => h.name.toLowerCase() === 'joker'));
       setDoubleChanceEnabled(helps.some(h => h.name.toLowerCase() === 'double chance'));
-      setCategoryBonusEnabled(helps.some(h => h.effect === 'category_bonus'));
       setHelpLoading(false);
     };
     loadHelps();
   }, [currentOrg?.id]);
 
-  const getEffectForName = (name: string) => {
-    const lower = name.toLowerCase();
-    if (lower === 'joker') return 'double';
-    if (lower === 'bonus poen') return 'category_bonus';
-    return 'second_chance';
-  };
-
-  const getDescriptionForName = (name: string) => {
-    const lower = name.toLowerCase();
-    if (lower === 'joker') return 'Duplira poene za jednu kategoriju';
-    if (lower === 'bonus poen') return 'Dodaje +1 poen pobedniku kategorije';
-    return 'Omogućava dva odgovora po pitanju u jednoj kategoriji';
-  };
-
   const toggleHelp = async (name: string, enabled: boolean) => {
     if (!currentOrg) return;
     if (enabled) {
+      const effect = name.toLowerCase() === 'joker' ? 'double' : 'second_chance';
       await supabase.from('help_types').insert({
         name,
-        effect: getEffectForName(name),
+        effect,
         organization_id: currentOrg.id,
-        description: getDescriptionForName(name),
+        description: name.toLowerCase() === 'joker' ? 'Duplira poene za jednu kategoriju' : 'Omogućava dva odgovora po pitanju u jednoj kategoriji',
       });
     } else {
-      const matchFn = name.toLowerCase() === 'bonus poen'
-        ? (h: HelpType) => h.effect === 'category_bonus'
-        : (h: HelpType) => h.name.toLowerCase() === name.toLowerCase();
-      const help = helpTypes.find(matchFn);
+      const help = helpTypes.find(h => h.name.toLowerCase() === name.toLowerCase());
       if (help) await supabase.from('help_types').delete().eq('id', help.id);
     }
     // Refresh
@@ -148,7 +130,6 @@ export default function SettingsPage() {
     setHelpTypes(helps);
     setJokerEnabled(helps.some(h => h.name.toLowerCase() === 'joker'));
     setDoubleChanceEnabled(helps.some(h => h.name.toLowerCase() === 'double chance'));
-    setCategoryBonusEnabled(helps.some(h => h.effect === 'category_bonus'));
     toast({ title: '✓', description: t('settings.saved') });
   };
 
@@ -650,17 +631,6 @@ export default function SettingsPage() {
                 <Switch
                   checked={doubleChanceEnabled}
                   onCheckedChange={(v) => { setDoubleChanceEnabled(v); toggleHelp('Double Chance', v); }}
-                  disabled={!canEdit}
-                />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-border p-4">
-                <div>
-                  <p className="font-medium">{t('settings.categoryBonusName')}</p>
-                  <p className="text-xs text-muted-foreground">{t('settings.categoryBonusDescription')}</p>
-                </div>
-                <Switch
-                  checked={categoryBonusEnabled}
-                  onCheckedChange={(v) => { setCategoryBonusEnabled(v); toggleHelp('Bonus poen', v); }}
                   disabled={!canEdit}
                 />
               </div>

@@ -272,7 +272,6 @@
     "brandingProOnly": "Kompletno brendiranje dostupno samo na Pro planu",
     "helpTypes": "Tipovi pomoći", "helpTypesDescription": "Uključite ili isključite pomoći za vaše kvizove.",
     "jokerDescription": "Duplira poene za jednu kategoriju.", "doubleChanceDescription": "Omogućava dva odgovora po pitanju u jednoj kategoriji.",
-    "categoryBonusName": "Bonus poen", "categoryBonusDescription": "Dodaje +1 poen pobedniku kategorije. Joker ne duplira ovaj bonus.",
     "theme": "Tema", "darkTheme": "Tamna tema", "lightTheme": "Svetla tema", "themeDescription": "Izaberite temu za aplikaciju.",
     "manageSubscription": "Upravljanje pretplatom",
     "currentPlan": "Trenutni plan",
