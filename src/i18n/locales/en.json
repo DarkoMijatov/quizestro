@@ -271,7 +271,7 @@
     "bgColor": "Background color", "textColor": "Text color", "headerColor": "Table header color",
     "brandingProOnly": "Full branding customization available on Pro plan only",
     "helpTypes": "Help Types", "helpTypesDescription": "Enable or disable helps for your quizzes.",
-    "jokerDescription": "Doubles points for one category.", "doubleChanceDescription": "Allows two answers per question in one category.",
+    "jokerDescription": "Doubles points for one category.", "doubleChanceDescription": "Allows two answers per question in one category.", "categoryBonusDescription": "Awards +1 bonus point to the category winner.",
     "theme": "Theme", "darkTheme": "Dark theme", "lightTheme": "Light theme", "themeDescription": "Choose the application theme.",
     "manageSubscription": "Manage Subscription",
     "currentPlan": "Current Plan",

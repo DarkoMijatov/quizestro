@@ -144,6 +144,7 @@ export default function QuizDetailPage() {
 
   const jokerType = helpTypes.find((h) => h.effect === "double");
   const markerType = helpTypes.find((h) => h.effect === "second_chance" || h.effect === "marker");
+  const categoryBonusEnabled = helpTypes.some((h) => h.effect === "category_bonus");
 
   const hasTeamUsedHelp = (teamId: string, helpTypeId: string) =>
     helpUsages.some((h) => h.quiz_team_id === teamId && h.help_type_id === helpTypeId);
@@ -690,6 +691,8 @@ export default function QuizDetailPage() {
                       const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
                       const hasBonusPt = hasCategoryBonus(team.id, cat.id);
                       const displayPts = getDisplayPoints(team.id, cat.id);
+                      const catBonusExisting = getCategoryBonus(cat.id);
+                      const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
 
                       // Disable help if team already used it in another category
                       const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
@@ -729,6 +732,16 @@ export default function QuizDetailPage() {
                                 )}
                               />
 
+                              {/* Effective points display when joker/bonus active */}
+                              {(hasJoker || hasBonusPt) && (
+                                <span className={cn(
+                                  "font-black text-primary/80",
+                                  sizeClass === "size-lg" ? "text-lg" : sizeClass === "size-md" ? "text-base" : "text-xs",
+                                )}>
+                                  = {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
+                                </span>
+                              )}
+
                               {/* Help initials + category bonus */}
                               <div className="flex items-center gap-0.5">
                                 {jokerType && (
@@ -765,19 +778,24 @@ export default function QuizDetailPage() {
                                     {getInitials(markerType.name)}
                                   </button>
                                 )}
-                                <button
-                                  onClick={() => toggleCategoryBonus(team.id, cat.id)}
-                                  tabIndex={-1}
-                                  title={t("scoring.categoryBonus")}
-                                  className={cn(
-                                    "w-6 h-5 rounded text-[9px] font-black border transition-colors",
-                                    hasBonusPt
-                                      ? "bg-yellow-500 text-white border-yellow-500"
-                                      : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
-                                  )}
-                                >
-                                  <Crown className="h-3 w-3 mx-auto" />
-                                </button>
+                                {categoryBonusEnabled && (
+                                  <button
+                                    onClick={() => toggleCategoryBonus(team.id, cat.id)}
+                                    disabled={bonusDisabled}
+                                    tabIndex={-1}
+                                    title={t("scoring.categoryBonus")}
+                                    className={cn(
+                                      "w-6 h-5 rounded text-[9px] font-black border transition-colors",
+                                      hasBonusPt
+                                        ? "bg-yellow-500 text-white border-yellow-500"
+                                        : bonusDisabled
+                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
+                                    )}
+                                  >
+                                    <Crown className="h-3 w-3 mx-auto" />
+                                  </button>
+                                )}
                               </div>
                             </>
                           ) : (

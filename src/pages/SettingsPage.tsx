@@ -69,6 +69,7 @@ export default function SettingsPage() {
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
   const [jokerEnabled, setJokerEnabled] = useState(false);
   const [doubleChanceEnabled, setDoubleChanceEnabled] = useState(false);
+  const [categoryBonusEnabled, setCategoryBonusEnabled] = useState(false);
   const [helpLoading, setHelpLoading] = useState(true);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
 
@@ -105,23 +106,31 @@ export default function SettingsPage() {
       setHelpTypes(helps);
       setJokerEnabled(helps.some(h => h.name.toLowerCase() === 'joker'));
       setDoubleChanceEnabled(helps.some(h => h.name.toLowerCase() === 'double chance'));
+      setCategoryBonusEnabled(helps.some(h => h.effect === 'category_bonus'));
       setHelpLoading(false);
     };
     loadHelps();
   }, [currentOrg?.id]);
 
-  const toggleHelp = async (name: string, enabled: boolean) => {
+  const toggleHelp = async (name: string, enabled: boolean, effect?: string) => {
     if (!currentOrg) return;
     if (enabled) {
-      const effect = name.toLowerCase() === 'joker' ? 'double' : 'second_chance';
+      const eff = effect || (name.toLowerCase() === 'joker' ? 'double' : 'second_chance');
+      const desc = name.toLowerCase() === 'joker' 
+        ? 'Duplira poene za jednu kategoriju' 
+        : eff === 'category_bonus'
+          ? 'Dodaje bonus poen pobedniku kategorije'
+          : 'Omogućava dva odgovora po pitanju u jednoj kategoriji';
       await supabase.from('help_types').insert({
         name,
-        effect,
+        effect: eff,
         organization_id: currentOrg.id,
-        description: name.toLowerCase() === 'joker' ? 'Duplira poene za jednu kategoriju' : 'Omogućava dva odgovora po pitanju u jednoj kategoriji',
+        description: desc,
       });
     } else {
-      const help = helpTypes.find(h => h.name.toLowerCase() === name.toLowerCase());
+      const help = effect 
+        ? helpTypes.find(h => h.effect === effect)
+        : helpTypes.find(h => h.name.toLowerCase() === name.toLowerCase());
       if (help) await supabase.from('help_types').delete().eq('id', help.id);
     }
     // Refresh
@@ -130,6 +139,7 @@ export default function SettingsPage() {
     setHelpTypes(helps);
     setJokerEnabled(helps.some(h => h.name.toLowerCase() === 'joker'));
     setDoubleChanceEnabled(helps.some(h => h.name.toLowerCase() === 'double chance'));
+    setCategoryBonusEnabled(helps.some(h => h.effect === 'category_bonus'));
     toast({ title: '✓', description: t('settings.saved') });
   };
 
@@ -631,6 +641,20 @@ export default function SettingsPage() {
                 <Switch
                   checked={doubleChanceEnabled}
                   onCheckedChange={(v) => { setDoubleChanceEnabled(v); toggleHelp('Double Chance', v); }}
+                  disabled={!canEdit}
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                <div className="flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-yellow-500" />
+                  <div>
+                    <p className="font-medium">{t('scoring.categoryBonus')}</p>
+                    <p className="text-xs text-muted-foreground">{t('settings.categoryBonusDescription')}</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={categoryBonusEnabled}
+                  onCheckedChange={(v) => { setCategoryBonusEnabled(v); toggleHelp('Category Bonus', v, 'category_bonus'); }}
                   disabled={!canEdit}
                 />
               </div>
