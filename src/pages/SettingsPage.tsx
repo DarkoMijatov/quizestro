@@ -644,6 +644,20 @@ export default function SettingsPage() {
                   disabled={!canEdit}
                 />
               </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                <div className="flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-yellow-500" />
+                  <div>
+                    <p className="font-medium">{t('scoring.categoryBonus')}</p>
+                    <p className="text-xs text-muted-foreground">{t('settings.categoryBonusDescription')}</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={categoryBonusEnabled}
+                  onCheckedChange={(v) => { setCategoryBonusEnabled(v); toggleHelp('Category Bonus', v, 'category_bonus'); }}
+                  disabled={!canEdit}
+                />
+              </div>
             </div>
           )}
         </div>

@@ -732,6 +732,16 @@ export default function QuizDetailPage() {
                                 )}
                               />
 
+                              {/* Effective points display when joker/bonus active */}
+                              {(hasJoker || hasBonusPt) && (
+                                <span className={cn(
+                                  "font-black text-primary/80",
+                                  sizeClass === "size-lg" ? "text-lg" : sizeClass === "size-md" ? "text-base" : "text-xs",
+                                )}>
+                                  = {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
+                                </span>
+                              )}
+
                               {/* Help initials + category bonus */}
                               <div className="flex items-center gap-0.5">
                                 {jokerType && (
@@ -768,19 +778,24 @@ export default function QuizDetailPage() {
                                     {getInitials(markerType.name)}
                                   </button>
                                 )}
-                                <button
-                                  onClick={() => toggleCategoryBonus(team.id, cat.id)}
-                                  tabIndex={-1}
-                                  title={t("scoring.categoryBonus")}
-                                  className={cn(
-                                    "w-6 h-5 rounded text-[9px] font-black border transition-colors",
-                                    hasBonusPt
-                                      ? "bg-yellow-500 text-white border-yellow-500"
-                                      : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
-                                  )}
-                                >
-                                  <Crown className="h-3 w-3 mx-auto" />
-                                </button>
+                                {categoryBonusEnabled && (
+                                  <button
+                                    onClick={() => toggleCategoryBonus(team.id, cat.id)}
+                                    disabled={bonusDisabled}
+                                    tabIndex={-1}
+                                    title={t("scoring.categoryBonus")}
+                                    className={cn(
+                                      "w-6 h-5 rounded text-[9px] font-black border transition-colors",
+                                      hasBonusPt
+                                        ? "bg-yellow-500 text-white border-yellow-500"
+                                        : bonusDisabled
+                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
+                                    )}
+                                  >
+                                    <Crown className="h-3 w-3 mx-auto" />
+                                  </button>
+                                )}
                               </div>
                             </>
                           ) : (
