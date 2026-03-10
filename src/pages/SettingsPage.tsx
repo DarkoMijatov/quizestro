@@ -112,18 +112,34 @@ export default function SettingsPage() {
     loadHelps();
   }, [currentOrg?.id]);
 
+  const getEffectForName = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower === 'joker') return 'double';
+    if (lower === 'bonus poen') return 'category_bonus';
+    return 'second_chance';
+  };
+
+  const getDescriptionForName = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower === 'joker') return 'Duplira poene za jednu kategoriju';
+    if (lower === 'bonus poen') return 'Dodaje +1 poen pobedniku kategorije';
+    return 'Omogućava dva odgovora po pitanju u jednoj kategoriji';
+  };
+
   const toggleHelp = async (name: string, enabled: boolean) => {
     if (!currentOrg) return;
     if (enabled) {
-      const effect = name.toLowerCase() === 'joker' ? 'double' : 'second_chance';
       await supabase.from('help_types').insert({
         name,
-        effect,
+        effect: getEffectForName(name),
         organization_id: currentOrg.id,
-        description: name.toLowerCase() === 'joker' ? 'Duplira poene za jednu kategoriju' : 'Omogućava dva odgovora po pitanju u jednoj kategoriji',
+        description: getDescriptionForName(name),
       });
     } else {
-      const help = helpTypes.find(h => h.name.toLowerCase() === name.toLowerCase());
+      const matchFn = name.toLowerCase() === 'bonus poen'
+        ? (h: HelpType) => h.effect === 'category_bonus'
+        : (h: HelpType) => h.name.toLowerCase() === name.toLowerCase();
+      const help = helpTypes.find(matchFn);
       if (help) await supabase.from('help_types').delete().eq('id', help.id);
     }
     // Refresh
@@ -132,6 +148,7 @@ export default function SettingsPage() {
     setHelpTypes(helps);
     setJokerEnabled(helps.some(h => h.name.toLowerCase() === 'joker'));
     setDoubleChanceEnabled(helps.some(h => h.name.toLowerCase() === 'double chance'));
+    setCategoryBonusEnabled(helps.some(h => h.effect === 'category_bonus'));
     toast({ title: '✓', description: t('settings.saved') });
   };
 
