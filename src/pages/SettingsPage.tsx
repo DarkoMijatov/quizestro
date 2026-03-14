@@ -623,9 +623,12 @@ export default function SettingsPage() {
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between rounded-lg border border-border p-4">
-                <div>
-                  <p className="font-medium">Joker</p>
-                  <p className="text-xs text-muted-foreground">{t('settings.jokerDescription')}</p>
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="font-medium">Joker</p>
+                    <p className="text-xs text-muted-foreground">{t('settings.jokerDescription')}</p>
+                  </div>
                 </div>
                 <Switch
                   checked={jokerEnabled}
@@ -634,9 +637,12 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="flex items-center justify-between rounded-lg border border-border p-4">
-                <div>
-                  <p className="font-medium">Double Chance</p>
-                  <p className="text-xs text-muted-foreground">{t('settings.doubleChanceDescription')}</p>
+                <div className="flex items-center gap-2">
+                  <CopyCheck className="h-4 w-4 text-accent-foreground" />
+                  <div>
+                    <p className="font-medium">Double Chance</p>
+                    <p className="text-xs text-muted-foreground">{t('settings.doubleChanceDescription')}</p>
+                  </div>
                 </div>
                 <Switch
                   checked={doubleChanceEnabled}
