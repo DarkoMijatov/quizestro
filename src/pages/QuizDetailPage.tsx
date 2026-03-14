@@ -824,7 +824,8 @@ export default function QuizDetailPage() {
                                 {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
                               </p>
                               <div className="flex items-center gap-0.5">
-                                {hasJoker && <span className="text-[10px] text-primary font-black">×2</span>}
+                                {hasJoker && <Zap className="h-3 w-3 text-primary" />}
+                                {hasMarker && <CopyCheck className="h-3 w-3 text-accent-foreground" />}
                                 {hasBonusPt && <Crown className="h-3 w-3 text-yellow-500" />}
                               </div>
                             </div>
