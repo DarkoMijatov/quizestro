@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Zap, Crown, Shield, Upload, Palette, Sun, Moon, ArrowDownCircle, CreditCard, CalendarDays, Receipt, KeyRound, Gift, Trash2, AlertTriangle } from 'lucide-react';
+import { Loader2, Zap, Crown, Shield, Upload, Palette, Sun, Moon, ArrowDownCircle, CreditCard, CalendarDays, Receipt, KeyRound, Gift, Trash2, AlertTriangle, CopyCheck } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,

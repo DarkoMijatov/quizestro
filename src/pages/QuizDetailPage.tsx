@@ -767,7 +767,7 @@ export default function QuizDetailPage() {
                                           : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
                                     )}
                                   >
-                                    {getInitials(jokerType.name)}
+                                    <Zap className="h-3 w-3 mx-auto" />
                                   </button>
                                 )}
                                 {markerType && (
@@ -784,7 +784,7 @@ export default function QuizDetailPage() {
                                           : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
                                     )}
                                   >
-                                    {getInitials(markerType.name)}
+                                    <CopyCheck className="h-3 w-3 mx-auto" />
                                   </button>
                                 )}
                                 {categoryBonusEnabled && (
