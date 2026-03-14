@@ -20,6 +20,8 @@ import {
   ChevronRight,
   Pencil,
   Crown,
+  Zap,
+  CopyCheck,
 } from "lucide-react";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
@@ -765,7 +767,7 @@ export default function QuizDetailPage() {
                                           : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
                                     )}
                                   >
-                                    {getInitials(jokerType.name)}
+                                    <Zap className="h-3 w-3 mx-auto" />
                                   </button>
                                 )}
                                 {markerType && (
@@ -782,7 +784,7 @@ export default function QuizDetailPage() {
                                           : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
                                     )}
                                   >
-                                    {getInitials(markerType.name)}
+                                    <CopyCheck className="h-3 w-3 mx-auto" />
                                   </button>
                                 )}
                                 {categoryBonusEnabled && (
@@ -822,7 +824,8 @@ export default function QuizDetailPage() {
                                 {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
                               </p>
                               <div className="flex items-center gap-0.5">
-                                {hasJoker && <span className="text-[10px] text-primary font-black">×2</span>}
+                                {hasJoker && <Zap className="h-3 w-3 text-primary" />}
+                                {hasMarker && <CopyCheck className="h-3 w-3 text-accent-foreground" />}
                                 {hasBonusPt && <Crown className="h-3 w-3 text-yellow-500" />}
                               </div>
                             </div>
