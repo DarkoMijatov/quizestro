@@ -614,6 +614,9 @@ export default function SettingsPage() {
           </div>
         )}
 
+        {/* Quiz Locations / Map Settings */}
+        <LocationManager />
+
         {/* Help Types */}
         <div className="rounded-xl border border-border bg-card p-6 space-y-5">
           <h2 className="font-display font-semibold">{t('settings.helpTypes')}</h2>
