@@ -86,7 +86,7 @@ export function LocationManager() {
 
   useEffect(() => {
     if (!currentOrg) return;
-    setMapEnabled(currentOrg.public_map_enabled ?? false);
+    setMapEnabled((currentOrg as any).public_map_enabled ?? false);
     loadData();
   }, [currentOrg?.id]);
 
