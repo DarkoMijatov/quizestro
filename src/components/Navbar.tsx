@@ -61,6 +61,9 @@ export function Navbar() {
         <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-lg px-4 py-4 space-y-3">
           {isLanding && (
             <>
+              <a href="#quiz-map" className="block text-sm font-medium py-2" onClick={() => setOpen(false)}>
+                {t('nav.quizMap')}
+              </a>
               <a href="#features" className="block text-sm font-medium py-2" onClick={() => setOpen(false)}>
                 {t('nav.features')}
               </a>
