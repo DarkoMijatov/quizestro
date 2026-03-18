@@ -24,6 +24,9 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-6">
           {isLanding && (
             <>
+              <a href="#quiz-map" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                {t('nav.quizMap')}
+              </a>
               <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 {t('nav.features')}
               </a>
