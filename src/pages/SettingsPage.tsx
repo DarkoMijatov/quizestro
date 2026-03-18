@@ -6,6 +6,7 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { isOrgPremium } from '@/lib/premium';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { LocationManager } from '@/components/map/LocationManager';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -612,6 +613,9 @@ export default function SettingsPage() {
             </Button>
           </div>
         )}
+
+        {/* Quiz Locations / Map Settings */}
+        <LocationManager />
 
         {/* Help Types */}
         <div className="rounded-xl border border-border bg-card p-6 space-y-5">

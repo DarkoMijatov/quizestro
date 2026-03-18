@@ -10,6 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { CookieBanner } from '@/components/CookieBanner';
+import { PublicQuizMap } from '@/components/map/PublicQuizMap';
 import { Users, BarChart3, Zap, Share2, Check, ArrowRight, Trophy, UserPlus, FolderOpen, PlayCircle, TrendingUp, Send, Loader2, MessageCircle, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -125,6 +126,9 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Public Quiz Map */}
+      <PublicQuizMap />
 
       {/* Features */}
       <section id="features" className="py-24 bg-muted/30">

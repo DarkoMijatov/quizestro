@@ -399,6 +399,90 @@ export type Database = {
           },
         ]
       }
+      location_schedules: {
+        Row: {
+          category: string | null
+          created_at: string
+          day_of_week: number | null
+          end_time: string | null
+          entry_fee: string | null
+          event_date: string | null
+          id: string
+          is_active: boolean
+          language: string | null
+          notes: string | null
+          organization_id: string
+          organization_location_id: string
+          prize_info: string | null
+          schedule_type: string
+          start_time: string
+          team_size_info: string | null
+          title: string | null
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          day_of_week?: number | null
+          end_time?: string | null
+          entry_fee?: string | null
+          event_date?: string | null
+          id?: string
+          is_active?: boolean
+          language?: string | null
+          notes?: string | null
+          organization_id: string
+          organization_location_id: string
+          prize_info?: string | null
+          schedule_type?: string
+          start_time: string
+          team_size_info?: string | null
+          title?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          day_of_week?: number | null
+          end_time?: string | null
+          entry_fee?: string | null
+          event_date?: string | null
+          id?: string
+          is_active?: boolean
+          language?: string | null
+          notes?: string | null
+          organization_id?: string
+          organization_location_id?: string
+          prize_info?: string | null
+          schedule_type?: string
+          start_time?: string
+          team_size_info?: string | null
+          title?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_schedules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_schedules_organization_location_id_fkey"
+            columns: ["organization_location_id"]
+            isOneToOne: false
+            referencedRelation: "org_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matching_pairs: {
         Row: {
           created_at: string
@@ -479,6 +563,80 @@ export type Database = {
           },
         ]
       }
+      org_locations: {
+        Row: {
+          address_line: string | null
+          city: string
+          contact_email: string | null
+          contact_phone: string | null
+          country: string
+          created_at: string
+          description: string | null
+          facebook_url: string | null
+          id: string
+          instagram_url: string | null
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          organization_id: string
+          postal_code: string | null
+          reservation_url: string | null
+          updated_at: string
+          venue_name: string
+          website_url: string | null
+        }
+        Insert: {
+          address_line?: string | null
+          city: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          country?: string
+          created_at?: string
+          description?: string | null
+          facebook_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          organization_id: string
+          postal_code?: string | null
+          reservation_url?: string | null
+          updated_at?: string
+          venue_name: string
+          website_url?: string | null
+        }
+        Update: {
+          address_line?: string | null
+          city?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          country?: string
+          created_at?: string
+          description?: string | null
+          facebook_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          organization_id?: string
+          postal_code?: string | null
+          reservation_url?: string | null
+          updated_at?: string
+          venue_name?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_locations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           branding_bg_color: string | null
@@ -498,6 +656,7 @@ export type Database = {
           premium_override_by: string | null
           premium_override_reason: string | null
           premium_override_until: string | null
+          public_map_enabled: boolean
           secondary_color: string | null
           slug: string | null
           subscription_id: string | null
@@ -524,6 +683,7 @@ export type Database = {
           premium_override_by?: string | null
           premium_override_reason?: string | null
           premium_override_until?: string | null
+          public_map_enabled?: boolean
           secondary_color?: string | null
           slug?: string | null
           subscription_id?: string | null
@@ -550,6 +710,7 @@ export type Database = {
           premium_override_by?: string | null
           premium_override_reason?: string | null
           premium_override_until?: string | null
+          public_map_enabled?: boolean
           secondary_color?: string | null
           slug?: string | null
           subscription_id?: string | null
