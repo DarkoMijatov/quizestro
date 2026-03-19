@@ -458,17 +458,30 @@ export function LocationManager() {
           {editSchedule && (
             <div className="space-y-4">
               {editSchedule.schedule_type === 'recurring' && (
-                <div className="space-y-2">
-                  <Label>{t('map.dayOfWeek')}</Label>
-                  <Select value={(editSchedule.day_of_week ?? 0).toString()} onValueChange={v => setEditSchedule(p => ({ ...p, day_of_week: parseInt(v) }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {DAY_KEYS.map((key, i) => (
-                        <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label>{t('map.dayOfWeek')}</Label>
+                    <Select value={(editSchedule.day_of_week ?? 0).toString()} onValueChange={v => setEditSchedule(p => ({ ...p, day_of_week: parseInt(v) }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {DAY_KEYS.map((key, i) => (
+                          <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('mapSettings.recurrencePattern')}</Label>
+                    <Select value={editSchedule.recurrence_pattern || 'weekly'} onValueChange={v => setEditSchedule(p => ({ ...p, recurrence_pattern: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">{t('mapSettings.weekly')}</SelectItem>
+                        <SelectItem value="biweekly">{t('mapSettings.biweekly')}</SelectItem>
+                        <SelectItem value="monthly">{t('mapSettings.monthly')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
               )}
               {editSchedule.schedule_type === 'one_time' && (
                 <div className="space-y-2">
