@@ -1,15 +1,17 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import 'leaflet.markercluster';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, MapPin, Navigation, Clock, Calendar, ExternalLink, Globe, Instagram, Facebook, Mail, Phone, Loader2, LocateFixed, ArrowRight } from 'lucide-react';
+import { Search, MapPin, Navigation, Clock, Calendar, Loader2, LocateFixed, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Fix Leaflet default icon issue
@@ -18,6 +20,16 @@ L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+const goldMarkerIcon = L.divIcon({
+  className: '',
+  html: `<div style="width:32px;height:32px;background:hsl(36,90%,50%);border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+  </div>`,
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -16],
 });
 
 interface OrgLocation {
@@ -40,6 +52,7 @@ interface OrgLocation {
   is_active: boolean;
   org_name?: string;
   schedules?: Schedule[];
+  _distance?: number;
 }
 
 interface Schedule {
@@ -69,18 +82,6 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function MapBoundsUpdater({ locations }: { locations: OrgLocation[] }) {
-  const map = useMap();
-  useEffect(() => {
-    const valid = locations.filter(l => l.latitude && l.longitude);
-    if (valid.length > 0) {
-      const bounds = L.latLngBounds(valid.map(l => [l.latitude!, l.longitude!] as [number, number]));
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
-    }
-  }, [locations, map]);
-  return null;
-}
-
 function getNextOccurrence(schedule: Schedule, t: (key: string) => string): string {
   if (schedule.schedule_type === 'one_time' && schedule.event_date) {
     return `${schedule.event_date} ${t('map.at')} ${schedule.start_time.slice(0, 5)}`;
@@ -89,6 +90,73 @@ function getNextOccurrence(schedule: Schedule, t: (key: string) => string): stri
     return `${t('map.every')} ${t(`map.${DAY_NAMES_KEYS[schedule.day_of_week]}`)} ${t('map.at')} ${schedule.start_time.slice(0, 5)}`;
   }
   return '';
+}
+
+// Marker cluster layer component
+function MarkerClusterGroup({ locations, onSelectLocation }: { locations: OrgLocation[]; onSelectLocation: (loc: OrgLocation) => void }) {
+  const map = useMap();
+  const { t } = useTranslation();
+  const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
+
+  useEffect(() => {
+    if (clusterRef.current) {
+      map.removeLayer(clusterRef.current);
+    }
+
+    const cluster = (L as any).markerClusterGroup({
+      maxClusterRadius: 50,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      iconCreateFunction: (c: any) => {
+        const count = c.getChildCount();
+        return L.divIcon({
+          html: `<div style="width:40px;height:40px;background:hsl(36,90%,50%);border:3px solid white;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;color:hsl(220,25%,10%);font-weight:700;font-size:14px;font-family:'Space Grotesk',sans-serif">${count}</div>`,
+          className: '',
+          iconSize: L.point(40, 40),
+          iconAnchor: L.point(20, 20),
+        });
+      },
+    });
+
+    locations.forEach(loc => {
+      if (!loc.latitude || !loc.longitude) return;
+      const marker = L.marker([loc.latitude, loc.longitude], { icon: goldMarkerIcon });
+      
+      const scheduleHtml = loc.schedules?.[0] 
+        ? `<p style="font-size:11px;margin-top:4px;font-weight:500;color:hsl(36,90%,50%)">${getNextOccurrence(loc.schedules[0], t)}</p>` 
+        : '';
+
+      marker.bindPopup(`
+        <div style="min-width:180px;font-family:'Inter',sans-serif">
+          <p style="font-weight:700;font-size:13px;margin:0;color:hsl(40,20%,92%)">${loc.venue_name}</p>
+          <p style="font-size:11px;margin:2px 0 0;color:hsl(220,10%,55%)">${loc.org_name || ''}</p>
+          <p style="font-size:11px;margin:2px 0;color:hsl(220,10%,55%)">${loc.city}, ${loc.country}</p>
+          ${scheduleHtml}
+        </div>
+      `, { className: 'quiz-map-popup' });
+      
+      marker.on('click', () => onSelectLocation(loc));
+      cluster.addLayer(marker);
+    });
+
+    map.addLayer(cluster);
+    clusterRef.current = cluster;
+
+    // Fit bounds
+    const valid = locations.filter(l => l.latitude && l.longitude);
+    if (valid.length > 0) {
+      const bounds = L.latLngBounds(valid.map(l => [l.latitude!, l.longitude!] as [number, number]));
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+    }
+
+    return () => {
+      if (clusterRef.current) {
+        map.removeLayer(clusterRef.current);
+      }
+    };
+  }, [locations, map, t, onSelectLocation]);
+
+  return null;
 }
 
 export function PublicQuizMap() {
@@ -101,7 +169,6 @@ export function PublicQuizMap() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<OrgLocation | null>(null);
 
   useEffect(() => {
     loadLocations();
@@ -109,7 +176,6 @@ export function PublicQuizMap() {
 
   const loadLocations = async () => {
     setLoading(true);
-    // Use anon key - public access via RLS
     const { data: locs } = await supabase
       .from('org_locations')
       .select('*')
@@ -121,7 +187,6 @@ export function PublicQuizMap() {
       return;
     }
 
-    // Get org names
     const orgIds = [...new Set(locs.map(l => l.organization_id))];
     const { data: orgs } = await supabase
       .from('organizations')
@@ -132,7 +197,6 @@ export function PublicQuizMap() {
 
     const orgMap = new Map((orgs || []).map(o => [o.id, o.name]));
 
-    // Get schedules
     const locIds = locs.map(l => l.id);
     const { data: schedules } = await supabase
       .from('location_schedules')
@@ -175,7 +239,6 @@ export function PublicQuizMap() {
   const filtered = useMemo(() => {
     let result = locations;
 
-    // Text search
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(l =>
@@ -187,22 +250,15 @@ export function PublicQuizMap() {
       );
     }
 
-    // Day filter
     if (dayFilter !== 'all') {
       const day = parseInt(dayFilter);
-      result = result.filter(l =>
-        l.schedules?.some(s => s.day_of_week === day)
-      );
+      result = result.filter(l => l.schedules?.some(s => s.day_of_week === day));
     }
 
-    // Type filter
     if (typeFilter !== 'all') {
-      result = result.filter(l =>
-        l.schedules?.some(s => s.schedule_type === typeFilter)
-      );
+      result = result.filter(l => l.schedules?.some(s => s.schedule_type === typeFilter));
     }
 
-    // Radius filter
     if (radius !== 'all' && userPos) {
       const maxKm = parseInt(radius);
       result = result.filter(l => {
@@ -211,18 +267,21 @@ export function PublicQuizMap() {
       });
     }
 
-    // Add distance
     if (userPos) {
       result = result.map(l => ({
         ...l,
         _distance: l.latitude && l.longitude ? haversineDistance(userPos.lat, userPos.lng, l.latitude, l.longitude) : undefined,
-      })).sort((a, b) => ((a as any)._distance ?? 9999) - ((b as any)._distance ?? 9999));
+      })).sort((a, b) => (a._distance ?? 9999) - (b._distance ?? 9999));
     }
 
     return result;
   }, [locations, search, radius, dayFilter, typeFilter, userPos]);
 
   const mappable = filtered.filter(l => l.latitude && l.longitude);
+
+  const handleSelectLocation = useCallback((loc: OrgLocation) => {
+    // Navigate to location detail page
+  }, []);
 
   return (
     <section id="quiz-map" className="py-24">
@@ -300,37 +359,15 @@ export function PublicQuizMap() {
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                 />
-                <MapBoundsUpdater locations={mappable} />
-                {mappable.map(loc => (
-                  <Marker key={loc.id} position={[loc.latitude!, loc.longitude!]}>
-                    <Popup>
-                      <div className="min-w-[200px]">
-                        <p className="font-bold text-sm">{loc.venue_name}</p>
-                        <p className="text-xs text-gray-600">{loc.org_name}</p>
-                        <p className="text-xs">{loc.city}, {loc.country}</p>
-                        {loc.schedules?.[0] && (
-                          <p className="text-xs mt-1 font-medium">
-                            {getNextOccurrence(loc.schedules[0], t)}
-                          </p>
-                        )}
-                        <button
-                          className="mt-2 text-xs text-blue-600 font-medium hover:underline"
-                          onClick={() => setSelectedLocation(loc)}
-                        >
-                          {t('map.viewDetails')}
-                        </button>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
+                <MarkerClusterGroup locations={mappable} onSelectLocation={handleSelectLocation} />
                 {userPos && (
                   <Marker
                     position={[userPos.lat, userPos.lng]}
                     icon={L.divIcon({
                       className: '',
-                      html: '<div style="width:16px;height:16px;background:#3b82f6;border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>',
+                      html: '<div style="width:16px;height:16px;background:hsl(210,100%,56%);border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>',
                       iconSize: [16, 16],
                       iconAnchor: [8, 8],
                     })}
@@ -352,42 +389,40 @@ export function PublicQuizMap() {
               </div>
             ) : (
               filtered.map(loc => (
-                <div
-                  key={loc.id}
-                  className="rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors cursor-pointer"
-                  onClick={() => setSelectedLocation(loc)}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">{loc.venue_name}</p>
-                      <p className="text-xs text-muted-foreground">{loc.org_name}</p>
+                <Link key={loc.id} to={`/quiz-map/${loc.id}`}>
+                  <div className="rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors cursor-pointer">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{loc.venue_name}</p>
+                        <p className="text-xs text-muted-foreground">{loc.org_name}</p>
+                      </div>
+                      {loc._distance !== undefined && (
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {loc._distance.toFixed(1)} {t('map.km')}
+                        </Badge>
+                      )}
                     </div>
-                    {(loc as any)._distance !== undefined && (
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        {(loc as any)._distance.toFixed(1)} {t('map.km')}
-                      </Badge>
+                    <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      {loc.city}, {loc.country}
+                    </div>
+                    {loc.schedules && loc.schedules.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {loc.schedules.slice(0, 2).map(s => (
+                          <div key={s.id} className="flex items-center gap-1.5 text-xs">
+                            {s.schedule_type === 'recurring' ? (
+                              <Clock className="h-3 w-3 text-primary" />
+                            ) : (
+                              <Calendar className="h-3 w-3 text-primary" />
+                            )}
+                            <span>{getNextOccurrence(s, t)}</span>
+                            {s.title && <Badge variant="secondary" className="text-[10px] px-1.5">{s.title}</Badge>}
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3" />
-                    {loc.city}, {loc.country}
-                  </div>
-                  {loc.schedules && loc.schedules.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {loc.schedules.slice(0, 2).map(s => (
-                        <div key={s.id} className="flex items-center gap-1.5 text-xs">
-                          {s.schedule_type === 'recurring' ? (
-                            <Clock className="h-3 w-3 text-primary" />
-                          ) : (
-                            <Calendar className="h-3 w-3 text-primary" />
-                          )}
-                          <span>{getNextOccurrence(s, t)}</span>
-                          {s.title && <Badge variant="secondary" className="text-[10px] px-1.5">{s.title}</Badge>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                </Link>
               ))
             )}
           </div>
@@ -405,116 +440,28 @@ export function PublicQuizMap() {
         </div>
       </div>
 
-      {/* Detail modal */}
-      <Dialog open={!!selectedLocation} onOpenChange={() => setSelectedLocation(null)}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          {selectedLocation && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="font-display">{selectedLocation.venue_name}</DialogTitle>
-                <p className="text-sm text-muted-foreground">{selectedLocation.org_name}</p>
-              </DialogHeader>
-
-              <div className="space-y-4 mt-2">
-                {/* Address */}
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    {selectedLocation.address_line && <p className="text-sm">{selectedLocation.address_line}</p>}
-                    <p className="text-sm">{selectedLocation.city}, {selectedLocation.country}</p>
-                    {selectedLocation.postal_code && <p className="text-xs text-muted-foreground">{selectedLocation.postal_code}</p>}
-                  </div>
-                </div>
-
-                {selectedLocation.description && (
-                  <p className="text-sm text-muted-foreground">{selectedLocation.description}</p>
-                )}
-
-                {/* Schedules */}
-                {selectedLocation.schedules && selectedLocation.schedules.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-sm mb-2">{t('map.schedule')}</h4>
-                    <div className="space-y-2">
-                      {selectedLocation.schedules.map(s => (
-                        <div key={s.id} className="rounded-lg border border-border p-3">
-                          <div className="flex items-center gap-2">
-                            {s.schedule_type === 'recurring' ? (
-                              <Badge variant="secondary" className="text-xs">{t('map.recurringSchedule')}</Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-xs">{t('map.oneTimeEvent')}</Badge>
-                            )}
-                            {s.title && <span className="text-sm font-medium">{s.title}</span>}
-                          </div>
-                          <p className="text-sm mt-1">{getNextOccurrence(s, t)}</p>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {s.entry_fee && (
-                              <span className="text-xs text-muted-foreground">💰 {t('map.entryFee')}: {s.entry_fee}</span>
-                            )}
-                            {s.prize_info && (
-                              <span className="text-xs text-muted-foreground">🏆 {t('map.prizes')}: {s.prize_info}</span>
-                            )}
-                            {s.team_size_info && (
-                              <span className="text-xs text-muted-foreground">👥 {t('map.teamSize')}: {s.team_size_info}</span>
-                            )}
-                            {s.language && (
-                              <span className="text-xs text-muted-foreground">🌐 {s.language}</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Contact & Links */}
-                <div className="flex flex-wrap gap-3">
-                  {selectedLocation.contact_email && (
-                    <a href={`mailto:${selectedLocation.contact_email}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                      <Mail className="h-3 w-3" /> {selectedLocation.contact_email}
-                    </a>
-                  )}
-                  {selectedLocation.contact_phone && (
-                    <a href={`tel:${selectedLocation.contact_phone}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                      <Phone className="h-3 w-3" /> {selectedLocation.contact_phone}
-                    </a>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {selectedLocation.website_url && (
-                    <a href={selectedLocation.website_url} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm" className="gap-1.5 text-xs"><Globe className="h-3 w-3" />{t('map.website')}</Button>
-                    </a>
-                  )}
-                  {selectedLocation.reservation_url && (
-                    <a href={selectedLocation.reservation_url} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm" className="gap-1.5 text-xs"><ExternalLink className="h-3 w-3" />{t('map.reservation')}</Button>
-                    </a>
-                  )}
-                  {selectedLocation.instagram_url && (
-                    <a href={selectedLocation.instagram_url} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm" className="gap-1.5 text-xs"><Instagram className="h-3 w-3" />Instagram</Button>
-                    </a>
-                  )}
-                  {selectedLocation.facebook_url && (
-                    <a href={selectedLocation.facebook_url} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm" className="gap-1.5 text-xs"><Facebook className="h-3 w-3" />Facebook</Button>
-                    </a>
-                  )}
-                  {selectedLocation.latitude && selectedLocation.longitude && (
-                    <a
-                      href={`https://www.google.com/maps/dir/?api=1&destination=${selectedLocation.latitude},${selectedLocation.longitude}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Button variant="outline" size="sm" className="gap-1.5 text-xs"><Navigation className="h-3 w-3" />{t('map.openInMaps')}</Button>
-                    </a>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Custom styles for dark map popups */}
+      <style>{`
+        .quiz-map-popup .leaflet-popup-content-wrapper {
+          background: hsl(220, 22%, 11%);
+          border: 1px solid hsl(220, 18%, 18%);
+          border-radius: 12px;
+          box-shadow: 0 8px 24px rgba(0,0,0,.4);
+        }
+        .quiz-map-popup .leaflet-popup-tip {
+          background: hsl(220, 22%, 11%);
+          border: 1px solid hsl(220, 18%, 18%);
+        }
+        .quiz-map-popup .leaflet-popup-close-button {
+          color: hsl(220, 10%, 55%);
+        }
+        .quiz-map-popup .leaflet-popup-close-button:hover {
+          color: hsl(36, 90%, 50%);
+        }
+        .leaflet-container {
+          background: hsl(220, 25%, 7%);
+        }
+      `}</style>
     </section>
   );
 }
