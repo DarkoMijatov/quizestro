@@ -467,7 +467,7 @@ export function PublicQuizMap() {
                             {s.schedule_type === 'recurring' ? (
                               <Clock className="h-3 w-3 text-primary" />
                             ) : (
-                              <Calendar className="h-3 w-3 text-primary" />
+                              <CalendarIcon className="h-3 w-3 text-primary" />
                             )}
                             <span>{getNextOccurrence(s, t)}</span>
                             {s.title && <Badge variant="secondary" className="text-[10px] px-1.5">{s.title}</Badge>}
