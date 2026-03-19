@@ -8,7 +8,7 @@ import {
   Tooltip, TooltipContent, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Trophy, LayoutDashboard, Users, FolderOpen, Award,
+  Trophy, LayoutDashboard, Users, FolderOpen, Award, MapPin,
   BarChart3, Settings, LogOut, BookOpen, UserPlus, ChevronLeft, ChevronRight, Building2, ChevronsUpDown, Lock, Menu, X,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
