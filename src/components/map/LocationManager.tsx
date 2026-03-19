@@ -338,7 +338,8 @@ export function LocationManager() {
                             </div>
                           )}
                         </div>
-                      ))}
+                      );
+                      })}
                     </div>
                   )}
 
