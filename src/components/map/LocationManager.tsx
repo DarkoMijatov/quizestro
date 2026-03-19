@@ -389,20 +389,8 @@ export function LocationManager() {
                 <Label>{t('mapSettings.postalCode')}</Label>
                 <Input value={editLoc.postal_code || ''} onChange={e => setEditLoc(p => ({ ...p, postal_code: e.target.value }))} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>{t('mapSettings.latitude')}</Label>
-                  <Input type="number" step="any" value={editLoc.latitude ?? ''} onChange={e => setEditLoc(p => ({ ...p, latitude: e.target.value ? parseFloat(e.target.value) : null }))} />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('mapSettings.longitude')}</Label>
-                  <Input type="number" step="any" value={editLoc.longitude ?? ''} onChange={e => setEditLoc(p => ({ ...p, longitude: e.target.value ? parseFloat(e.target.value) : null }))} />
-                </div>
-              </div>
-              <Button variant="outline" size="sm" className="gap-1" onClick={handleGeocode} disabled={geocoding}>
-                {geocoding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Navigation className="h-3 w-3" />}
-                {geocoding ? t('mapSettings.geocoding') : t('mapSettings.geocodeAddress')}
-              </Button>
+
+              <Separator />
 
               <Separator />
 
