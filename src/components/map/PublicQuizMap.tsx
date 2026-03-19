@@ -11,7 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, MapPin, Navigation, Clock, Calendar, Loader2, LocateFixed, ArrowRight } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { Search, MapPin, Navigation, Clock, Calendar as CalendarIcon, Loader2, LocateFixed, ArrowRight, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Fix Leaflet default icon issue
