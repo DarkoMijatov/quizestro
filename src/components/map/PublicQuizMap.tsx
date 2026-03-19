@@ -262,8 +262,15 @@ export function PublicQuizMap() {
     if (!navigator.geolocation) return;
     setGeoLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+          const data = await res.json();
+          if (data?.address?.city || data?.address?.town) {
+            setDetectedCity(data.address.city || data.address.town);
+          }
+        } catch { /* ignore */ }
         setGeoLoading(false);
       },
       () => setGeoLoading(false),
