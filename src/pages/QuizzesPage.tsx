@@ -46,6 +46,8 @@ export default function QuizzesPage() {
   const [quizzes, setQuizzes] = useState<QuizRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteItem, setDeleteItem] = useState<QuizRow | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   const canCreate = currentRole === 'owner' || currentRole === 'admin';
   const canDelete = currentRole === 'owner' || currentRole === 'admin';
