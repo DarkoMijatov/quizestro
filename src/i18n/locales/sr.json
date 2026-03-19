@@ -439,7 +439,9 @@
     "registerOrganization": "Registrujte se",
     "locationDetails": "Detalji lokacije",
     "noUpcomingSchedules": "Nema predstojećih termina",
-    "km": "km"
+    "km": "km",
+    "category": "Kategorija",
+    "allCategories": "Sve kategorije"
   },
   "mapSettings": {
     "title": "Vidljivost na javnoj mapi",
@@ -491,6 +493,10 @@
     "activeLocations": "aktivnih lokacija",
     "upcomingEvents": "predstojećih događaja",
     "geocodeAddress": "Pronađi koordinate iz adrese",
-    "geocoding": "Traženje koordinata..."
+    "geocoding": "Traženje koordinata...",
+    "recurrencePattern": "Ponavljanje",
+    "weekly": "Svake nedelje",
+    "biweekly": "Na svake 2 nedelje",
+    "monthly": "Mesečno"
   }
 }

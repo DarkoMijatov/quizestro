@@ -74,6 +74,7 @@ interface Schedule {
   team_size_info: string | null;
   notes: string | null;
   is_active: boolean;
+  recurrence_pattern: string;
 }
 
 const DAY_NAMES_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -91,7 +92,10 @@ function getNextOccurrence(schedule: Schedule, t: (key: string) => string): stri
     return `${schedule.event_date} ${t('map.at')} ${schedule.start_time.slice(0, 5)}`;
   }
   if (schedule.day_of_week !== null) {
-    return `${t('map.every')} ${t(`map.${DAY_NAMES_KEYS[schedule.day_of_week]}`)} ${t('map.at')} ${schedule.start_time.slice(0, 5)}`;
+    const patternSuffix = schedule.recurrence_pattern && schedule.recurrence_pattern !== 'weekly'
+      ? ` (${t(`mapSettings.${schedule.recurrence_pattern}`)})`
+      : '';
+    return `${t('map.every')} ${t(`map.${DAY_NAMES_KEYS[schedule.day_of_week]}`)} ${t('map.at')} ${schedule.start_time.slice(0, 5)}${patternSuffix}`;
   }
   return '';
 }
@@ -171,6 +175,7 @@ export function PublicQuizMap() {
   const [radius, setRadius] = useState<string>('all');
   const [dayFilter, setDayFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
@@ -242,6 +247,12 @@ export function PublicQuizMap() {
     );
   }, []);
 
+  const allCategories = useMemo(() => {
+    const cats = new Set<string>();
+    locations.forEach(l => l.schedules?.forEach(s => { if (s.category) cats.add(s.category); }));
+    return Array.from(cats).sort();
+  }, [locations]);
+
   const filtered = useMemo(() => {
     let result = locations;
 
@@ -265,7 +276,11 @@ export function PublicQuizMap() {
       result = result.filter(l => l.schedules?.some(s => s.schedule_type === typeFilter));
     }
 
-    // Date range filter - filter locations that have schedules matching the date range
+    if (categoryFilter !== 'all') {
+      result = result.filter(l => l.schedules?.some(s => s.category === categoryFilter));
+    }
+
+    // Date range filter
     if (dateFrom || dateTo) {
       result = result.filter(l => {
         if (!l.schedules || l.schedules.length === 0) return false;
@@ -277,7 +292,6 @@ export function PublicQuizMap() {
             return true;
           }
           if (s.schedule_type === 'recurring') {
-            // Recurring events are always relevant unless date range is in the past
             if (dateTo && dateTo < new Date()) return false;
             return true;
           }
@@ -302,7 +316,7 @@ export function PublicQuizMap() {
     }
 
     return result;
-  }, [locations, search, radius, dayFilter, typeFilter, dateFrom, dateTo, userPos]);
+  }, [locations, search, radius, dayFilter, typeFilter, categoryFilter, dateFrom, dateTo, userPos]);
 
   const mappable = filtered.filter(l => l.latitude && l.longitude);
 
@@ -367,6 +381,19 @@ export function PublicQuizMap() {
               <SelectItem value="one_time">{t('map.oneTime')}</SelectItem>
             </SelectContent>
           </Select>
+          {allCategories.length > 0 && (
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder={t('map.category')} />
+              </SelectTrigger>
+              <SelectContent className="z-[9999]">
+                <SelectItem value="all">{t('map.allCategories')}</SelectItem>
+                {allCategories.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className={cn("gap-2 w-[140px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>

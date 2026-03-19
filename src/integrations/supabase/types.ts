@@ -414,6 +414,7 @@ export type Database = {
           organization_id: string
           organization_location_id: string
           prize_info: string | null
+          recurrence_pattern: string
           schedule_type: string
           start_time: string
           team_size_info: string | null
@@ -436,6 +437,7 @@ export type Database = {
           organization_id: string
           organization_location_id: string
           prize_info?: string | null
+          recurrence_pattern?: string
           schedule_type?: string
           start_time: string
           team_size_info?: string | null
@@ -458,6 +460,7 @@ export type Database = {
           organization_id?: string
           organization_location_id?: string
           prize_info?: string | null
+          recurrence_pattern?: string
           schedule_type?: string
           start_time?: string
           team_size_info?: string | null

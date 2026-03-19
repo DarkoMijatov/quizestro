@@ -59,6 +59,7 @@ interface Schedule {
   prize_info: string | null;
   team_size_info: string | null;
   notes: string | null;
+  recurrence_pattern: string;
 }
 
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -186,6 +187,7 @@ export function LocationManager() {
       prize_info: editSchedule.prize_info?.trim() || null,
       team_size_info: editSchedule.team_size_info?.trim() || null,
       notes: editSchedule.notes?.trim() || null,
+      recurrence_pattern: editSchedule.recurrence_pattern || 'weekly',
     };
 
     if (editSchedule.id) {
@@ -310,13 +312,17 @@ export function LocationManager() {
                   {/* Schedules for this location */}
                   {locSchedules.length > 0 && (
                     <div className="space-y-1">
-                      {locSchedules.map(s => (
+                      {locSchedules.map(s => {
+                        const patternLabel = s.schedule_type === 'recurring' && (s as any).recurrence_pattern && (s as any).recurrence_pattern !== 'weekly'
+                          ? ` (${t(`mapSettings.${(s as any).recurrence_pattern}`)})`
+                          : '';
+                        return (
                         <div key={s.id} className="flex items-center justify-between text-xs rounded bg-muted/50 px-3 py-1.5">
                           <div className="flex items-center gap-2">
                             {s.schedule_type === 'recurring' ? <Clock className="h-3 w-3 text-primary" /> : <Calendar className="h-3 w-3 text-primary" />}
                             <span>
                               {s.schedule_type === 'recurring'
-                                ? `${t(`map.${DAY_KEYS[s.day_of_week || 0]}`)} ${t('map.at')} ${s.start_time?.slice(0, 5)}`
+                                ? `${t(`map.${DAY_KEYS[s.day_of_week || 0]}`)} ${t('map.at')} ${s.start_time?.slice(0, 5)}${patternLabel}`
                                 : `${s.event_date} ${t('map.at')} ${s.start_time?.slice(0, 5)}`}
                             </span>
                             {s.title && <Badge variant="secondary" className="text-[10px]">{s.title}</Badge>}
@@ -332,15 +338,17 @@ export function LocationManager() {
                             </div>
                           )}
                         </div>
-                      ))}
+                      );
+                      })}
                     </div>
                   )}
 
                   {canEdit && (
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => setEditSchedule({
+                    <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => setEditSchedule({
                         organization_location_id: loc.id, organization_id: currentOrg.id,
                         schedule_type: 'recurring', day_of_week: 4, start_time: '20:00', is_active: true,
+                        recurrence_pattern: 'weekly',
                       })}>
                         <Clock className="h-3 w-3" /> {t('mapSettings.addRecurring')}
                       </Button>
@@ -408,10 +416,6 @@ export function LocationManager() {
                   <Input value={editLoc.contact_phone || ''} onChange={e => setEditLoc(p => ({ ...p, contact_phone: e.target.value }))} />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>{t('mapSettings.reservationUrl')}</Label>
-                <Input value={editLoc.reservation_url || ''} onChange={e => setEditLoc(p => ({ ...p, reservation_url: e.target.value }))} />
-              </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-2">
                   <Label>{t('mapSettings.websiteUrl')}</Label>
@@ -454,17 +458,30 @@ export function LocationManager() {
           {editSchedule && (
             <div className="space-y-4">
               {editSchedule.schedule_type === 'recurring' && (
-                <div className="space-y-2">
-                  <Label>{t('map.dayOfWeek')}</Label>
-                  <Select value={(editSchedule.day_of_week ?? 0).toString()} onValueChange={v => setEditSchedule(p => ({ ...p, day_of_week: parseInt(v) }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {DAY_KEYS.map((key, i) => (
-                        <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label>{t('map.dayOfWeek')}</Label>
+                    <Select value={(editSchedule.day_of_week ?? 0).toString()} onValueChange={v => setEditSchedule(p => ({ ...p, day_of_week: parseInt(v) }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {DAY_KEYS.map((key, i) => (
+                          <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('mapSettings.recurrencePattern')}</Label>
+                    <Select value={editSchedule.recurrence_pattern || 'weekly'} onValueChange={v => setEditSchedule(p => ({ ...p, recurrence_pattern: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">{t('mapSettings.weekly')}</SelectItem>
+                        <SelectItem value="biweekly">{t('mapSettings.biweekly')}</SelectItem>
+                        <SelectItem value="monthly">{t('mapSettings.monthly')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
               )}
               {editSchedule.schedule_type === 'one_time' && (
                 <div className="space-y-2">

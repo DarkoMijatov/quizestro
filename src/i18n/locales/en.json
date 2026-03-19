@@ -439,7 +439,9 @@
     "registerOrganization": "Register now",
     "locationDetails": "Location Details",
     "noUpcomingSchedules": "No upcoming schedules",
-    "km": "km"
+    "km": "km",
+    "category": "Category",
+    "allCategories": "All categories"
   },
   "mapSettings": {
     "title": "Public Map Visibility",
@@ -491,6 +493,10 @@
     "activeLocations": "active locations",
     "upcomingEvents": "upcoming events",
     "geocodeAddress": "Get coordinates from address",
-    "geocoding": "Looking up coordinates..."
+    "geocoding": "Looking up coordinates...",
+    "recurrencePattern": "Recurrence",
+    "weekly": "Every week",
+    "biweekly": "Every 2 weeks",
+    "monthly": "Monthly"
   }
 }
