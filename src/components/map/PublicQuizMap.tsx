@@ -175,6 +175,7 @@ export function PublicQuizMap() {
   const [radius, setRadius] = useState<string>('all');
   const [dayFilter, setDayFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
