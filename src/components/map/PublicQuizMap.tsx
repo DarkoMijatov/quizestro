@@ -189,6 +189,24 @@ export function PublicQuizMap() {
 
   useEffect(() => {
     loadLocations();
+    // Auto-detect user city
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setUserPos({ lat: latitude, lng: longitude });
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+            const data = await res.json();
+            if (data?.address?.city || data?.address?.town) {
+              setDetectedCity(data.address.city || data.address.town);
+            }
+          } catch { /* ignore */ }
+        },
+        () => { /* geolocation denied, no city filter */ },
+        { enableHighAccuracy: false, timeout: 5000 }
+      );
+    }
   }, []);
 
   const loadLocations = async () => {
