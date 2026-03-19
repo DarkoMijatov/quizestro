@@ -113,14 +113,30 @@ export function LocationManager() {
   const handleSaveLocation = async () => {
     if (!currentOrg || !editLoc?.venue_name?.trim() || !editLoc?.city?.trim()) return;
     setSaving(true);
+
+    // Auto-geocode in background
+    let latitude = editLoc.latitude || null;
+    let longitude = editLoc.longitude || null;
+    if (!latitude || !longitude) {
+      try {
+        const query = [editLoc.address_line, editLoc.city, editLoc.country].filter(Boolean).join(', ');
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+        const data = await res.json();
+        if (data?.[0]) {
+          latitude = parseFloat(data[0].lat);
+          longitude = parseFloat(data[0].lon);
+        }
+      } catch { /* ignore geocoding errors */ }
+    }
+
     const payload = {
       venue_name: editLoc.venue_name.trim(),
       address_line: editLoc.address_line?.trim() || null,
       city: editLoc.city.trim(),
       postal_code: editLoc.postal_code?.trim() || null,
       country: editLoc.country?.trim() || 'Serbia',
-      latitude: editLoc.latitude || null,
-      longitude: editLoc.longitude || null,
+      latitude,
+      longitude,
       description: editLoc.description?.trim() || null,
       contact_email: editLoc.contact_email?.trim() || null,
       contact_phone: editLoc.contact_phone?.trim() || null,
