@@ -247,6 +247,12 @@ export function PublicQuizMap() {
     );
   }, []);
 
+  const allCategories = useMemo(() => {
+    const cats = new Set<string>();
+    locations.forEach(l => l.schedules?.forEach(s => { if (s.category) cats.add(s.category); }));
+    return Array.from(cats).sort();
+  }, [locations]);
+
   const filtered = useMemo(() => {
     let result = locations;
 
@@ -270,7 +276,11 @@ export function PublicQuizMap() {
       result = result.filter(l => l.schedules?.some(s => s.schedule_type === typeFilter));
     }
 
-    // Date range filter - filter locations that have schedules matching the date range
+    if (categoryFilter !== 'all') {
+      result = result.filter(l => l.schedules?.some(s => s.category === categoryFilter));
+    }
+
+    // Date range filter
     if (dateFrom || dateTo) {
       result = result.filter(l => {
         if (!l.schedules || l.schedules.length === 0) return false;
@@ -282,7 +292,6 @@ export function PublicQuizMap() {
             return true;
           }
           if (s.schedule_type === 'recurring') {
-            // Recurring events are always relevant unless date range is in the past
             if (dateTo && dateTo < new Date()) return false;
             return true;
           }
@@ -307,7 +316,7 @@ export function PublicQuizMap() {
     }
 
     return result;
-  }, [locations, search, radius, dayFilter, typeFilter, dateFrom, dateTo, userPos]);
+  }, [locations, search, radius, dayFilter, typeFilter, categoryFilter, dateFrom, dateTo, userPos]);
 
   const mappable = filtered.filter(l => l.latitude && l.longitude);
 
