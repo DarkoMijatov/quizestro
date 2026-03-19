@@ -350,7 +350,7 @@ export function PublicQuizMap() {
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder={t('map.dayOfWeek')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[9999]">
               <SelectItem value="all">{t('map.allDays')}</SelectItem>
               {DAY_NAMES_KEYS.map((key, i) => (
                 <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
