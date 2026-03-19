@@ -84,6 +84,7 @@ export function LocationManager() {
   const [saving, setSaving] = useState(false);
   const [editLoc, setEditLoc] = useState<Partial<Location> | null>(null);
   const [editSchedule, setEditSchedule] = useState<Partial<Schedule> | null>(null);
+  const [selectedDays, setSelectedDays] = useState<number[]>([4]);
   const [geocoding, setGeocoding] = useState(false);
 
   useEffect(() => {
