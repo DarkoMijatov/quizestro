@@ -381,6 +381,19 @@ export function PublicQuizMap() {
               <SelectItem value="one_time">{t('map.oneTime')}</SelectItem>
             </SelectContent>
           </Select>
+          {allCategories.length > 0 && (
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder={t('map.category')} />
+              </SelectTrigger>
+              <SelectContent className="z-[9999]">
+                <SelectItem value="all">{t('map.allCategories')}</SelectItem>
+                {allCategories.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className={cn("gap-2 w-[140px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
