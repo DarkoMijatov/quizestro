@@ -337,7 +337,7 @@ export function PublicQuizMap() {
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder={t('map.radius')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[9999]">
               <SelectItem value="all">{t('map.radius')}</SelectItem>
               <SelectItem value="5">5 {t('map.km')}</SelectItem>
               <SelectItem value="10">10 {t('map.km')}</SelectItem>
