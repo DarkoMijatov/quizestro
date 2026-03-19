@@ -11,7 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, MapPin, Navigation, Clock, Calendar, Loader2, LocateFixed, ArrowRight } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { Search, MapPin, Navigation, Clock, Calendar as CalendarIcon, Loader2, LocateFixed, ArrowRight, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Fix Leaflet default icon issue
@@ -167,6 +171,8 @@ export function PublicQuizMap() {
   const [radius, setRadius] = useState<string>('all');
   const [dayFilter, setDayFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
 
@@ -259,6 +265,27 @@ export function PublicQuizMap() {
       result = result.filter(l => l.schedules?.some(s => s.schedule_type === typeFilter));
     }
 
+    // Date range filter - filter locations that have schedules matching the date range
+    if (dateFrom || dateTo) {
+      result = result.filter(l => {
+        if (!l.schedules || l.schedules.length === 0) return false;
+        return l.schedules.some(s => {
+          if (s.schedule_type === 'one_time' && s.event_date) {
+            const eventDate = new Date(s.event_date);
+            if (dateFrom && eventDate < dateFrom) return false;
+            if (dateTo && eventDate > dateTo) return false;
+            return true;
+          }
+          if (s.schedule_type === 'recurring') {
+            // Recurring events are always relevant unless date range is in the past
+            if (dateTo && dateTo < new Date()) return false;
+            return true;
+          }
+          return false;
+        });
+      });
+    }
+
     if (radius !== 'all' && userPos) {
       const maxKm = parseInt(radius);
       result = result.filter(l => {
@@ -275,7 +302,7 @@ export function PublicQuizMap() {
     }
 
     return result;
-  }, [locations, search, radius, dayFilter, typeFilter, userPos]);
+  }, [locations, search, radius, dayFilter, typeFilter, dateFrom, dateTo, userPos]);
 
   const mappable = filtered.filter(l => l.latitude && l.longitude);
 
@@ -340,6 +367,33 @@ export function PublicQuizMap() {
               <SelectItem value="one_time">{t('map.oneTime')}</SelectItem>
             </SelectContent>
           </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("gap-2 w-[140px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
+                <CalendarIcon className="h-4 w-4" />
+                {dateFrom ? format(dateFrom, 'dd.MM.yyyy') : t('filters.dateFrom')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("gap-2 w-[140px] justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
+                <CalendarIcon className="h-4 w-4" />
+                {dateTo ? format(dateTo, 'dd.MM.yyyy') : t('filters.dateTo')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
+            </PopoverContent>
+          </Popover>
+          {(dateFrom || dateTo) && (
+            <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+              <X className="h-4 w-4 mr-1" />{t('filters.clearDates')}
+            </Button>
+          )}
         </div>
 
         {/* Map + Results */}
@@ -413,7 +467,7 @@ export function PublicQuizMap() {
                             {s.schedule_type === 'recurring' ? (
                               <Clock className="h-3 w-3 text-primary" />
                             ) : (
-                              <Calendar className="h-3 w-3 text-primary" />
+                              <CalendarIcon className="h-3 w-3 text-primary" />
                             )}
                             <span>{getNextOccurrence(s, t)}</span>
                             {s.title && <Badge variant="secondary" className="text-[10px] px-1.5">{s.title}</Badge>}

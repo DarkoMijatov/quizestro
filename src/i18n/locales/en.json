@@ -392,7 +392,10 @@
     "finished": "Finished",
     "type": "Type",
     "allTypes": "All types",
-    "custom": "Custom"
+    "custom": "Custom",
+    "dateFrom": "Date from",
+    "dateTo": "Date to",
+    "clearDates": "Clear dates"
   },
   "map": {
     "title": "Find Pub Quizzes Near You",

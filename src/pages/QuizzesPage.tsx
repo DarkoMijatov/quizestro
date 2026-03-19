@@ -13,7 +13,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Trophy, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { Plus, Trophy, Eye, Pencil, Trash2, Calendar as CalendarIcon, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { srLatn } from 'date-fns/locale';
@@ -43,6 +46,8 @@ export default function QuizzesPage() {
   const [quizzes, setQuizzes] = useState<QuizRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteItem, setDeleteItem] = useState<QuizRow | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   const canCreate = currentRole === 'owner' || currentRole === 'admin';
   const canDelete = currentRole === 'owner' || currentRole === 'admin';
@@ -181,11 +186,59 @@ export default function QuizzesPage() {
     },
   ], [t, canCreate, canDelete, navigate]);
 
+  const filteredByDate = useMemo(() => {
+    let result = quizzes;
+    if (dateFrom) {
+      result = result.filter(q => new Date(q.date) >= dateFrom);
+    }
+    if (dateTo) {
+      result = result.filter(q => new Date(q.date) <= dateTo);
+    }
+    return result;
+  }, [quizzes, dateFrom, dateTo]);
+
+  const dateFiltersUI = (
+    <div className="flex items-center gap-2 flex-wrap">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className={cn("gap-2 w-[140px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
+            <CalendarIcon className="h-4 w-4" />
+            {dateFrom ? format(dateFrom, 'dd.MM.yyyy') : t('filters.dateFrom')}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
+        </PopoverContent>
+      </Popover>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className={cn("gap-2 w-[140px] justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
+            <CalendarIcon className="h-4 w-4" />
+            {dateTo ? format(dateTo, 'dd.MM.yyyy') : t('filters.dateTo')}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
+        </PopoverContent>
+      </Popover>
+      {(dateFrom || dateTo) && (
+        <Button variant="ghost" size="icon" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+      {canCreate && (
+        <Link to="/dashboard/quizzes/new">
+          <Button className="gap-2"><Plus className="h-4 w-4" />{t('dashboard.createQuiz')}</Button>
+        </Link>
+      )}
+    </div>
+  );
+
   return (
     <DashboardLayout>
       <DataTable
         columns={columns}
-        data={quizzes}
+        data={filteredByDate}
         loading={loading}
         pageSize={15}
         defaultSortKey="date"
@@ -198,11 +251,7 @@ export default function QuizzesPage() {
             <Button className="gap-2"><Plus className="h-4 w-4" />{t('dashboard.createQuiz')}</Button>
           </Link>
         ) : undefined}
-        headerActions={canCreate ? (
-          <Link to="/dashboard/quizzes/new">
-            <Button className="gap-2"><Plus className="h-4 w-4" />{t('dashboard.createQuiz')}</Button>
-          </Link>
-        ) : undefined}
+        headerActions={dateFiltersUI}
         searchFn={(row, q) => row.name.toLowerCase().includes(q) || (row.location || '').toLowerCase().includes(q) || (row.winner || '').toLowerCase().includes(q)}
         filters={[
           {
