@@ -171,11 +171,11 @@ export function LocationManager() {
   const handleSaveSchedule = async () => {
     if (!currentOrg || !editSchedule?.start_time) return;
     setSaving(true);
-    const payload = {
+
+    const basePayload = {
       organization_location_id: editSchedule.organization_location_id!,
       organization_id: currentOrg.id,
       schedule_type: editSchedule.schedule_type || 'recurring',
-      day_of_week: editSchedule.schedule_type === 'recurring' ? (editSchedule.day_of_week ?? 0) : null,
       event_date: editSchedule.schedule_type === 'one_time' ? editSchedule.event_date : null,
       start_time: editSchedule.start_time,
       end_time: editSchedule.end_time || null,
@@ -193,12 +193,23 @@ export function LocationManager() {
     };
 
     if (editSchedule.id) {
-      await supabase.from('location_schedules').update(payload).eq('id', editSchedule.id);
+      // Editing existing - single update
+      await supabase.from('location_schedules').update({
+        ...basePayload,
+        day_of_week: editSchedule.schedule_type === 'recurring' ? (editSchedule.day_of_week ?? 0) : null,
+      }).eq('id', editSchedule.id);
+    } else if (editSchedule.schedule_type === 'recurring' && selectedDays.length > 0) {
+      // New recurring - insert one row per selected day
+      const rows = selectedDays.map(day => ({ ...basePayload, day_of_week: day }));
+      await supabase.from('location_schedules').insert(rows);
     } else {
-      await supabase.from('location_schedules').insert(payload);
+      // New one-time
+      await supabase.from('location_schedules').insert({ ...basePayload, day_of_week: null });
     }
+
     setSaving(false);
     setEditSchedule(null);
+    setSelectedDays([4]);
     toast({ title: '✓', description: t('mapSettings.scheduleSaved') });
     loadData();
   };
