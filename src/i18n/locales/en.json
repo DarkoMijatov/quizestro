@@ -421,7 +421,7 @@
     "viewDetails": "View details",
     "openInMaps": "Open in Maps",
     "nextQuiz": "Next quiz",
-    "every": "Every",
+    "every": "",
     "at": "at",
     "distance": "away",
     "entryFee": "Entry fee",
@@ -441,7 +441,8 @@
     "noUpcomingSchedules": "No upcoming schedules",
     "km": "km",
     "category": "Category",
-    "allCategories": "All categories"
+    "allCategories": "All categories",
+    "allCities": "All cities"
   },
   "mapSettings": {
     "title": "Public Map Visibility",
@@ -497,6 +498,7 @@
     "recurrencePattern": "Recurrence",
     "weekly": "Every week",
     "biweekly": "Every 2 weeks",
-    "monthly": "Monthly"
+    "monthly": "Monthly",
+    "selectDays": "Select days"
   }
 }

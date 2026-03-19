@@ -95,7 +95,7 @@ function getNextOccurrence(schedule: Schedule, t: (key: string) => string): stri
     const patternSuffix = schedule.recurrence_pattern && schedule.recurrence_pattern !== 'weekly'
       ? ` (${t(`mapSettings.${schedule.recurrence_pattern}`)})`
       : '';
-    return `${t('map.every')} ${t(`map.${DAY_NAMES_KEYS[schedule.day_of_week]}`)} ${t('map.at')} ${schedule.start_time.slice(0, 5)}${patternSuffix}`;
+    return `${t(`map.${DAY_NAMES_KEYS[schedule.day_of_week]}`)} ${t('map.at')} ${schedule.start_time.slice(0, 5)}${patternSuffix}`;
   }
   return '';
 }
@@ -176,13 +176,37 @@ export function PublicQuizMap() {
   const [dayFilter, setDayFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(new Date());
+  const [dateTo, setDateTo] = useState<Date | undefined>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    return d;
+  });
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [detectedCity, setDetectedCity] = useState<string | null>(null);
+  const [cityFilter, setCityFilter] = useState<string>('auto');
 
   useEffect(() => {
     loadLocations();
+    // Auto-detect user city
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setUserPos({ lat: latitude, lng: longitude });
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+            const data = await res.json();
+            if (data?.address?.city || data?.address?.town) {
+              setDetectedCity(data.address.city || data.address.town);
+            }
+          } catch { /* ignore */ }
+        },
+        () => { /* geolocation denied, no city filter */ },
+        { enableHighAccuracy: false, timeout: 5000 }
+      );
+    }
   }, []);
 
   const loadLocations = async () => {
@@ -238,8 +262,15 @@ export function PublicQuizMap() {
     if (!navigator.geolocation) return;
     setGeoLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+          const data = await res.json();
+          if (data?.address?.city || data?.address?.town) {
+            setDetectedCity(data.address.city || data.address.town);
+          }
+        } catch { /* ignore */ }
         setGeoLoading(false);
       },
       () => setGeoLoading(false),
@@ -253,8 +284,21 @@ export function PublicQuizMap() {
     return Array.from(cats).sort();
   }, [locations]);
 
+  const allCities = useMemo(() => {
+    const cities = new Set<string>();
+    locations.forEach(l => cities.add(l.city));
+    return Array.from(cities).sort();
+  }, [locations]);
+
   const filtered = useMemo(() => {
     let result = locations;
+
+    // City filter (default to detected city)
+    if (cityFilter === 'auto' && detectedCity) {
+      result = result.filter(l => l.city.toLowerCase() === detectedCity.toLowerCase());
+    } else if (cityFilter !== 'all' && cityFilter !== 'auto') {
+      result = result.filter(l => l.city === cityFilter);
+    }
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -316,7 +360,7 @@ export function PublicQuizMap() {
     }
 
     return result;
-  }, [locations, search, radius, dayFilter, typeFilter, categoryFilter, dateFrom, dateTo, userPos]);
+  }, [locations, search, radius, dayFilter, typeFilter, categoryFilter, dateFrom, dateTo, userPos, cityFilter, detectedCity]);
 
   const mappable = filtered.filter(l => l.latitude && l.longitude);
 
@@ -343,6 +387,18 @@ export function PublicQuizMap() {
               className="pl-10"
             />
           </div>
+          <Select value={cityFilter} onValueChange={setCityFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder={t('mapSettings.city')} />
+            </SelectTrigger>
+            <SelectContent className="z-[9999]">
+              <SelectItem value="all">{t('map.allCities')}</SelectItem>
+              {detectedCity && <SelectItem value="auto">{detectedCity}</SelectItem>}
+              {allCities.filter(c => c !== detectedCity).map(city => (
+                <SelectItem key={city} value={city}>{city}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="outline" size="sm" className="gap-2" onClick={handleGeolocate} disabled={geoLoading}>
             {geoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
             {t('map.useMyLocation')}

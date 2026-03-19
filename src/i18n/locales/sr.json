@@ -421,7 +421,7 @@
     "viewDetails": "Pogledaj detalje",
     "openInMaps": "Otvori u mapama",
     "nextQuiz": "Sledeći kviz",
-    "every": "Svakog",
+    "every": "",
     "at": "u",
     "distance": "udaljenosti",
     "entryFee": "Kotizacija",
@@ -441,7 +441,8 @@
     "noUpcomingSchedules": "Nema predstojećih termina",
     "km": "km",
     "category": "Kategorija",
-    "allCategories": "Sve kategorije"
+    "allCategories": "Sve kategorije",
+    "allCities": "Svi gradovi"
   },
   "mapSettings": {
     "title": "Vidljivost na javnoj mapi",
@@ -497,6 +498,7 @@
     "recurrencePattern": "Ponavljanje",
     "weekly": "Svake nedelje",
     "biweekly": "Na svake 2 nedelje",
-    "monthly": "Mesečno"
+    "monthly": "Mesečno",
+    "selectDays": "Izaberite dane"
   }
 }

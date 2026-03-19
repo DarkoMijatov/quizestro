@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -83,6 +84,7 @@ export function LocationManager() {
   const [saving, setSaving] = useState(false);
   const [editLoc, setEditLoc] = useState<Partial<Location> | null>(null);
   const [editSchedule, setEditSchedule] = useState<Partial<Schedule> | null>(null);
+  const [selectedDays, setSelectedDays] = useState<number[]>([4]);
   const [geocoding, setGeocoding] = useState(false);
 
   useEffect(() => {
@@ -169,11 +171,11 @@ export function LocationManager() {
   const handleSaveSchedule = async () => {
     if (!currentOrg || !editSchedule?.start_time) return;
     setSaving(true);
-    const payload = {
+
+    const basePayload = {
       organization_location_id: editSchedule.organization_location_id!,
       organization_id: currentOrg.id,
       schedule_type: editSchedule.schedule_type || 'recurring',
-      day_of_week: editSchedule.schedule_type === 'recurring' ? (editSchedule.day_of_week ?? 0) : null,
       event_date: editSchedule.schedule_type === 'one_time' ? editSchedule.event_date : null,
       start_time: editSchedule.start_time,
       end_time: editSchedule.end_time || null,
@@ -191,12 +193,23 @@ export function LocationManager() {
     };
 
     if (editSchedule.id) {
-      await supabase.from('location_schedules').update(payload).eq('id', editSchedule.id);
+      // Editing existing - single update
+      await supabase.from('location_schedules').update({
+        ...basePayload,
+        day_of_week: editSchedule.schedule_type === 'recurring' ? (editSchedule.day_of_week ?? 0) : null,
+      }).eq('id', editSchedule.id);
+    } else if (editSchedule.schedule_type === 'recurring' && selectedDays.length > 0) {
+      // New recurring - insert one row per selected day
+      const rows = selectedDays.map(day => ({ ...basePayload, day_of_week: day }));
+      await supabase.from('location_schedules').insert(rows);
     } else {
-      await supabase.from('location_schedules').insert(payload);
+      // New one-time
+      await supabase.from('location_schedules').insert({ ...basePayload, day_of_week: null });
     }
+
     setSaving(false);
     setEditSchedule(null);
+    setSelectedDays([4]);
     toast({ title: '✓', description: t('mapSettings.scheduleSaved') });
     loadData();
   };
@@ -345,11 +358,14 @@ export function LocationManager() {
 
                   {canEdit && (
                     <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => setEditSchedule({
-                        organization_location_id: loc.id, organization_id: currentOrg.id,
-                        schedule_type: 'recurring', day_of_week: 4, start_time: '20:00', is_active: true,
-                        recurrence_pattern: 'weekly',
-                      })}>
+                    <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => {
+                        setSelectedDays([4]);
+                        setEditSchedule({
+                          organization_location_id: loc.id, organization_id: currentOrg.id,
+                          schedule_type: 'recurring', day_of_week: 4, start_time: '20:00', is_active: true,
+                          recurrence_pattern: 'weekly',
+                        });
+                      }}>
                         <Clock className="h-3 w-3" /> {t('mapSettings.addRecurring')}
                       </Button>
                       <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => setEditSchedule({
@@ -459,17 +475,38 @@ export function LocationManager() {
             <div className="space-y-4">
               {editSchedule.schedule_type === 'recurring' && (
                 <>
-                  <div className="space-y-2">
-                    <Label>{t('map.dayOfWeek')}</Label>
-                    <Select value={(editSchedule.day_of_week ?? 0).toString()} onValueChange={v => setEditSchedule(p => ({ ...p, day_of_week: parseInt(v) }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
+                  {editSchedule.id ? (
+                    <div className="space-y-2">
+                      <Label>{t('map.dayOfWeek')}</Label>
+                      <Select value={(editSchedule.day_of_week ?? 0).toString()} onValueChange={v => setEditSchedule(p => ({ ...p, day_of_week: parseInt(v) }))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {DAY_KEYS.map((key, i) => (
+                            <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>{t('mapSettings.selectDays')}</Label>
+                      <div className="grid grid-cols-2 gap-2">
                         {DAY_KEYS.map((key, i) => (
-                          <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
+                          <label key={i} className="flex items-center gap-2 text-sm cursor-pointer">
+                            <Checkbox
+                              checked={selectedDays.includes(i)}
+                              onCheckedChange={(checked) => {
+                                setSelectedDays(prev =>
+                                  checked ? [...prev, i] : prev.filter(d => d !== i)
+                                );
+                              }}
+                            />
+                            {t(`map.${key}`)}
+                          </label>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      </div>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label>{t('mapSettings.recurrencePattern')}</Label>
                     <Select value={editSchedule.recurrence_pattern || 'weekly'} onValueChange={v => setEditSchedule(p => ({ ...p, recurrence_pattern: v }))}>
