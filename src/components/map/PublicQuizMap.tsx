@@ -302,7 +302,7 @@ export function PublicQuizMap() {
     }
 
     return result;
-  }, [locations, search, radius, dayFilter, typeFilter, userPos]);
+  }, [locations, search, radius, dayFilter, typeFilter, dateFrom, dateTo, userPos]);
 
   const mappable = filtered.filter(l => l.latitude && l.longitude);
 
