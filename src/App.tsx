@@ -37,6 +37,8 @@ import RefundPage from "./pages/RefundPage";
 import BillingCheckoutPage from "./pages/BillingCheckoutPage";
 import BillingSuccessPage from "./pages/BillingSuccessPage";
 import BillingCancelPage from "./pages/BillingCancelPage";
+import LocationDetailPage from "./pages/LocationDetailPage";
+import QuizLocationsPage from "./pages/QuizLocationsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
