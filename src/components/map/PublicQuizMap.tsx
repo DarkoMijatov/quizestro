@@ -284,8 +284,21 @@ export function PublicQuizMap() {
     return Array.from(cats).sort();
   }, [locations]);
 
+  const allCities = useMemo(() => {
+    const cities = new Set<string>();
+    locations.forEach(l => cities.add(l.city));
+    return Array.from(cities).sort();
+  }, [locations]);
+
   const filtered = useMemo(() => {
     let result = locations;
+
+    // City filter (default to detected city)
+    if (cityFilter === 'auto' && detectedCity) {
+      result = result.filter(l => l.city.toLowerCase() === detectedCity.toLowerCase());
+    } else if (cityFilter !== 'all' && cityFilter !== 'auto') {
+      result = result.filter(l => l.city === cityFilter);
+    }
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -347,7 +360,7 @@ export function PublicQuizMap() {
     }
 
     return result;
-  }, [locations, search, radius, dayFilter, typeFilter, categoryFilter, dateFrom, dateTo, userPos]);
+  }, [locations, search, radius, dayFilter, typeFilter, categoryFilter, dateFrom, dateTo, userPos, cityFilter, detectedCity]);
 
   const mappable = filtered.filter(l => l.latitude && l.longitude);
 
