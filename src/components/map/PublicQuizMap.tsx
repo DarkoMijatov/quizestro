@@ -92,7 +92,10 @@ function getNextOccurrence(schedule: Schedule, t: (key: string) => string): stri
     return `${schedule.event_date} ${t('map.at')} ${schedule.start_time.slice(0, 5)}`;
   }
   if (schedule.day_of_week !== null) {
-    return `${t('map.every')} ${t(`map.${DAY_NAMES_KEYS[schedule.day_of_week]}`)} ${t('map.at')} ${schedule.start_time.slice(0, 5)}`;
+    const patternSuffix = schedule.recurrence_pattern && schedule.recurrence_pattern !== 'weekly'
+      ? ` (${t(`mapSettings.${schedule.recurrence_pattern}`)})`
+      : '';
+    return `${t('map.every')} ${t(`map.${DAY_NAMES_KEYS[schedule.day_of_week]}`)} ${t('map.at')} ${schedule.start_time.slice(0, 5)}${patternSuffix}`;
   }
   return '';
 }
