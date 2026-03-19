@@ -319,7 +319,7 @@ export function PublicQuizMap() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex flex-wrap gap-3 mb-6 relative z-[1000]">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -337,7 +337,7 @@ export function PublicQuizMap() {
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder={t('map.radius')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[9999]">
               <SelectItem value="all">{t('map.radius')}</SelectItem>
               <SelectItem value="5">5 {t('map.km')}</SelectItem>
               <SelectItem value="10">10 {t('map.km')}</SelectItem>
@@ -350,7 +350,7 @@ export function PublicQuizMap() {
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder={t('map.dayOfWeek')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[9999]">
               <SelectItem value="all">{t('map.allDays')}</SelectItem>
               {DAY_NAMES_KEYS.map((key, i) => (
                 <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
@@ -361,7 +361,7 @@ export function PublicQuizMap() {
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder={t('map.eventType')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[9999]">
               <SelectItem value="all">{t('map.allEvents')}</SelectItem>
               <SelectItem value="recurring">{t('map.recurring')}</SelectItem>
               <SelectItem value="one_time">{t('map.oneTime')}</SelectItem>
@@ -374,7 +374,7 @@ export function PublicQuizMap() {
                 {dateFrom ? format(dateFrom, 'dd.MM.yyyy') : t('filters.dateFrom')}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 z-[9999]" align="start">
               <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
             </PopoverContent>
           </Popover>
@@ -385,7 +385,7 @@ export function PublicQuizMap() {
                 {dateTo ? format(dateTo, 'dd.MM.yyyy') : t('filters.dateTo')}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 z-[9999]" align="start">
               <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
             </PopoverContent>
           </Popover>

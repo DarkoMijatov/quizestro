@@ -113,14 +113,30 @@ export function LocationManager() {
   const handleSaveLocation = async () => {
     if (!currentOrg || !editLoc?.venue_name?.trim() || !editLoc?.city?.trim()) return;
     setSaving(true);
+
+    // Auto-geocode in background
+    let latitude = editLoc.latitude || null;
+    let longitude = editLoc.longitude || null;
+    if (!latitude || !longitude) {
+      try {
+        const query = [editLoc.address_line, editLoc.city, editLoc.country].filter(Boolean).join(', ');
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+        const data = await res.json();
+        if (data?.[0]) {
+          latitude = parseFloat(data[0].lat);
+          longitude = parseFloat(data[0].lon);
+        }
+      } catch { /* ignore geocoding errors */ }
+    }
+
     const payload = {
       venue_name: editLoc.venue_name.trim(),
       address_line: editLoc.address_line?.trim() || null,
       city: editLoc.city.trim(),
       postal_code: editLoc.postal_code?.trim() || null,
       country: editLoc.country?.trim() || 'Serbia',
-      latitude: editLoc.latitude || null,
-      longitude: editLoc.longitude || null,
+      latitude,
+      longitude,
       description: editLoc.description?.trim() || null,
       contact_email: editLoc.contact_email?.trim() || null,
       contact_phone: editLoc.contact_phone?.trim() || null,
@@ -373,20 +389,8 @@ export function LocationManager() {
                 <Label>{t('mapSettings.postalCode')}</Label>
                 <Input value={editLoc.postal_code || ''} onChange={e => setEditLoc(p => ({ ...p, postal_code: e.target.value }))} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>{t('mapSettings.latitude')}</Label>
-                  <Input type="number" step="any" value={editLoc.latitude ?? ''} onChange={e => setEditLoc(p => ({ ...p, latitude: e.target.value ? parseFloat(e.target.value) : null }))} />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('mapSettings.longitude')}</Label>
-                  <Input type="number" step="any" value={editLoc.longitude ?? ''} onChange={e => setEditLoc(p => ({ ...p, longitude: e.target.value ? parseFloat(e.target.value) : null }))} />
-                </div>
-              </div>
-              <Button variant="outline" size="sm" className="gap-1" onClick={handleGeocode} disabled={geocoding}>
-                {geocoding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Navigation className="h-3 w-3" />}
-                {geocoding ? t('mapSettings.geocoding') : t('mapSettings.geocodeAddress')}
-              </Button>
+
+              <Separator />
 
               <Separator />
 
