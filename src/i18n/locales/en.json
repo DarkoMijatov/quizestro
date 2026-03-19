@@ -497,6 +497,7 @@
     "recurrencePattern": "Recurrence",
     "weekly": "Every week",
     "biweekly": "Every 2 weeks",
-    "monthly": "Monthly"
+    "monthly": "Monthly",
+    "selectDays": "Select days"
   }
 }

@@ -497,6 +497,7 @@
     "recurrencePattern": "Ponavljanje",
     "weekly": "Svake nedelje",
     "biweekly": "Na svake 2 nedelje",
-    "monthly": "Mesečno"
+    "monthly": "Mesečno",
+    "selectDays": "Izaberite dane"
   }
 }
