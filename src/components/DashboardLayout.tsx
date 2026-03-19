@@ -108,6 +108,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { key: 'dashboard.categories', icon: FolderOpen, path: '/dashboard/categories' },
     { key: 'dashboard.leagues', icon: Award, path: '/dashboard/leagues', premium: true },
     { key: 'dashboard.questionBank', icon: BookOpen, path: '/dashboard/questions', premium: true },
+    { key: 'dashboard.quizLocations', icon: MapPin, path: '/dashboard/locations' },
     { key: 'dashboard.stats', icon: BarChart3, path: '/dashboard/stats' },
     { key: 'dashboard.members', icon: UserPlus, path: '/dashboard/members' },
     { key: 'dashboard.settings', icon: Settings, path: '/dashboard/settings' },
