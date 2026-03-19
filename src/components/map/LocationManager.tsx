@@ -358,11 +358,14 @@ export function LocationManager() {
 
                   {canEdit && (
                     <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => setEditSchedule({
-                        organization_location_id: loc.id, organization_id: currentOrg.id,
-                        schedule_type: 'recurring', day_of_week: 4, start_time: '20:00', is_active: true,
-                        recurrence_pattern: 'weekly',
-                      })}>
+                    <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => {
+                        setSelectedDays([4]);
+                        setEditSchedule({
+                          organization_location_id: loc.id, organization_id: currentOrg.id,
+                          schedule_type: 'recurring', day_of_week: 4, start_time: '20:00', is_active: true,
+                          recurrence_pattern: 'weekly',
+                        });
+                      }}>
                         <Clock className="h-3 w-3" /> {t('mapSettings.addRecurring')}
                       </Button>
                       <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => setEditSchedule({
