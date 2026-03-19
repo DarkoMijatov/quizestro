@@ -176,10 +176,16 @@ export function PublicQuizMap() {
   const [dayFilter, setDayFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(new Date());
+  const [dateTo, setDateTo] = useState<Date | undefined>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    return d;
+  });
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [detectedCity, setDetectedCity] = useState<string | null>(null);
+  const [cityFilter, setCityFilter] = useState<string>('auto');
 
   useEffect(() => {
     loadLocations();
