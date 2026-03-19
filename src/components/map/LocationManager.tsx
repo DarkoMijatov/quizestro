@@ -475,17 +475,38 @@ export function LocationManager() {
             <div className="space-y-4">
               {editSchedule.schedule_type === 'recurring' && (
                 <>
-                  <div className="space-y-2">
-                    <Label>{t('map.dayOfWeek')}</Label>
-                    <Select value={(editSchedule.day_of_week ?? 0).toString()} onValueChange={v => setEditSchedule(p => ({ ...p, day_of_week: parseInt(v) }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
+                  {editSchedule.id ? (
+                    <div className="space-y-2">
+                      <Label>{t('map.dayOfWeek')}</Label>
+                      <Select value={(editSchedule.day_of_week ?? 0).toString()} onValueChange={v => setEditSchedule(p => ({ ...p, day_of_week: parseInt(v) }))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {DAY_KEYS.map((key, i) => (
+                            <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>{t('mapSettings.selectDays')}</Label>
+                      <div className="grid grid-cols-2 gap-2">
                         {DAY_KEYS.map((key, i) => (
-                          <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
+                          <label key={i} className="flex items-center gap-2 text-sm cursor-pointer">
+                            <Checkbox
+                              checked={selectedDays.includes(i)}
+                              onCheckedChange={(checked) => {
+                                setSelectedDays(prev =>
+                                  checked ? [...prev, i] : prev.filter(d => d !== i)
+                                );
+                              }}
+                            />
+                            {t(`map.${key}`)}
+                          </label>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      </div>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label>{t('mapSettings.recurrencePattern')}</Label>
                     <Select value={editSchedule.recurrence_pattern || 'weekly'} onValueChange={v => setEditSchedule(p => ({ ...p, recurrence_pattern: v }))}>
