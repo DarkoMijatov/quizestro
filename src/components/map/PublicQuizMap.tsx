@@ -374,7 +374,7 @@ export function PublicQuizMap() {
                 {dateFrom ? format(dateFrom, 'dd.MM.yyyy') : t('filters.dateFrom')}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 z-[9999]" align="start">
               <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
             </PopoverContent>
           </Popover>
@@ -385,7 +385,7 @@ export function PublicQuizMap() {
                 {dateTo ? format(dateTo, 'dd.MM.yyyy') : t('filters.dateTo')}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 z-[9999]" align="start">
               <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
             </PopoverContent>
           </Popover>
