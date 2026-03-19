@@ -187,6 +187,7 @@ export function LocationManager() {
       prize_info: editSchedule.prize_info?.trim() || null,
       team_size_info: editSchedule.team_size_info?.trim() || null,
       notes: editSchedule.notes?.trim() || null,
+      recurrence_pattern: editSchedule.recurrence_pattern || 'weekly',
     };
 
     if (editSchedule.id) {
