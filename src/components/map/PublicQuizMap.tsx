@@ -361,7 +361,7 @@ export function PublicQuizMap() {
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder={t('map.eventType')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[9999]">
               <SelectItem value="all">{t('map.allEvents')}</SelectItem>
               <SelectItem value="recurring">{t('map.recurring')}</SelectItem>
               <SelectItem value="one_time">{t('map.oneTime')}</SelectItem>
