@@ -392,7 +392,10 @@
     "finished": "Završen",
     "type": "Tip",
     "allTypes": "Svi tipovi",
-    "custom": "Prilagođena"
+    "custom": "Prilagođena",
+    "dateFrom": "Datum od",
+    "dateTo": "Datum do",
+    "clearDates": "Obriši datume"
   },
   "map": {
     "title": "Pronađi pab kvizove u svojoj blizini",
