@@ -387,6 +387,18 @@ export function PublicQuizMap() {
               className="pl-10"
             />
           </div>
+          <Select value={cityFilter} onValueChange={setCityFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder={t('mapSettings.city')} />
+            </SelectTrigger>
+            <SelectContent className="z-[9999]">
+              <SelectItem value="all">{t('map.allCities')}</SelectItem>
+              {detectedCity && <SelectItem value="auto">{detectedCity}</SelectItem>}
+              {allCities.filter(c => c !== detectedCity).map(city => (
+                <SelectItem key={city} value={city}>{city}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="outline" size="sm" className="gap-2" onClick={handleGeolocate} disabled={geoLoading}>
             {geoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
             {t('map.useMyLocation')}
