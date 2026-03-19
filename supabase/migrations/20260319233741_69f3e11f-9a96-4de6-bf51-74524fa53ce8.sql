@@ -1,0 +1,1 @@
+ALTER TABLE public.location_schedules ADD COLUMN recurrence_pattern text NOT NULL DEFAULT 'weekly';
