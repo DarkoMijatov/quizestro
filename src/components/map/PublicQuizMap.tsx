@@ -74,6 +74,7 @@ interface Schedule {
   team_size_info: string | null;
   notes: string | null;
   is_active: boolean;
+  recurrence_pattern: string;
 }
 
 const DAY_NAMES_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
