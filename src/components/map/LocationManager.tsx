@@ -59,6 +59,7 @@ interface Schedule {
   prize_info: string | null;
   team_size_info: string | null;
   notes: string | null;
+  recurrence_pattern: string;
 }
 
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
