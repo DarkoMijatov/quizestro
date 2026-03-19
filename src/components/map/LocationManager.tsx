@@ -416,10 +416,6 @@ export function LocationManager() {
                   <Input value={editLoc.contact_phone || ''} onChange={e => setEditLoc(p => ({ ...p, contact_phone: e.target.value }))} />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>{t('mapSettings.reservationUrl')}</Label>
-                <Input value={editLoc.reservation_url || ''} onChange={e => setEditLoc(p => ({ ...p, reservation_url: e.target.value }))} />
-              </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-2">
                   <Label>{t('mapSettings.websiteUrl')}</Label>
