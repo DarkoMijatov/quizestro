@@ -441,7 +441,8 @@
     "noUpcomingSchedules": "No upcoming schedules",
     "km": "km",
     "category": "Category",
-    "allCategories": "All categories"
+    "allCategories": "All categories",
+    "allCities": "All cities"
   },
   "mapSettings": {
     "title": "Public Map Visibility",

@@ -441,7 +441,8 @@
     "noUpcomingSchedules": "Nema predstojećih termina",
     "km": "km",
     "category": "Kategorija",
-    "allCategories": "Sve kategorije"
+    "allCategories": "Sve kategorije",
+    "allCities": "Svi gradovi"
   },
   "mapSettings": {
     "title": "Vidljivost na javnoj mapi",
