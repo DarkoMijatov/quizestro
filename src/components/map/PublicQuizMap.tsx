@@ -265,6 +265,27 @@ export function PublicQuizMap() {
       result = result.filter(l => l.schedules?.some(s => s.schedule_type === typeFilter));
     }
 
+    // Date range filter - filter locations that have schedules matching the date range
+    if (dateFrom || dateTo) {
+      result = result.filter(l => {
+        if (!l.schedules || l.schedules.length === 0) return false;
+        return l.schedules.some(s => {
+          if (s.schedule_type === 'one_time' && s.event_date) {
+            const eventDate = new Date(s.event_date);
+            if (dateFrom && eventDate < dateFrom) return false;
+            if (dateTo && eventDate > dateTo) return false;
+            return true;
+          }
+          if (s.schedule_type === 'recurring') {
+            // Recurring events are always relevant unless date range is in the past
+            if (dateTo && dateTo < new Date()) return false;
+            return true;
+          }
+          return false;
+        });
+      });
+    }
+
     if (radius !== 'all' && userPos) {
       const maxKm = parseInt(radius);
       result = result.filter(l => {
