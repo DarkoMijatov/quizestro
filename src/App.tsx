@@ -37,6 +37,8 @@ import RefundPage from "./pages/RefundPage";
 import BillingCheckoutPage from "./pages/BillingCheckoutPage";
 import BillingSuccessPage from "./pages/BillingSuccessPage";
 import BillingCancelPage from "./pages/BillingCancelPage";
+import LocationDetailPage from "./pages/LocationDetailPage";
+import QuizLocationsPage from "./pages/QuizLocationsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +71,7 @@ const App = () => (
             <Route path="/billing/checkout" element={<ForceDarkTheme><BillingCheckoutPage /></ForceDarkTheme>} />
             <Route path="/billing/success" element={<ForceDarkTheme><BillingSuccessPage /></ForceDarkTheme>} />
             <Route path="/billing/cancel" element={<ForceDarkTheme><BillingCancelPage /></ForceDarkTheme>} />
+            <Route path="/quiz-map/:id" element={<LocationDetailPage />} />
             <Route path="/onboarding" element={<ForceDarkTheme><ProtectedRoute><OnboardingPage /></ProtectedRoute></ForceDarkTheme>} />
             <Route path="/dashboard" element={<OrgRoute><DashboardPage /></OrgRoute>} />
             <Route path="/dashboard/teams" element={<OrgRoute><TeamsPage /></OrgRoute>} />
@@ -83,6 +86,7 @@ const App = () => (
             <Route path="/dashboard/questions" element={<PremiumRoute><QuestionBankPage /></PremiumRoute>} />
             <Route path="/dashboard/stats" element={<OrgRoute><StatsPage /></OrgRoute>} />
             <Route path="/dashboard/members" element={<OrgRoute><MembersPage /></OrgRoute>} />
+            <Route path="/dashboard/locations" element={<OrgRoute><QuizLocationsPage /></OrgRoute>} />
             <Route path="/dashboard/settings" element={<OrgRoute><SettingsPage /></OrgRoute>} />
             <Route path="/dashboard/pricing" element={<OrgRoute><PricingPage /></OrgRoute>} />
             <Route path="/dashboard/*" element={<OrgRoute><DashboardPage /></OrgRoute>} />
