@@ -312,13 +312,17 @@ export function LocationManager() {
                   {/* Schedules for this location */}
                   {locSchedules.length > 0 && (
                     <div className="space-y-1">
-                      {locSchedules.map(s => (
+                      {locSchedules.map(s => {
+                        const patternLabel = s.schedule_type === 'recurring' && (s as any).recurrence_pattern && (s as any).recurrence_pattern !== 'weekly'
+                          ? ` (${t(`mapSettings.${(s as any).recurrence_pattern}`)})`
+                          : '';
+                        return (
                         <div key={s.id} className="flex items-center justify-between text-xs rounded bg-muted/50 px-3 py-1.5">
                           <div className="flex items-center gap-2">
                             {s.schedule_type === 'recurring' ? <Clock className="h-3 w-3 text-primary" /> : <Calendar className="h-3 w-3 text-primary" />}
                             <span>
                               {s.schedule_type === 'recurring'
-                                ? `${t(`map.${DAY_KEYS[s.day_of_week || 0]}`)} ${t('map.at')} ${s.start_time?.slice(0, 5)}`
+                                ? `${t(`map.${DAY_KEYS[s.day_of_week || 0]}`)} ${t('map.at')} ${s.start_time?.slice(0, 5)}${patternLabel}`
                                 : `${s.event_date} ${t('map.at')} ${s.start_time?.slice(0, 5)}`}
                             </span>
                             {s.title && <Badge variant="secondary" className="text-[10px]">{s.title}</Badge>}
