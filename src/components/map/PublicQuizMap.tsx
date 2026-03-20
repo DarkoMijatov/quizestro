@@ -75,6 +75,8 @@ interface Schedule {
   notes: string | null;
   is_active: boolean;
   recurrence_pattern: string;
+  valid_from: string | null;
+  valid_until: string | null;
 }
 
 const DAY_NAMES_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
