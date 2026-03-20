@@ -324,25 +324,28 @@ export function PublicQuizMap() {
       result = result.filter(l => l.schedules?.some(s => s.category === categoryFilter));
     }
 
-    // Date range filter
-    if (dateFrom || dateTo) {
-      result = result.filter(l => {
-        if (!l.schedules || l.schedules.length === 0) return false;
-        return l.schedules.some(s => {
-          if (s.schedule_type === 'one_time' && s.event_date) {
-            const eventDate = new Date(s.event_date);
-            if (dateFrom && eventDate < dateFrom) return false;
-            if (dateTo && eventDate > dateTo) return false;
-            return true;
-          }
-          if (s.schedule_type === 'recurring') {
-            if (dateTo && dateTo < new Date()) return false;
-            return true;
-          }
-          return false;
-        });
+    // Date range filter — filter individual schedules, remove locations with none left
+    const rangeFrom = dateFrom || new Date();
+    const rangeTo = dateTo;
+    result = result.map(l => {
+      if (!l.schedules || l.schedules.length === 0) return { ...l, schedules: [] };
+      const validSchedules = l.schedules.filter(s => {
+        if (s.schedule_type === 'one_time' && s.event_date) {
+          const eventDate = new Date(s.event_date);
+          if (eventDate < rangeFrom) return false;
+          if (rangeTo && eventDate > rangeTo) return false;
+          return true;
+        }
+        if (s.schedule_type === 'recurring') {
+          // Recurring: check valid_from / valid_until if set
+          if (s.valid_until && new Date(s.valid_until) < rangeFrom) return false;
+          if (rangeTo && s.valid_from && new Date(s.valid_from) > rangeTo) return false;
+          return true;
+        }
+        return false;
       });
-    }
+      return { ...l, schedules: validSchedules };
+    }).filter(l => l.schedules!.length > 0);
 
     if (radius !== 'all' && userPos) {
       const maxKm = parseInt(radius);
