@@ -12,3 +12,8 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /onboarding
+Disallow: /billing
+
+Sitemap: https://quizestro.lovable.app/sitemap.xml

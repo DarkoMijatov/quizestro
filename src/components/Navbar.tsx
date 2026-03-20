@@ -22,11 +22,11 @@ export function Navbar() {
 
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-6">
+          <Link to="/map" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            {t('nav.quizMap')}
+          </Link>
           {isLanding && (
             <>
-              <a href="#quiz-map" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                {t('nav.quizMap')}
-              </a>
               <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 {t('nav.features')}
               </a>
@@ -59,11 +59,11 @@ export function Navbar() {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-lg px-4 py-4 space-y-3">
+          <Link to="/map" className="block text-sm font-medium py-2" onClick={() => setOpen(false)}>
+            {t('nav.quizMap')}
+          </Link>
           {isLanding && (
             <>
-              <a href="#quiz-map" className="block text-sm font-medium py-2" onClick={() => setOpen(false)}>
-                {t('nav.quizMap')}
-              </a>
               <a href="#features" className="block text-sm font-medium py-2" onClick={() => setOpen(false)}>
                 {t('nav.features')}
               </a>

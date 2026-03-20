@@ -400,6 +400,7 @@
   "map": {
     "title": "Find Pub Quizzes Near You",
     "subtitle": "Search quiz nights by city, country, venue, or distance.",
+    "exploreCta": "Explore the map",
     "searchPlaceholder": "Search by city, country, venue or organizer...",
     "useMyLocation": "Use my location",
     "radius": "Radius",

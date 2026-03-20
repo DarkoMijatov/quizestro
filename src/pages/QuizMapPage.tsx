@@ -1,21 +1,20 @@
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { ForceDarkTheme } from '@/components/ForceDarkTheme';
+import { SEOHead } from '@/components/SEOHead';
 import { PublicQuizMap } from '@/components/map/PublicQuizMap';
 
 export default function QuizMapPage() {
   const { t } = useTranslation();
 
-  useEffect(() => {
-    document.title = `${t('map.title')} - Quizestro`;
-    return () => { document.title = 'Quizestro'; };
-  }, [t]);
-
   return (
     <ForceDarkTheme>
       <div className="min-h-screen bg-background flex flex-col">
+        <SEOHead
+          titleKey="map.title"
+          descriptionKey="map.subtitle"
+        />
         <Navbar />
         <main className="flex-1 pt-20">
           <div className="container mx-auto px-4 py-8">
