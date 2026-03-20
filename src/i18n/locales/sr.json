@@ -400,6 +400,7 @@
   "map": {
     "title": "Pronađi pab kvizove u svojoj blizini",
     "subtitle": "Pretraži kviz večeri po gradu, državi, lokalu ili udaljenosti.",
+    "exploreCta": "Istraži mapu",
     "searchPlaceholder": "Pretraži po gradu, državi, lokalu ili organizatoru...",
     "useMyLocation": "Koristi moju lokaciju",
     "radius": "Radius",
