@@ -126,8 +126,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Public Quiz Map */}
-      <PublicQuizMap />
+      {/* Map CTA Banner */}
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-4 text-center">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
+            className="max-w-2xl mx-auto"
+          >
+            <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-primary/10 text-primary mb-5">
+              <MapPin className="h-7 w-7" />
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">{t('map.title')}</h2>
+            <p className="text-muted-foreground text-lg mb-8">{t('map.subtitle')}</p>
+            <Link to="/map">
+              <Button size="lg" variant="outline" className="gap-2 text-base px-8">
+                {t('map.exploreCta')}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
 
       {/* Features */}
       <section id="features" className="py-24 bg-muted/30">
