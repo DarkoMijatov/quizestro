@@ -88,6 +88,11 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        titleKey="hero.title"
+        descriptionKey="hero.subtitle"
+        titleFallback="Quizestro – Pub Quiz Platform"
+      />
       <Navbar />
 
       {/* Hero */}
