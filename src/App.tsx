@@ -10,6 +10,7 @@ import { ProtectedRoute, PublicOnlyRoute } from '@/components/ProtectedRoute';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { RequirePremium } from '@/components/RequirePremium';
 import { ForceDarkTheme } from '@/components/ForceDarkTheme';
+import { ScrollToTop } from '@/components/ScrollToTop';
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
