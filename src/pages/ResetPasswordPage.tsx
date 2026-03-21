@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
+import { SEOHead } from '@/components/SEOHead';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +38,8 @@ export default function ResetPasswordPage() {
   };
 
   return (
+    <>
+    <SEOHead titleKey="auth.resetPassword" noIndex />
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="flex items-center gap-2 font-display font-bold text-xl">
@@ -56,5 +59,6 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </div>
+    </>
   );
 }

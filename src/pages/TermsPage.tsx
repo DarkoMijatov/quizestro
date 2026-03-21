@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Footer } from '@/components/Footer';
+import { SEOHead } from '@/components/SEOHead';
 
 export default function TermsPage() {
   const { t, i18n } = useTranslation();
@@ -9,6 +10,7 @@ export default function TermsPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEOHead titleFallback="Terms of Service | Quizestro" descriptionFallback="Terms of Service for Quizestro pub quiz platform." noIndex />
       <div className="container mx-auto px-4 py-8 max-w-3xl flex-1">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
           <ArrowLeft className="h-4 w-4" />

@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Separator } from '@/components/ui/separator';
+import { SEOHead } from '@/components/SEOHead';
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -44,6 +45,8 @@ export default function LoginPage() {
   };
 
   return (
+    <>
+    <SEOHead titleKey="auth.login" descriptionFallback="Sign in to Quizestro pub quiz platform." />
     <div className="min-h-screen flex">
       {/* Left panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-dark items-center justify-center p-12">
@@ -123,5 +126,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

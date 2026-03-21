@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { SEOHead } from '@/components/SEOHead';
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation();
@@ -31,6 +32,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
+    <>
+    <SEOHead titleKey="auth.forgotPassword" descriptionFallback="Reset your Quizestro password." noIndex />
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="flex justify-between items-center">
@@ -65,5 +68,6 @@ export default function ForgotPasswordPage() {
         )}
       </div>
     </div>
+    </>
   );
 }
