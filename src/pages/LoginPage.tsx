@@ -45,6 +45,8 @@ export default function LoginPage() {
   };
 
   return (
+    <>
+    <SEOHead titleKey="auth.login" descriptionFallback="Sign in to Quizestro pub quiz platform." />
     <div className="min-h-screen flex">
       {/* Left panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-dark items-center justify-center p-12">

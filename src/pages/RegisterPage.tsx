@@ -59,6 +59,8 @@ export default function RegisterPage() {
   };
 
   return (
+    <>
+    <SEOHead titleKey="auth.register" descriptionFallback="Create your Quizestro account to manage pub quizzes." />
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-dark items-center justify-center p-12">
         <div className="text-center">
