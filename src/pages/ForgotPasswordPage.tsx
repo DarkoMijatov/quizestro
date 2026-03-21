@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { SEOHead } from '@/components/SEOHead';
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation();

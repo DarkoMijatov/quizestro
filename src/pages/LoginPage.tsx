@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Separator } from '@/components/ui/separator';
+import { SEOHead } from '@/components/SEOHead';
 
 export default function LoginPage() {
   const { t } = useTranslation();

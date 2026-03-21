@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { SEOHead } from '@/components/SEOHead';
 
 export default function RegisterPage() {
   const { t } = useTranslation();
