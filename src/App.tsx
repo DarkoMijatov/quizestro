@@ -60,6 +60,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<ForceDarkTheme><LandingPage /></ForceDarkTheme>} />
             <Route path="/login" element={<ForceDarkTheme><PublicOnlyRoute><LoginPage /></PublicOnlyRoute></ForceDarkTheme>} />
