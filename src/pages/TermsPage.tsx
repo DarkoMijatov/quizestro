@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Footer } from '@/components/Footer';
+import { SEOHead } from '@/components/SEOHead';
 
 export default function TermsPage() {
   const { t, i18n } = useTranslation();
