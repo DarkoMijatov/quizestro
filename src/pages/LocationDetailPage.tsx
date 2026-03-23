@@ -247,7 +247,7 @@ export default function LocationDetailPage() {
                       </a>
                     )}
                     {location.instagram_url && (
-                      <a href={location.instagram_url} target="_blank" rel="noopener noreferrer">
+                      <a href={`https://www.instagram.com/`location.instagram_url.replace("@", "")} target="_blank" rel="noopener noreferrer">
                         <Button variant="outline" size="sm" className="gap-1.5"><Instagram className="h-3.5 w-3.5" />Instagram</Button>
                       </a>
                     )}
