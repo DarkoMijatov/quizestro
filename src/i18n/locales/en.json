@@ -96,6 +96,7 @@
     "createTitle": "New Quiz", "step0": "Method", "step1": "Details", "step2": "Categories", "step3": "Teams", "step4": "Review",
     "name": "Quiz name", "namePlaceholder": "e.g. Quiz Night #42", "date": "Date",
     "location": "Location", "locationPlaceholder": "e.g. The Tipsy Scholar",
+    "selectLocation": "Select a location", "searchLocations": "Search locations...", "noLocations": "No locations added", "customLocation": "Enter manually", "savedLocation": "Saved location", "orEnterManually": "or enter manually",
     "league": "League (optional)", "selectLeague": "Select a league", "noLeague": "No league",
     "selectCategories": "Select categories for this quiz",
     "availableCategories": "Available",
