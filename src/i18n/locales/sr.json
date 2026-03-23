@@ -96,6 +96,7 @@
     "createTitle": "Novi kviz", "step0": "Metod", "step1": "Detalji", "step2": "Kategorije", "step3": "Timovi", "step4": "Pregled",
     "name": "Naziv kviza", "namePlaceholder": "npr. Kviz veče #42", "date": "Datum",
     "location": "Lokacija", "locationPlaceholder": "npr. Kafana Kod Mace",
+    "selectLocation": "Izaberite lokaciju", "searchLocations": "Pretraži lokacije...", "noLocations": "Nema dodatih lokacija", "customLocation": "Unesite ručno", "savedLocation": "Sačuvana lokacija", "orEnterManually": "ili unesite ručno",
     "league": "Liga (opciono)", "selectLeague": "Izaberite ligu", "noLeague": "Bez lige",
     "selectCategories": "Izaberite kategorije za ovaj kviz",
     "availableCategories": "Dostupne",

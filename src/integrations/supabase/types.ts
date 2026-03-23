@@ -1151,6 +1151,7 @@ export type Database = {
           league_id: string | null
           location: string | null
           name: string
+          org_location_id: string | null
           organization_id: string
           override_categories_count: number | null
           override_questions_per_category: number | null
@@ -1167,6 +1168,7 @@ export type Database = {
           league_id?: string | null
           location?: string | null
           name: string
+          org_location_id?: string | null
           organization_id: string
           override_categories_count?: number | null
           override_questions_per_category?: number | null
@@ -1183,6 +1185,7 @@ export type Database = {
           league_id?: string | null
           location?: string | null
           name?: string
+          org_location_id?: string | null
           organization_id?: string
           override_categories_count?: number | null
           override_questions_per_category?: number | null
@@ -1196,6 +1199,13 @@ export type Database = {
             columns: ["league_id"]
             isOneToOne: false
             referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quizzes_org_location_id_fkey"
+            columns: ["org_location_id"]
+            isOneToOne: false
+            referencedRelation: "org_locations"
             referencedColumns: ["id"]
           },
           {

@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import {
   CalendarIcon,
@@ -33,6 +34,7 @@ import {
   GripVertical,
   X,
   Search,
+  MapPin,
 } from "lucide-react";
 import { parseQuizExcel, generateImportTemplate } from "@/lib/excelUtils";
 import { ImportExcelDialog } from "@/components/ImportExcelDialog";
@@ -54,6 +56,12 @@ interface TeamAlias {
 interface League {
   id: string;
   name: string;
+}
+interface OrgLocation {
+  id: string;
+  venue_name: string;
+  address_line: string | null;
+  city: string;
 }
 
 interface TeamSelection {
@@ -79,6 +87,8 @@ export default function CreateQuizPage() {
   const [quizName, setQuizName] = useState("");
   const [quizDate, setQuizDate] = useState<Date>(new Date());
   const [location, setLocation] = useState("");
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
 
   // Data
@@ -86,6 +96,7 @@ export default function CreateQuizPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamAliases, setTeamAliases] = useState<TeamAlias[]>([]);
   const [leagues, setLeagues] = useState<League[]>([]);
+  const [orgLocations, setOrgLocations] = useState<OrgLocation[]>([]);
   const [helpTypes, setHelpTypes] = useState<{ id: string; name: string; effect: string }[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -115,7 +126,7 @@ export default function CreateQuizPage() {
     if (!currentOrg) return;
     const load = async () => {
       setLoadingData(true);
-      const [catRes, teamRes, leagueRes, htRes, aliasRes] = await Promise.all([
+      const [catRes, teamRes, leagueRes, htRes, aliasRes, locRes] = await Promise.all([
         supabase
           .from("categories")
           .select("id, name, is_default")
@@ -136,12 +147,19 @@ export default function CreateQuizPage() {
           .order("name"),
         supabase.from("help_types").select("id, name, effect").eq("organization_id", currentOrg.id),
         supabase.from("team_aliases").select("id, alias, team_id").eq("organization_id", currentOrg.id),
+        supabase
+          .from("org_locations")
+          .select("id, venue_name, address_line, city")
+          .eq("organization_id", currentOrg.id)
+          .eq("is_active", true)
+          .order("venue_name"),
       ]);
       const cats = (catRes.data as Category[]) || [];
       setCategories(cats);
       setTeams((teamRes.data as Team[]) || []);
       setTeamAliases((aliasRes.data as TeamAlias[]) || []);
       setLeagues((leagueRes.data as League[]) || []);
+      setOrgLocations((locRes.data as OrgLocation[]) || []);
       setHelpTypes((htRes.data as any) || []);
 
       // Pre-select default categories
@@ -325,6 +343,7 @@ export default function CreateQuizPage() {
         name: quizName.trim(),
         date: format(quizDate, "yyyy-MM-dd"),
         location: location.trim() || null,
+        org_location_id: selectedLocationId || null,
         organization_id: currentOrg.id,
         league_id: selectedLeague || null,
         created_by: user.id,
@@ -352,6 +371,7 @@ export default function CreateQuizPage() {
         name: quizName.trim(),
         date: format(quizDate, "yyyy-MM-dd"),
         location: location.trim() || null,
+        org_location_id: selectedLocationId || null,
         organization_id: currentOrg.id,
         league_id: selectedLeague || null,
         created_by: user.id,
@@ -534,11 +554,68 @@ export default function CreateQuizPage() {
             </div>
             <div className="space-y-2">
               <Label>{t("quiz.location")}</Label>
-              <Input
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder={t("quiz.locationPlaceholder")}
-              />
+              {orgLocations.length > 0 ? (
+                <div className="space-y-2">
+                  <Popover open={locationPopoverOpen} onOpenChange={setLocationPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal gap-2">
+                        <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        {selectedLocationId
+                          ? orgLocations.find((l) => l.id === selectedLocationId)?.venue_name
+                          : t("quiz.selectLocation")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder={t("quiz.searchLocations")} />
+                        <CommandList>
+                          <CommandEmpty>{t("quiz.noLocations")}</CommandEmpty>
+                          <CommandGroup>
+                            {orgLocations.map((loc) => (
+                              <CommandItem
+                                key={loc.id}
+                                value={`${loc.venue_name} ${loc.address_line || ""} ${loc.city}`}
+                                onSelect={() => {
+                                  setSelectedLocationId(loc.id);
+                                  setLocation(loc.venue_name + (loc.address_line ? `, ${loc.address_line}` : ""));
+                                  setLocationPopoverOpen(false);
+                                }}
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{loc.venue_name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {[loc.address_line, loc.city].filter(Boolean).join(", ")}
+                                  </span>
+                                </div>
+                                {selectedLocationId === loc.id && <Check className="ml-auto h-4 w-4" />}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{t("quiz.orEnterManually")}</span>
+                  </div>
+                  <Input
+                    value={location}
+                    onChange={(e) => {
+                      setLocation(e.target.value);
+                      if (e.target.value !== (orgLocations.find((l) => l.id === selectedLocationId)?.venue_name || "")) {
+                        setSelectedLocationId(null);
+                      }
+                    }}
+                    placeholder={t("quiz.locationPlaceholder")}
+                  />
+                </div>
+              ) : (
+                <Input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder={t("quiz.locationPlaceholder")}
+                />
+              )}
             </div>
             {leagues.length > 0 && (
               <div className="space-y-2">
@@ -647,11 +724,68 @@ export default function CreateQuizPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>{t("quiz.location")}</Label>
-                    <Input
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder={t("quiz.locationPlaceholder")}
-                    />
+                    {orgLocations.length > 0 ? (
+                      <div className="space-y-2">
+                        <Popover open={locationPopoverOpen} onOpenChange={setLocationPopoverOpen}>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start text-left font-normal gap-2">
+                              <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              {selectedLocationId
+                                ? orgLocations.find((l) => l.id === selectedLocationId)?.venue_name
+                                : t("quiz.selectLocation")}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder={t("quiz.searchLocations")} />
+                              <CommandList>
+                                <CommandEmpty>{t("quiz.noLocations")}</CommandEmpty>
+                                <CommandGroup>
+                                  {orgLocations.map((loc) => (
+                                    <CommandItem
+                                      key={loc.id}
+                                      value={`${loc.venue_name} ${loc.address_line || ""} ${loc.city}`}
+                                      onSelect={() => {
+                                        setSelectedLocationId(loc.id);
+                                        setLocation(loc.venue_name + (loc.address_line ? `, ${loc.address_line}` : ""));
+                                        setLocationPopoverOpen(false);
+                                      }}
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="font-medium">{loc.venue_name}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {[loc.address_line, loc.city].filter(Boolean).join(", ")}
+                                        </span>
+                                      </div>
+                                      {selectedLocationId === loc.id && <Check className="ml-auto h-4 w-4" />}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{t("quiz.orEnterManually")}</span>
+                        </div>
+                        <Input
+                          value={location}
+                          onChange={(e) => {
+                            setLocation(e.target.value);
+                            if (e.target.value !== (orgLocations.find((l) => l.id === selectedLocationId)?.venue_name || "")) {
+                              setSelectedLocationId(null);
+                            }
+                          }}
+                          placeholder={t("quiz.locationPlaceholder")}
+                        />
+                      </div>
+                    ) : (
+                      <Input
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        placeholder={t("quiz.locationPlaceholder")}
+                      />
+                    )}
                   </div>
                   {leagues.length > 0 && (
                     <div className="space-y-2">
