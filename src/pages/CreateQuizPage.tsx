@@ -96,6 +96,7 @@ export default function CreateQuizPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamAliases, setTeamAliases] = useState<TeamAlias[]>([]);
   const [leagues, setLeagues] = useState<League[]>([]);
+  const [orgLocations, setOrgLocations] = useState<OrgLocation[]>([]);
   const [helpTypes, setHelpTypes] = useState<{ id: string; name: string; effect: string }[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
