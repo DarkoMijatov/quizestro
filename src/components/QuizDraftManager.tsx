@@ -62,7 +62,7 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
           .select("id, name")
           .eq("organization_id", organizationId)
           .eq("is_deleted", false)
-          .order("id"),
+          .order("created_at"),
         supabase
           .from("teams")
           .select("id, name")
