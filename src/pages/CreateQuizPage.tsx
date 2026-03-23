@@ -121,7 +121,7 @@ export default function CreateQuizPage() {
           .select("id, name, is_default")
           .eq("organization_id", currentOrg.id)
           .eq("is_deleted", false)
-          .order("id"),
+          .order("created_at"),
         supabase
           .from("teams")
           .select("id, name")
