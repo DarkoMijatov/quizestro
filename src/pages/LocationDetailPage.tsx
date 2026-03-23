@@ -238,7 +238,7 @@ export default function LocationDetailPage() {
                             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                               {s.entry_fee && (
                                 <span className="flex items-center gap-1">
-                                  <DollarSign className="h-3 w-3" /> {s.entry_fee}
+                                  {t("price")} {s.entry_fee}
                                 </span>
                               )}
                               {s.prize_info && (
