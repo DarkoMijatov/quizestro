@@ -57,6 +57,12 @@ interface League {
   id: string;
   name: string;
 }
+interface OrgLocation {
+  id: string;
+  venue_name: string;
+  address_line: string | null;
+  city: string;
+}
 
 interface TeamSelection {
   teamId: string;
