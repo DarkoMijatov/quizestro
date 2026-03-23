@@ -126,7 +126,7 @@ export default function CreateQuizPage() {
     if (!currentOrg) return;
     const load = async () => {
       setLoadingData(true);
-      const [catRes, teamRes, leagueRes, htRes, aliasRes] = await Promise.all([
+      const [catRes, teamRes, leagueRes, htRes, aliasRes, locRes] = await Promise.all([
         supabase
           .from("categories")
           .select("id, name, is_default")
@@ -147,12 +147,19 @@ export default function CreateQuizPage() {
           .order("name"),
         supabase.from("help_types").select("id, name, effect").eq("organization_id", currentOrg.id),
         supabase.from("team_aliases").select("id, alias, team_id").eq("organization_id", currentOrg.id),
+        supabase
+          .from("org_locations")
+          .select("id, venue_name, address_line, city")
+          .eq("organization_id", currentOrg.id)
+          .eq("is_active", true)
+          .order("venue_name"),
       ]);
       const cats = (catRes.data as Category[]) || [];
       setCategories(cats);
       setTeams((teamRes.data as Team[]) || []);
       setTeamAliases((aliasRes.data as TeamAlias[]) || []);
       setLeagues((leagueRes.data as League[]) || []);
+      setOrgLocations((locRes.data as OrgLocation[]) || []);
       setHelpTypes((htRes.data as any) || []);
 
       // Pre-select default categories
