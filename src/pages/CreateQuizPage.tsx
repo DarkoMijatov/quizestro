@@ -87,6 +87,8 @@ export default function CreateQuizPage() {
   const [quizName, setQuizName] = useState("");
   const [quizDate, setQuizDate] = useState<Date>(new Date());
   const [location, setLocation] = useState("");
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
 
   // Data
