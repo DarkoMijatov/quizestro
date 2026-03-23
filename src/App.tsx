@@ -76,6 +76,7 @@ const App = () => (
             <Route path="/billing/success" element={<ForceDarkTheme><BillingSuccessPage /></ForceDarkTheme>} />
             <Route path="/billing/cancel" element={<ForceDarkTheme><BillingCancelPage /></ForceDarkTheme>} />
             <Route path="/map" element={<QuizMapPage />} />
+            <Route path="/unsubscribe" element={<UnsubscribePage />} />
             <Route path="/quiz-map/:id" element={<LocationDetailPage />} />
             <Route path="/onboarding" element={<ForceDarkTheme><ProtectedRoute><OnboardingPage /></ProtectedRoute></ForceDarkTheme>} />
             <Route path="/dashboard" element={<OrgRoute><DashboardPage /></OrgRoute>} />
