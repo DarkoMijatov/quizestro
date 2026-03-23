@@ -41,6 +41,7 @@ import BillingCancelPage from "./pages/BillingCancelPage";
 import LocationDetailPage from "./pages/LocationDetailPage";
 import QuizLocationsPage from "./pages/QuizLocationsPage";
 import QuizMapPage from "./pages/QuizMapPage";
+import UnsubscribePage from "./pages/UnsubscribePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
