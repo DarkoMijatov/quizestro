@@ -1,0 +1,1 @@
+ALTER TABLE public.quizzes ADD COLUMN org_location_id uuid REFERENCES public.org_locations(id) ON DELETE SET NULL DEFAULT NULL;
