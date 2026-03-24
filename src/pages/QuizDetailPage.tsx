@@ -520,8 +520,11 @@ export default function QuizDetailPage() {
   const sizeClass = teamCount <= 6 ? "size-lg" : teamCount <= 10 ? "size-md" : teamCount <= 15 ? "size-sm" : "size-xs";
 
   return (
-    <DashboardLayout>
-      <div className="flex flex-col h-[calc(100vh-6rem)]">
+    <DashboardLayout hideLayout={isFullscreen}>
+      <div className={cn(
+        "flex flex-col",
+        isFullscreen ? "fixed inset-0 z-50 bg-background p-4" : "h-[calc(100vh-6rem)]"
+      )}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-3">
@@ -542,6 +545,9 @@ export default function QuizDetailPage() {
                 onChanged={fetchAll}
               />
             )}
+            <Button variant="outline" size="sm" onClick={() => setIsFullscreen(!isFullscreen)} className="gap-1">
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-1">
               <Download className="h-4 w-4" /> {t("excel.export")}
             </Button>
