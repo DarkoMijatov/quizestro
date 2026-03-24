@@ -520,7 +520,7 @@ export default function QuizDetailPage() {
   const sizeClass = teamCount <= 6 ? "size-lg" : teamCount <= 10 ? "size-md" : teamCount <= 15 ? "size-sm" : "size-xs";
 
   return (
-    <DashboardLayout hideLayout={isFullscreen}>
+    <DashboardLayout>
       <div className={cn(
         "flex flex-col",
         isFullscreen ? "fixed inset-0 z-50 bg-background p-4" : "h-[calc(100vh-6rem)]"
