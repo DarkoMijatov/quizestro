@@ -77,8 +77,8 @@ export default function QuizzesPage() {
     // Apply status filter
     const statusFilter = params.filters.status;
     if (statusFilter && statusFilter !== 'all') {
-      countQuery = countQuery.eq('status', statusFilter);
-      dataQuery = dataQuery.eq('status', statusFilter);
+      countQuery = countQuery.eq('status', statusFilter as 'draft' | 'live' | 'finished');
+      dataQuery = dataQuery.eq('status', statusFilter as 'draft' | 'live' | 'finished');
     }
 
     // Apply date filters
