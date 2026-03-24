@@ -22,6 +22,8 @@ import {
   Crown,
   Zap,
   CopyCheck,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
@@ -98,6 +100,7 @@ export default function QuizDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editingAliasTeamId, setEditingAliasTeamId] = useState<string | null>(null);
   const [editingAliasValue, setEditingAliasValue] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
@@ -137,6 +140,15 @@ export default function QuizDetailPage() {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  // Escape key exits fullscreen
+  useEffect(() => {
+    const handleEsc = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false);
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [isFullscreen]);
 
   const getScore = (teamId: string, catId: string) =>
     scores.find((s) => s.quiz_team_id === teamId && s.quiz_category_id === catId);
@@ -518,7 +530,10 @@ export default function QuizDetailPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-[calc(100vh-6rem)]">
+      <div className={cn(
+        "flex flex-col",
+        isFullscreen ? "fixed inset-0 z-50 bg-background p-4" : "h-[calc(100vh-6rem)]"
+      )}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-3">
@@ -539,6 +554,9 @@ export default function QuizDetailPage() {
                 onChanged={fetchAll}
               />
             )}
+            <Button variant="outline" size="sm" onClick={() => setIsFullscreen(!isFullscreen)} className="gap-1">
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-1">
               <Download className="h-4 w-4" /> {t("excel.export")}
             </Button>
