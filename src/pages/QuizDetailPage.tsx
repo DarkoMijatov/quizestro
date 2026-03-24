@@ -22,6 +22,8 @@ import {
   Crown,
   Zap,
   CopyCheck,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
