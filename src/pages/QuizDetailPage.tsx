@@ -100,6 +100,7 @@ export default function QuizDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editingAliasTeamId, setEditingAliasTeamId] = useState<string | null>(null);
   const [editingAliasValue, setEditingAliasValue] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
