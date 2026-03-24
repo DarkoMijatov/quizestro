@@ -141,6 +141,15 @@ export default function QuizDetailPage() {
     fetchAll();
   }, [fetchAll]);
 
+  // Escape key exits fullscreen
+  useEffect(() => {
+    const handleEsc = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false);
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [isFullscreen]);
+
   const getScore = (teamId: string, catId: string) =>
     scores.find((s) => s.quiz_team_id === teamId && s.quiz_category_id === catId);
 
