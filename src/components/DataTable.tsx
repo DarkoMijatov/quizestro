@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -49,6 +49,19 @@ interface DataTableProps<T> {
   onRowClick?: (row: T) => void;
   headerActions?: React.ReactNode;
   title?: string;
+  // Server-side pagination props
+  serverSide?: boolean;
+  totalCount?: number;
+  onServerChange?: (params: ServerParams) => void;
+}
+
+export interface ServerParams {
+  page: number;
+  pageSize: number;
+  search: string;
+  sortKey: string;
+  sortDir: 'asc' | 'desc';
+  filters: Record<string, string>;
 }
 
 export function DataTable<T>({
@@ -68,6 +81,9 @@ export function DataTable<T>({
   onRowClick,
   headerActions,
   title,
+  serverSide,
+  totalCount,
+  onServerChange,
 }: DataTableProps<T>) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
@@ -76,15 +92,41 @@ export function DataTable<T>({
   const [page, setPage] = useState(1);
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
 
+  // Debounced search for server-side
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    if (!serverSide) return;
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search, serverSide]);
+
+  // Notify server of changes
+  const notifyServer = useCallback((overrides?: Partial<ServerParams>) => {
+    if (!serverSide || !onServerChange) return;
+    onServerChange({
+      page: overrides?.page ?? page,
+      pageSize,
+      search: overrides?.search ?? debouncedSearch,
+      sortKey: overrides?.sortKey ?? sortKey,
+      sortDir: overrides?.sortDir ?? sortDir,
+      filters: overrides?.filters ?? activeFilters,
+    });
+  }, [serverSide, onServerChange, page, pageSize, debouncedSearch, sortKey, sortDir, activeFilters]);
+
+  // Trigger server fetch when params change (server-side mode)
+  useEffect(() => {
+    if (serverSide) notifyServer();
+  }, [debouncedSearch, page, sortKey, sortDir, activeFilters, serverSide]);
+
+  // Client-side filtering
   const filtered = useMemo(() => {
+    if (serverSide) return data;
     let result = data;
 
-    // Apply filters
     if (filters && filterFn && Object.keys(activeFilters).some(k => activeFilters[k] !== '' && activeFilters[k] !== 'all')) {
       result = result.filter((row) => filterFn(row, activeFilters));
     }
 
-    // Apply search
     if (search.trim()) {
       const q = search.toLowerCase();
       if (searchFn) {
@@ -100,9 +142,11 @@ export function DataTable<T>({
     }
 
     return result;
-  }, [data, search, searchFn, columns, activeFilters, filters, filterFn]);
+  }, [data, search, searchFn, columns, activeFilters, filters, filterFn, serverSide]);
 
+  // Client-side sorting
   const sorted = useMemo(() => {
+    if (serverSide) return filtered;
     if (!sortKey) return filtered;
     const col = columns.find((c) => c.key === sortKey);
     return [...filtered].sort((a, b) => {
@@ -116,15 +160,17 @@ export function DataTable<T>({
         : String(aVal).localeCompare(String(bVal));
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [filtered, sortKey, sortDir, columns]);
+  }, [filtered, sortKey, sortDir, columns, serverSide]);
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const totalItems = serverSide ? (totalCount ?? data.length) : sorted.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safePage = Math.min(page, totalPages);
-  const paged = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const paged = serverSide ? data : sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      const newDir = sortDir === 'asc' ? 'desc' : 'asc';
+      setSortDir(newDir);
     } else {
       setSortKey(key);
       setSortDir('desc');
@@ -268,7 +314,7 @@ export function DataTable<T>({
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : sorted.length === 0 ? (
+      ) : paged.length === 0 && totalItems === 0 ? (
         <div className="rounded-xl border border-border bg-card p-12 text-center">
           {emptyIcon}
           <p className="text-muted-foreground mt-4">{emptyMessage || t('common.noResults')}</p>
@@ -315,7 +361,7 @@ export function DataTable<T>({
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, sorted.length)} / {sorted.length}
+                {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, totalItems)} / {totalItems}
               </p>
               <Pagination>
                 <PaginationContent>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { Link, useNavigate } from 'react-router-dom';
@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { DataTable, Column, FilterConfig } from '@/components/DataTable';
+import { DataTable, Column, FilterConfig, ServerParams } from '@/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -38,6 +38,8 @@ const statusColors: Record<string, string> = {
   finished: 'bg-accent text-accent-foreground',
 };
 
+const PAGE_SIZE = 15;
+
 export default function QuizzesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -45,68 +47,131 @@ export default function QuizzesPage() {
   const { toast } = useToast();
   const [quizzes, setQuizzes] = useState<QuizRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
   const [deleteItem, setDeleteItem] = useState<QuizRow | null>(null);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [serverParams, setServerParams] = useState<ServerParams>({
+    page: 1, pageSize: PAGE_SIZE, search: '', sortKey: 'date', sortDir: 'desc', filters: {},
+  });
 
   const canCreate = currentRole === 'owner' || currentRole === 'admin';
   const canDelete = currentRole === 'owner' || currentRole === 'admin';
 
-  useEffect(() => {
+  const fetchQuizzes = useCallback(async (params: ServerParams, from?: Date, to?: Date) => {
     if (!currentOrg) return;
-    const fetchData = async () => {
-      setLoading(true);
+    setLoading(true);
 
-      // Fetch quizzes
-      const { data: quizData } = await supabase
-        .from('quizzes')
-        .select('id, name, date, location, status')
-        .eq('organization_id', currentOrg.id)
-        .order('date', { ascending: false });
+    // Build count query
+    let countQuery = supabase
+      .from('quizzes')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', currentOrg.id);
 
-      const qList = (quizData || []) as any[];
-      if (qList.length === 0) { setQuizzes([]); setLoading(false); return; }
+    // Build data query
+    let dataQuery = supabase
+      .from('quizzes')
+      .select('id, name, date, location, status')
+      .eq('organization_id', currentOrg.id);
 
-      const quizIds = qList.map((q) => q.id);
+    // Apply status filter
+    const statusFilter = params.filters.status;
+    if (statusFilter && statusFilter !== 'all') {
+      countQuery = countQuery.eq('status', statusFilter);
+      dataQuery = dataQuery.eq('status', statusFilter);
+    }
 
-      // Fetch quiz_teams with team names for counts, winners
-      const { data: qtData } = await supabase
-        .from('quiz_teams')
-        .select('quiz_id, team_id, total_points, rank, teams(name)')
-        .in('quiz_id', quizIds);
+    // Apply date filters
+    if (from) {
+      const fromStr = format(from, 'yyyy-MM-dd');
+      countQuery = countQuery.gte('date', fromStr);
+      dataQuery = dataQuery.gte('date', fromStr);
+    }
+    if (to) {
+      const toStr = format(to, 'yyyy-MM-dd');
+      countQuery = countQuery.lte('date', toStr);
+      dataQuery = dataQuery.lte('date', toStr);
+    }
 
-      const qtList = (qtData || []) as any[];
+    // Apply search (server-side ilike on name and location)
+    if (params.search) {
+      const searchPattern = `%${params.search}%`;
+      countQuery = countQuery.or(`name.ilike.${searchPattern},location.ilike.${searchPattern}`);
+      dataQuery = dataQuery.or(`name.ilike.${searchPattern},location.ilike.${searchPattern}`);
+    }
 
-      // Build aggregates per quiz
-      const aggMap = new Map<string, { teamCount: number; winner: string | null; totalPoints: number }>();
-      for (const qt of qtList) {
-        const agg = aggMap.get(qt.quiz_id) || { teamCount: 0, winner: null, totalPoints: 0 };
-        agg.teamCount++;
-        agg.totalPoints += Number(qt.total_points || 0);
-        if (qt.rank === 1) agg.winner = qt.teams?.name || null;
-        aggMap.set(qt.quiz_id, agg);
-      }
+    // Apply sorting
+    const sortCol = params.sortKey || 'date';
+    const ascending = params.sortDir === 'asc';
+    if (['name', 'date', 'location', 'status'].includes(sortCol)) {
+      dataQuery = dataQuery.order(sortCol, { ascending });
+    } else {
+      dataQuery = dataQuery.order('date', { ascending: false });
+    }
 
-      setQuizzes(qList.map((q) => {
-        const agg = aggMap.get(q.id);
-        return {
-          ...q,
-          teamCount: agg?.teamCount || 0,
-          winner: agg?.winner || null,
-          avgPoints: agg && agg.teamCount > 0 ? Math.round((agg.totalPoints / agg.teamCount) * 10) / 10 : null,
-        };
-      }));
+    // Apply pagination
+    const rangeFrom = (params.page - 1) * params.pageSize;
+    const rangeTo = rangeFrom + params.pageSize - 1;
+    dataQuery = dataQuery.range(rangeFrom, rangeTo);
+
+    // Execute both queries
+    const [countRes, dataRes] = await Promise.all([countQuery, dataQuery]);
+
+    setTotalCount(countRes.count || 0);
+
+    const qList = (dataRes.data || []) as any[];
+    if (qList.length === 0) {
+      setQuizzes([]);
       setLoading(false);
-    };
-    fetchData();
+      return;
+    }
+
+    // Fetch aggregates for current page quizzes only
+    const quizIds = qList.map((q) => q.id);
+    const { data: qtData } = await supabase
+      .from('quiz_teams')
+      .select('quiz_id, team_id, total_points, rank, teams(name)')
+      .in('quiz_id', quizIds);
+
+    const qtList = (qtData || []) as any[];
+    const aggMap = new Map<string, { teamCount: number; winner: string | null; totalPoints: number }>();
+    for (const qt of qtList) {
+      const agg = aggMap.get(qt.quiz_id) || { teamCount: 0, winner: null, totalPoints: 0 };
+      agg.teamCount++;
+      agg.totalPoints += Number(qt.total_points || 0);
+      if (qt.rank === 1) agg.winner = qt.teams?.name || null;
+      aggMap.set(qt.quiz_id, agg);
+    }
+
+    setQuizzes(qList.map((q) => {
+      const agg = aggMap.get(q.id);
+      return {
+        ...q,
+        teamCount: agg?.teamCount || 0,
+        winner: agg?.winner || null,
+        avgPoints: agg && agg.teamCount > 0 ? Math.round((agg.totalPoints / agg.teamCount) * 10) / 10 : null,
+      };
+    }));
+    setLoading(false);
   }, [currentOrg?.id]);
+
+  // Initial load and when date filters change
+  useEffect(() => {
+    fetchQuizzes(serverParams, dateFrom, dateTo);
+  }, [currentOrg?.id, dateFrom, dateTo]);
+
+  const handleServerChange = useCallback((params: ServerParams) => {
+    setServerParams(params);
+    fetchQuizzes(params, dateFrom, dateTo);
+  }, [fetchQuizzes, dateFrom, dateTo]);
 
   const handleDelete = async () => {
     if (!deleteItem) return;
     await supabase.from('quizzes').delete().eq('id', deleteItem.id);
     toast({ title: '✓', description: t('quizzes.deleted') });
     setDeleteItem(null);
-    setQuizzes((prev) => prev.filter((q) => q.id !== deleteItem.id));
+    // Refresh current page
+    fetchQuizzes(serverParams, dateFrom, dateTo);
   };
 
   const columns: Column<QuizRow>[] = useMemo(() => [
@@ -136,16 +201,16 @@ export default function QuizzesPage() {
       getValue: (r) => r.location,
     },
     {
-      key: 'teamCount', label: t('quizzes.teamCount'), sortable: true,
+      key: 'teamCount', label: t('quizzes.teamCount'), sortable: false,
       getValue: (r) => r.teamCount,
     },
     {
-      key: 'winner', label: t('quizzes.winner'), sortable: true,
+      key: 'winner', label: t('quizzes.winner'), sortable: false,
       render: (r) => r.winner || '—',
       getValue: (r) => r.winner,
     },
     {
-      key: 'avgPoints', label: t('quizzes.avgPoints'), sortable: true,
+      key: 'avgPoints', label: t('quizzes.avgPoints'), sortable: false,
       render: (r) => r.avgPoints != null ? r.avgPoints : '—',
       getValue: (r) => r.avgPoints,
     },
@@ -185,17 +250,6 @@ export default function QuizzesPage() {
       ),
     },
   ], [t, canCreate, canDelete, navigate]);
-
-  const filteredByDate = useMemo(() => {
-    let result = quizzes;
-    if (dateFrom) {
-      result = result.filter(q => new Date(q.date) >= dateFrom);
-    }
-    if (dateTo) {
-      result = result.filter(q => new Date(q.date) <= dateTo);
-    }
-    return result;
-  }, [quizzes, dateFrom, dateTo]);
 
   const dateFiltersUI = (
     <div className="flex items-center gap-2 flex-wrap">
@@ -238,9 +292,9 @@ export default function QuizzesPage() {
     <DashboardLayout>
       <DataTable
         columns={columns}
-        data={filteredByDate}
+        data={quizzes}
         loading={loading}
-        pageSize={15}
+        pageSize={PAGE_SIZE}
         defaultSortKey="date"
         defaultSortDir="desc"
         title={t('dashboard.quizzes')}
@@ -252,7 +306,6 @@ export default function QuizzesPage() {
           </Link>
         ) : undefined}
         headerActions={dateFiltersUI}
-        searchFn={(row, q) => row.name.toLowerCase().includes(q) || (row.location || '').toLowerCase().includes(q) || (row.winner || '').toLowerCase().includes(q)}
         filters={[
           {
             key: 'status',
@@ -265,10 +318,9 @@ export default function QuizzesPage() {
             ],
           },
         ]}
-        filterFn={(row, filters) => {
-          if (filters.status && filters.status !== 'all' && row.status !== filters.status) return false;
-          return true;
-        }}
+        serverSide
+        totalCount={totalCount}
+        onServerChange={handleServerChange}
         onRowClick={(r) => navigate(`/dashboard/quizzes/${r.id}`)}
       />
 
