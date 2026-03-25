@@ -742,7 +742,7 @@ export default function QuizDetailPage() {
 
             <div className="flex flex-col">
               {rankedTeams.map((team, rowIdx) => {
-                const total = getTeamTotal(team.id);
+                const total = getTeamRankTotal(team.id);
                 const teamName = team.alias || (team.team as any)?.name || "";
 
                 return (
