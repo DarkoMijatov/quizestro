@@ -59,6 +59,7 @@ interface QuizCategory {
   id: string;
   category_id: string;
   sort_order: number | null;
+  quiz_part_id: string | null;
   category: { name: string };
 }
 
