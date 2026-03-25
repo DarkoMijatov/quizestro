@@ -1281,6 +1281,10 @@ export default function QuizDetailPage() {
                                     const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
                                     const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
                                     const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
+                                    const jokerDisabledByMarker2 = jokerType && !hasJoker && !!hasMarker;
+                                    const markerDisabledByJoker2 = markerType && !hasMarker && !!hasJoker;
+                                    const jokerDisabled = !!jokerDisabledElsewhere || !!jokerDisabledByMarker2;
+                                    const markerDisabled = !!markerDisabledElsewhere || !!markerDisabledByJoker2;
 
                                     const cellKey = `drill-${team.id}-${cat.id}`;
                                     const isFocused = focusedCell === cellKey;
