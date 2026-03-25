@@ -110,6 +110,21 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
 
   const enqueueHelpToggle = useCallback(
     (item: Omit<HelpToggle, 'type' | 'timestamp' | 'localId'>) => {
+      // If removing an optimistic local help entry, cancel its queued add instead of queuing a DB delete.
+      if (item.action === 'remove' && item.helpUsageId?.startsWith('local-')) {
+        setQueue((prev) =>
+          prev.filter(
+            (queued) =>
+              !(
+                queued.type === 'help_toggle' &&
+                (queued as HelpToggle).action === 'add' &&
+                (queued as HelpToggle).localId === item.helpUsageId
+              ),
+          ),
+        );
+        return item.helpUsageId;
+      }
+
       const localId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const entry: HelpToggle = { ...item, type: 'help_toggle', timestamp: Date.now(), localId };
       setQueue((prev) => [...prev, entry]);
@@ -133,6 +148,8 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
     },
     [],
   );
+
+  const isLocalOptimisticId = (id?: string) => Boolean(id && id.startsWith('local-'));
 
   // ── Sync logic ──
 
@@ -158,6 +175,8 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
         } else if (item.type === 'help_toggle') {
           const h = item as HelpToggle;
           if (h.action === 'remove' && h.helpUsageId) {
+            // Local optimistic ids are not DB UUIDs, skip server delete.
+            if (isLocalOptimisticId(h.helpUsageId)) continue;
             const { error } = await supabase.from('help_usages').delete().eq('id', h.helpUsageId);
             if (error) throw error;
           } else if (h.action === 'add') {
@@ -182,8 +201,9 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
             if (error) throw error;
           } else if (cb.action === 'set') {
             // First remove any existing for this category
-            if (cb.previousId) {
-              await supabase.from('category_bonuses').delete().eq('id', cb.previousId);
+            if (cb.previousId && !isLocalOptimisticId(cb.previousId)) {
+              const { error: deleteError } = await supabase.from('category_bonuses').delete().eq('id', cb.previousId);
+              if (deleteError) throw deleteError;
             }
             const { error } = await supabase.from('category_bonuses').insert({
               quiz_id: cb.quizId!,
