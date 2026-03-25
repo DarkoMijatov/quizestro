@@ -742,59 +742,21 @@ export default function QuizDetailPage() {
         >
         {scoringView === "categories" ? (
           (() => {
-            // Dynamic column sizing: team col = 2x, category cols = 1x each, total col = 1x
-            const units = categories.length + 3; // 2 for team + N cats + 1 total
-            const teamFr = 2;
-            const colTemplate = `${teamFr}fr ${categories.map(() => "1fr").join(" ")} 1fr`;
+            const colTemplate = `minmax(0,2fr) ${categories.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
+            const rowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
+
             return (
-          <div className="min-h-full flex flex-col" style={{ minWidth: `${units * 60}px` }}>
+          <div className="min-h-full w-full flex flex-col">
             {/* Header row */}
             <div
-              className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
+              className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
               style={{
                 gridTemplateColumns: colTemplate,
+                minHeight: rowHeight,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
-              <div
-                className={cn(
-                  "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
-                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
-                )}
-                style={{ color: currentOrg?.branding_text_color || undefined }}
-              >
-                {t("scoring.team")}
-              </div>
-              {categories.map((cat, catIdx) => (
-                <div
-                  key={cat.id}
-                  className={cn(
-                    "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center gap-0.5",
-                    sizeClass === "size-xs" ? "text-[9px]" : "text-[10px]",
-                  )}
-                  style={{ color: currentOrg?.branding_text_color || undefined }}
-                >
-                  {canReorder && categories.length > 1 && (
-                    <div className="flex items-center gap-0.5">
-                      <button
-                        onClick={() => swapCategories(catIdx, -1)}
-                        disabled={catIdx === 0}
-                        className="p-0 disabled:opacity-20 hover:text-primary transition-colors"
-                      >
-                        <ChevronLeft className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={() => swapCategories(catIdx, 1)}
-                        disabled={catIdx === categories.length - 1}
-                        className="p-0 disabled:opacity-20 hover:text-primary transition-colors"
-                      >
-                        <ChevronRight className="h-3 w-3" />
-                      </button>
-                    </div>
-                  )}
-                  {(cat.category as any)?.name || cat.category_id}
-                </div>
-              ))}
+...
               <div
                 className={cn(
                   "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
@@ -806,7 +768,7 @@ export default function QuizDetailPage() {
               </div>
             </div>
 
-            <div className="flex flex-col flex-1">
+            <div className="flex flex-col flex-1 w-full">
               {rankedTeams.map((team, rowIdx) => {
                 const total = getTeamRankTotal(team.id);
                 const teamName = team.alias || (team.team as any)?.name || "";
@@ -815,11 +777,12 @@ export default function QuizDetailPage() {
                   <div
                     key={team.id}
                     className={cn(
-                      "grid border-b-2 border-foreground/20 last:border-0 flex-1",
+                      "grid w-full border-b-2 border-foreground/20 last:border-0",
                       rowIdx === 0 && "bg-primary/[0.04]",
                     )}
                     style={{
                       gridTemplateColumns: colTemplate,
+                      minHeight: rowHeight,
                     }}
                   >
                     {/* Rank + Team */}
