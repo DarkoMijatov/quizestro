@@ -699,9 +699,11 @@ export default function QuizDetailPage() {
                 onChanged={fetchAll}
               />
             )}
-            <Button variant="outline" size="sm" onClick={handleManualSort} className="gap-1" title={t("scoring.sortByTotal")}>
-              <ArrowDownUp className="h-4 w-4" /> {t("scoring.sortByTotal")}
-            </Button>
+            {!isSortedByTotal && (
+              <Button variant="outline" size="sm" onClick={handleManualSort} className="gap-1">
+                <ChevronDown className="h-4 w-4" /> {t("scoring.sort")}
+              </Button>
+            )}
             
             <Button variant="outline" size="sm" onClick={toggleFullscreen} className="gap-1">
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
