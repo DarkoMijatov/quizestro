@@ -644,6 +644,17 @@ export default function QuizDetailPage() {
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-1">
               <Download className="h-4 w-4" /> {t("excel.export")}
             </Button>
+            {quiz.scoring_mode === "per_part" && quizParts.length > 0 && (
+              <Button
+                variant={scoringView === "parts" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setScoringView(scoringView === "parts" ? "categories" : "parts")}
+                className="gap-1"
+              >
+                <Layers className="h-4 w-4" />
+                {scoringView === "parts" ? t("scoring.viewCategories") : t("scoring.viewParts")}
+              </Button>
+            )}
             {canEdit && quiz.status === "draft" && (
               <Button onClick={() => updateQuizStatus("live")} className="gap-2">
                 <Play className="h-4 w-4" /> {t("scoring.goLive")}
