@@ -167,7 +167,7 @@ export default function StatsPage() {
               name: nameMap.get(id) || '?',
               quizzes: s.quizzes,
               wins: s.wins,
-              avgPoints: s.quizzes > 0 ? Math.round((s.totalPoints / s.quizzes) * 10) / 10 : 0,
+              avgPoints: s.quizzes > 0 ? Math.round((s.totalPoints / s.quizzes) * 100) / 100 : 0,
             }))
             .sort((a, b) => b.quizzes - a.quizzes)
             .slice(0, TOP_N)
@@ -197,7 +197,7 @@ export default function StatsPage() {
           Object.entries(catStats)
             .map(([id, s]) => ({
               name: cNameMap.get(id) || '?',
-              avgPoints: s.count > 0 ? Math.round((s.total / s.count) * 10) / 10 : 0,
+              avgPoints: s.count > 0 ? Math.round((s.total / s.count) * 100) / 100 : 0,
             }))
             .sort((a, b) => b.avgPoints - a.avgPoints)
             .slice(0, TOP_N)
@@ -224,7 +224,7 @@ export default function StatsPage() {
                 name: quiz?.name || '?',
                 date: quiz?.date || '',
                 teamCount: s.teamCount,
-                avgPoints: s.teamCount > 0 ? Math.round((s.totalPoints / s.teamCount) * 10) / 10 : 0,
+                avgPoints: s.teamCount > 0 ? Math.round((s.totalPoints / s.teamCount) * 100) / 100 : 0,
               };
             })
             .sort((a, b) => b.avgPoints - a.avgPoints)

@@ -154,7 +154,7 @@ export default function CategoriesPage() {
       const agg = scoreMap.get(c.id);
       return {
         ...c,
-        avgPoints: agg && agg.count > 0 ? Math.round((agg.total / agg.count) * 10) / 10 : null,
+        avgPoints: agg && agg.count > 0 ? Math.round((agg.total / agg.count) * 100) / 100 : null,
       };
     }));
     setLoading(false);

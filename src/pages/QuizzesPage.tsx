@@ -149,7 +149,7 @@ export default function QuizzesPage() {
         ...q,
         teamCount: agg?.teamCount || 0,
         winner: agg?.winner || null,
-        avgPoints: agg && agg.teamCount > 0 ? Math.round((agg.totalPoints / agg.teamCount) * 10) / 10 : null,
+        avgPoints: agg && agg.teamCount > 0 ? Math.round((agg.totalPoints / agg.teamCount) * 100) / 100 : null,
       };
     }));
     setLoading(false);
