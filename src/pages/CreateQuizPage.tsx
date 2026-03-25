@@ -96,6 +96,8 @@ export default function CreateQuizPage() {
   const [scoringMode, setScoringMode] = useState<"per_category" | "per_part">("per_category");
   const [partsCount, setPartsCount] = useState(2);
   const [partNames, setPartNames] = useState<string[]>(["", ""]);
+  // Map categoryId -> partIndex for manual assignment
+  const [categoryPartAssignment, setCategoryPartAssignment] = useState<Record<string, number>>({});
 
   // Data
   const [categories, setCategories] = useState<Category[]>([]);
@@ -395,12 +397,42 @@ export default function CreateQuizPage() {
 
     const quizId = (quiz as any).id;
 
-    const catInserts = selectedCats.map((catId, i) => ({
-      quiz_id: quizId,
-      category_id: catId,
-      organization_id: currentOrg.id,
-      sort_order: i,
-    }));
+    // Create parts first if per_part mode (we need part IDs for category assignment)
+    let insertedParts: any[] = [];
+    if (scoringMode === "per_part") {
+      const partInserts = Array.from({ length: partsCount }, (_, i) => ({
+        quiz_id: quizId,
+        part_number: i,
+        name: partNames[i]?.trim() || t("quiz.defaultPartName", { num: i + 1 }),
+        organization_id: currentOrg.id,
+      }));
+      const { data } = await supabase.from("quiz_parts").insert(partInserts).select();
+      insertedParts = (data as any[]) || [];
+    }
+
+    const catInserts = selectedCats.map((catId, i) => {
+      const base: any = {
+        quiz_id: quizId,
+        category_id: catId,
+        organization_id: currentOrg.id,
+        sort_order: i,
+      };
+      // Assign quiz_part_id if per_part mode
+      if (scoringMode === "per_part" && insertedParts.length > 0) {
+        const partIdx = categoryPartAssignment[catId];
+        if (partIdx !== undefined && insertedParts[partIdx]) {
+          base.quiz_part_id = insertedParts[partIdx].id;
+        } else {
+          // Auto-assign by sort order if not manually assigned
+          const catsPerPart = Math.ceil(selectedCats.length / partsCount);
+          const autoIdx = Math.min(Math.floor(i / catsPerPart), partsCount - 1);
+          if (insertedParts[autoIdx]) {
+            base.quiz_part_id = insertedParts[autoIdx].id;
+          }
+        }
+      }
+      return base;
+    });
     const { data: insertedCats } = await supabase.from("quiz_categories").insert(catInserts).select();
 
     const teamInserts = selectedTeams.map((t) => ({
@@ -427,31 +459,21 @@ export default function CreateQuizPage() {
       }
       await supabase.from("scores").insert(scoreInserts);
 
-      // Create parts and part_scores if scoring mode is per_part
-      if (scoringMode === "per_part") {
-        const partInserts = Array.from({ length: partsCount }, (_, i) => ({
-          quiz_id: quizId,
-          part_number: i,
-          name: partNames[i]?.trim() || t("quiz.defaultPartName", { num: i + 1 }),
-          organization_id: currentOrg.id,
-        }));
-        const { data: insertedParts } = await supabase.from("quiz_parts").insert(partInserts).select();
-
-        if (insertedParts) {
-          const partScoreInserts: any[] = [];
-          for (const qt of insertedTeams as any[]) {
-            for (const part of insertedParts as any[]) {
-              partScoreInserts.push({
-                quiz_id: quizId,
-                quiz_part_id: part.id,
-                quiz_team_id: qt.id,
-                points: 0,
-                organization_id: currentOrg.id,
-              });
-            }
+      // Create part_scores if scoring mode is per_part
+      if (scoringMode === "per_part" && insertedParts.length > 0) {
+        const partScoreInserts: any[] = [];
+        for (const qt of insertedTeams as any[]) {
+          for (const part of insertedParts) {
+            partScoreInserts.push({
+              quiz_id: quizId,
+              quiz_part_id: part.id,
+              quiz_team_id: qt.id,
+              points: 0,
+              organization_id: currentOrg.id,
+            });
           }
-          await supabase.from("part_scores").insert(partScoreInserts);
         }
+        await supabase.from("part_scores").insert(partScoreInserts);
       }
     }
 
@@ -1063,6 +1085,63 @@ export default function CreateQuizPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Category-to-Part assignment (only in per_part mode) */}
+                  {scoringMode === "per_part" && selectedCats.length > 0 && (
+                    <div className="mt-6 space-y-3 border-t border-border pt-4">
+                      <div>
+                        <p className="text-sm font-semibold">{t("quiz.assignCategoryToPart")}</p>
+                        <p className="text-xs text-muted-foreground">{t("quiz.assignCategoryToPartDesc")}</p>
+                      </div>
+                      <div className="space-y-2">
+                        {selectedCats.map((catId, idx) => {
+                          const cat = categories.find((c) => c.id === catId);
+                          const assignedPart = categoryPartAssignment[catId];
+                          return (
+                            <div key={catId} className="flex items-center gap-3 p-2 rounded-md bg-muted/30 border border-border">
+                              <span className="text-xs text-muted-foreground">#{idx + 1}</span>
+                              <FolderOpen className="h-3.5 w-3.5 text-primary shrink-0" />
+                              <span className="text-sm font-medium flex-1">{cat?.name}</span>
+                              <Select
+                                value={assignedPart !== undefined ? String(assignedPart) : ""}
+                                onValueChange={(v) => {
+                                  setCategoryPartAssignment((prev) => ({ ...prev, [catId]: Number(v) }));
+                                }}
+                              >
+                                <SelectTrigger className="w-44 h-8 text-xs">
+                                  <SelectValue placeholder={t("quiz.unassigned")} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({ length: partsCount }, (_, i) => (
+                                    <SelectItem key={i} value={String(i)}>
+                                      {partNames[i]?.trim() || t("quiz.defaultPartName", { num: i + 1 })}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Auto-assign button */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const assignment: Record<string, number> = {};
+                          const catsPerPart = Math.ceil(selectedCats.length / partsCount);
+                          selectedCats.forEach((catId, idx) => {
+                            assignment[catId] = Math.min(Math.floor(idx / catsPerPart), partsCount - 1);
+                          });
+                          setCategoryPartAssignment(assignment);
+                        }}
+                        className="text-xs"
+                      >
+                        {t("quiz.autoAssign", "Automatski raspodeli")}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 

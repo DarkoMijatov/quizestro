@@ -270,7 +270,12 @@
     "partNamePlaceholder": "npr. Prvo poluvreme",
     "defaultPartName": "Deo {{num}}",
     "parts": "Delovi",
-    "reviewParts": "Delovi bodovanja"
+    "reviewParts": "Delovi bodovanja",
+    "assignCategoryToPart": "Dodelite kategorije delovima",
+    "assignCategoryToPartDesc": "Prevucite ili izaberite u koji deo spada svaka kategorija.",
+    "unassigned": "Nedodeljene",
+    "partLabel": "Deo: {{name}}",
+    "autoAssign": "Automatski raspodeli"
   },
   "scoring": {
     "team": "Tim",

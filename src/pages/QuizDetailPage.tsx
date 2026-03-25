@@ -59,6 +59,7 @@ interface QuizCategory {
   id: string;
   category_id: string;
   sort_order: number | null;
+  quiz_part_id: string | null;
   category: { name: string };
 }
 
@@ -426,6 +427,11 @@ export default function QuizDetailPage() {
 
   const getPartCategories = (partIdx: number) => {
     if (quizParts.length === 0) return [];
+    const part = quizParts[partIdx];
+    // Use explicit quiz_part_id assignment if available
+    const assigned = categories.filter((c) => c.quiz_part_id === part.id);
+    if (assigned.length > 0) return assigned;
+    // Fallback: auto-distribute by sort order
     const catsPerPart = Math.ceil(categories.length / quizParts.length);
     const start = partIdx * catsPerPart;
     return categories.slice(start, start + catsPerPart);
@@ -1192,21 +1198,108 @@ export default function QuizDetailPage() {
                               <div className="p-1 text-xs font-medium truncate">{teamName}</div>
                               {partCats.map((cat) => {
                                 const score = getScore(team.id, cat.id);
+                                const hasJoker = jokerType && getHelpUsage(team.id, cat.id, jokerType.id);
+                                const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
+                                const hasBonusPt = hasCategoryBonus(team.id, cat.id);
                                 const displayPts = getDisplayPoints(team.id, cat.id);
+                                const catBonusExisting = getCategoryBonus(cat.id);
+                                const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
+                                const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
+                                const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
+
+                                const cellKey = `drill-${team.id}-${cat.id}`;
+                                const isFocused = focusedCell === cellKey;
+                                const showEffective = (hasJoker || hasBonusPt) && !isFocused;
+                                const displayValue = showEffective ? displayPts : (score?.points ?? 0);
+
                                 return (
-                                  <div key={cat.id} className="p-1 border-l border-foreground/10">
+                                  <div
+                                    key={cat.id}
+                                    className={cn(
+                                      "p-1 border-l border-foreground/10 flex flex-col items-center gap-0.5",
+                                      hasJoker && "bg-primary/[0.08]",
+                                      hasBonusPt && !hasJoker && "bg-yellow-500/[0.06]",
+                                    )}
+                                  >
                                     {canScore ? (
-                                      <input
-                                        type="number"
-                                        min={0}
-                                        step={0.5}
-                                        value={score?.points ?? 0}
-                                        onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
-                                        onFocus={(e) => e.target.select()}
-                                        className="w-full text-center font-bold text-sm bg-transparent border border-foreground/15 rounded focus:border-primary focus:outline-none h-7"
-                                      />
+                                      <>
+                                        <input
+                                          type="number"
+                                          min={0}
+                                          step={0.5}
+                                          value={displayValue}
+                                          onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
+                                          onFocus={(e) => { setFocusedCell(cellKey); e.target.select(); }}
+                                          onBlur={() => setFocusedCell(null)}
+                                          className={cn(
+                                            "w-full text-center font-bold text-sm bg-transparent border rounded focus:border-primary focus:outline-none h-7",
+                                            showEffective ? "text-primary border-primary/30" : "text-foreground border-foreground/15",
+                                          )}
+                                        />
+                                        {/* Help & Bonus buttons */}
+                                        <div className="flex items-center gap-0.5">
+                                          {jokerType && (
+                                            <button
+                                              onClick={() => toggleHelp(team.id, cat.id, jokerType)}
+                                              disabled={!!jokerDisabledElsewhere}
+                                              tabIndex={-1}
+                                              className={cn(
+                                                "w-5 h-4 rounded text-[8px] font-black border transition-colors",
+                                                hasJoker
+                                                  ? "bg-primary text-primary-foreground border-primary"
+                                                  : jokerDisabledElsewhere
+                                                    ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                                    : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
+                                              )}
+                                            >
+                                              <Zap className="h-2.5 w-2.5 mx-auto" />
+                                            </button>
+                                          )}
+                                          {markerType && (
+                                            <button
+                                              onClick={() => toggleHelp(team.id, cat.id, markerType)}
+                                              disabled={!!markerDisabledElsewhere}
+                                              tabIndex={-1}
+                                              className={cn(
+                                                "w-5 h-4 rounded text-[8px] font-black border transition-colors",
+                                                hasMarker
+                                                  ? "bg-accent text-accent-foreground border-accent"
+                                                  : markerDisabledElsewhere
+                                                    ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                                    : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
+                                              )}
+                                            >
+                                              <CopyCheck className="h-2.5 w-2.5 mx-auto" />
+                                            </button>
+                                          )}
+                                          {categoryBonusEnabled && (
+                                            <button
+                                              onClick={() => toggleCategoryBonus(team.id, cat.id)}
+                                              disabled={bonusDisabled}
+                                              tabIndex={-1}
+                                              className={cn(
+                                                "w-5 h-4 rounded text-[8px] font-black border transition-colors",
+                                                hasBonusPt
+                                                  ? "bg-yellow-500 text-white border-yellow-500"
+                                                  : bonusDisabled
+                                                    ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                                    : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
+                                              )}
+                                            >
+                                              <Crown className="h-2.5 w-2.5 mx-auto" />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </>
                                     ) : (
-                                      <p className="text-sm font-bold text-center">{displayPts}</p>
+                                      <div className="flex flex-col items-center gap-0.5">
+                                        <p className="text-sm font-bold text-center">{displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}</p>
+                                        <div className="flex items-center gap-0.5">
+                                          {hasJoker && <Zap className="h-2.5 w-2.5 text-primary" />}
+                                          {hasMarker && <CopyCheck className="h-2.5 w-2.5 text-accent-foreground" />}
+                                          {hasBonusPt && <Crown className="h-2.5 w-2.5 text-yellow-500" />}
+                                        </div>
+                                      </div>
                                     )}
                                   </div>
                                 );

@@ -1047,6 +1047,7 @@ export type Database = {
           id: string
           organization_id: string
           quiz_id: string
+          quiz_part_id: string | null
           sort_order: number | null
         }
         Insert: {
@@ -1055,6 +1056,7 @@ export type Database = {
           id?: string
           organization_id: string
           quiz_id: string
+          quiz_part_id?: string | null
           sort_order?: number | null
         }
         Update: {
@@ -1063,6 +1065,7 @@ export type Database = {
           id?: string
           organization_id?: string
           quiz_id?: string
+          quiz_part_id?: string | null
           sort_order?: number | null
         }
         Relationships: [
@@ -1085,6 +1088,13 @@ export type Database = {
             columns: ["quiz_id"]
             isOneToOne: false
             referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_categories_quiz_part_id_fkey"
+            columns: ["quiz_part_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_parts"
             referencedColumns: ["id"]
           },
         ]
