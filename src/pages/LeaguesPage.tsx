@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { DataTable, Column, FilterConfig } from '@/components/DataTable';
+import { DataTable, Column, FilterConfig, ServerParams } from '@/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,6 +37,8 @@ interface LeagueRow extends League {
   lastDate: string | null;
 }
 
+const PAGE_SIZE = 15;
+
 export default function LeaguesPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -44,6 +46,7 @@ export default function LeaguesPage() {
   const { toast } = useToast();
 
   const [leagues, setLeagues] = useState<LeagueRow[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<League | null>(null);
@@ -53,19 +56,57 @@ export default function LeaguesPage() {
   const [saving, setSaving] = useState(false);
   const [deleteItem, setDeleteItem] = useState<League | null>(null);
 
+  const [serverParams, setServerParams] = useState<ServerParams>({
+    page: 1, pageSize: PAGE_SIZE, search: '', sortKey: 'created_at', sortDir: 'desc', filters: {},
+  });
+
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
 
-  const fetchLeagues = async () => {
+  const fetchLeagues = useCallback(async (params: ServerParams) => {
     if (!currentOrg) return;
     setLoading(true);
 
-    const { data: leagueData } = await supabase
+    let countQuery = supabase
+      .from('leagues')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', currentOrg.id);
+
+    let dataQuery = supabase
       .from('leagues')
       .select('*')
-      .eq('organization_id', currentOrg.id)
-      .order('created_at', { ascending: false }) as { data: League[] | null };
+      .eq('organization_id', currentOrg.id);
 
-    const rawLeagues = leagueData || [];
+    // Status filter
+    const statusFilter = params.filters.status;
+    if (statusFilter && statusFilter !== 'all') {
+      const isActiveVal = statusFilter === 'active';
+      countQuery = countQuery.eq('is_active', isActiveVal);
+      dataQuery = dataQuery.eq('is_active', isActiveVal);
+    }
+
+    // Search
+    if (params.search) {
+      const pattern = `%${params.search}%`;
+      countQuery = countQuery.or(`name.ilike.${pattern},season.ilike.${pattern}`);
+      dataQuery = dataQuery.or(`name.ilike.${pattern},season.ilike.${pattern}`);
+    }
+
+    // Sort
+    const sortCol = params.sortKey || 'created_at';
+    if (['name', 'created_at', 'is_active'].includes(sortCol)) {
+      dataQuery = dataQuery.order(sortCol, { ascending: params.sortDir === 'asc' });
+    } else {
+      dataQuery = dataQuery.order('created_at', { ascending: false });
+    }
+
+    // Pagination
+    const from = (params.page - 1) * params.pageSize;
+    dataQuery = dataQuery.range(from, from + params.pageSize - 1);
+
+    const [countRes, dataRes] = await Promise.all([countQuery, dataQuery]);
+    setTotalCount(countRes.count || 0);
+
+    const rawLeagues = (dataRes.data || []) as League[];
     if (rawLeagues.length === 0) { setLeagues([]); setLoading(false); return; }
 
     const leagueIds = rawLeagues.map(l => l.id);
@@ -90,13 +131,10 @@ export default function LeaguesPage() {
     }
 
     const allFinishedIds = Object.values(finishedQuizIdsByLeague).flat();
-
     let leaderMap: Record<string, string> = {};
     if (allFinishedIds.length > 0) {
       const { data: qtData } = await supabase
-        .from('quiz_teams')
-        .select('team_id, quiz_id, total_points')
-        .in('quiz_id', allFinishedIds);
+        .from('quiz_teams').select('team_id, quiz_id, total_points').in('quiz_id', allFinishedIds);
 
       const teamPointsByLeague: Record<string, Record<string, number>> = {};
       for (const qt of (qtData || [])) {
@@ -140,14 +178,18 @@ export default function LeaguesPage() {
       };
     }));
     setLoading(false);
-  };
+  }, [currentOrg?.id]);
 
-  useEffect(() => { fetchLeagues(); }, [currentOrg?.id]);
+  useEffect(() => { fetchLeagues(serverParams); }, [currentOrg?.id]);
+
+  const handleServerChange = useCallback((params: ServerParams) => {
+    setServerParams(params);
+    fetchLeagues(params);
+  }, [fetchLeagues]);
 
   const openCreate = () => {
     setEditing(null); setLeagueName(''); setSeason(''); setIsActive(true); setDialogOpen(true);
   };
-
   const openEdit = (l: League) => {
     setEditing(l); setLeagueName(l.name); setSeason(l.season || ''); setIsActive(l.is_active); setDialogOpen(true);
   };
@@ -162,14 +204,14 @@ export default function LeaguesPage() {
       await supabase.from('leagues').insert({ name: leagueName.trim(), season: season.trim() || null, is_active: isActive, organization_id: currentOrg.id });
       toast({ title: '✓', description: t('leagues.created') });
     }
-    setSaving(false); setDialogOpen(false); fetchLeagues();
+    setSaving(false); setDialogOpen(false); fetchLeagues(serverParams);
   };
 
   const handleDelete = async () => {
     if (!deleteItem) return;
     await supabase.from('leagues').delete().eq('id', deleteItem.id);
     toast({ title: '✓', description: t('leagues.deleted') });
-    setDeleteItem(null); fetchLeagues();
+    setDeleteItem(null); fetchLeagues(serverParams);
   };
 
   const formatDate = (d: string | null) => {
@@ -187,10 +229,10 @@ export default function LeaguesPage() {
         {r.season && <span className="text-xs text-muted-foreground">({r.season})</span>}
       </div>
     )},
-    { key: 'firstDate', label: t('leagues.startDate', 'Početak'), sortable: true, render: (r) => (
+    { key: 'firstDate', label: t('leagues.startDate', 'Početak'), sortable: false, render: (r) => (
       <span className="text-sm text-muted-foreground">{formatDate(r.firstDate)}</span>
     ), getValue: (r) => r.firstDate || '' },
-    { key: 'lastDate', label: t('leagues.endDate', 'Kraj'), sortable: true, render: (r) => (
+    { key: 'lastDate', label: t('leagues.endDate', 'Kraj'), sortable: false, render: (r) => (
       <span className="text-sm text-muted-foreground">{formatDate(r.lastDate)}</span>
     ), getValue: (r) => r.lastDate || '' },
     { key: 'is_active', label: t('filters.status'), sortable: true, render: (r) => (
@@ -198,8 +240,8 @@ export default function LeaguesPage() {
         {r.is_active ? t('leagues.active') : t('leagues.inactive')}
       </Badge>
     ), getValue: (r) => r.is_active ? 1 : 0 },
-    { key: 'quizCount', label: t('leagueDetail.quizCount'), sortable: true, getValue: (r) => r.quizCount },
-    { key: 'leaderName', label: t('leagueDetail.leaderOrWinner'), sortable: true, render: (r) => (
+    { key: 'quizCount', label: t('leagueDetail.quizCount'), sortable: false, getValue: (r) => r.quizCount },
+    { key: 'leaderName', label: t('leagueDetail.leaderOrWinner'), sortable: false, render: (r) => (
       <span className="text-sm">{r.leaderName || '-'}</span>
     ), getValue: (r) => r.leaderName || '' },
     ...(canEdit ? [{
@@ -232,26 +274,18 @@ export default function LeaguesPage() {
         columns={columns}
         data={leagues}
         loading={loading}
-        defaultSortKey="lastDate"
+        pageSize={PAGE_SIZE}
+        defaultSortKey="created_at"
         defaultSortDir="desc"
-        searchFn={(r, q) => r.name.toLowerCase().includes(q) || (r.season || '').toLowerCase().includes(q)}
         filters={filterConfigs}
-        filterFn={(r, f) => {
-          if (f.status && f.status !== 'all') {
-            if (f.status === 'active' && !r.is_active) return false;
-            if (f.status === 'inactive' && r.is_active) return false;
-          }
-          return true;
-        }}
         emptyIcon={<Award className="h-12 w-12 text-muted-foreground/30 mx-auto" />}
         emptyMessage={t('leagues.noLeagues')}
         emptyAction={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('leagues.addLeague')}</Button> : undefined}
         onRowClick={(r) => navigate(`/dashboard/leagues/${r.id}`)}
-        headerActions={
-          canEdit ? (
-            <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('leagues.addLeague')}</Button>
-          ) : undefined
-        }
+        headerActions={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('leagues.addLeague')}</Button> : undefined}
+        serverSide
+        totalCount={totalCount}
+        onServerChange={handleServerChange}
       />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
