@@ -27,7 +27,6 @@ import {
   Maximize2,
   Minimize2,
   Layers,
-  Layers,
 } from "lucide-react";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
