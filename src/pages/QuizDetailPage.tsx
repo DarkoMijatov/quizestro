@@ -101,6 +101,7 @@ export default function QuizDetailPage() {
   const [editingAliasTeamId, setEditingAliasTeamId] = useState<string | null>(null);
   const [editingAliasValue, setEditingAliasValue] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const scoringRef = useRef<HTMLDivElement>(null);
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
@@ -141,14 +142,20 @@ export default function QuizDetailPage() {
     fetchAll();
   }, [fetchAll]);
 
-  // Escape key exits fullscreen
+  // Fullscreen API: sync state with browser fullscreen
   useEffect(() => {
-    const handleEsc = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false);
-    };
-    document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
-  }, [isFullscreen]);
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await scoringRef.current?.requestFullscreen();
+    }
+  };
 
   const getScore = (teamId: string, catId: string) =>
     scores.find((s) => s.quiz_team_id === teamId && s.quiz_category_id === catId);
@@ -530,10 +537,13 @@ export default function QuizDetailPage() {
 
   return (
     <DashboardLayout>
-      <div className={cn(
-        "flex flex-col",
-        isFullscreen ? "fixed inset-0 z-50 bg-background p-4" : "h-[calc(100vh-6rem)]"
-      )}>
+      <div
+        ref={scoringRef}
+        className={cn(
+          "flex flex-col",
+          isFullscreen ? "bg-background p-4 h-screen" : "h-[calc(100vh-6rem)]"
+        )}
+      >
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-3">
@@ -554,7 +564,7 @@ export default function QuizDetailPage() {
                 onChanged={fetchAll}
               />
             )}
-            <Button variant="outline" size="sm" onClick={() => setIsFullscreen(!isFullscreen)} className="gap-1">
+            <Button variant="outline" size="sm" onClick={toggleFullscreen} className="gap-1">
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </Button>
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-1">
@@ -746,13 +756,7 @@ export default function QuizDetailPage() {
                                 type="number"
                                 min={0}
                                 step={0.5}
-                                value={
-                                  hasJoker || hasBonusPt
-                                    ? displayPts % 1 === 0
-                                      ? displayPts
-                                      : displayPts.toFixed(1)
-                                    : (score?.points ?? 0)
-                                }
+                                value={score?.points ?? 0}
                                 onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
                                 onFocus={(e) => e.target.select()}
                                 onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
@@ -768,6 +772,11 @@ export default function QuizDetailPage() {
                                         : "h-6 text-base",
                                 )}
                               />
+                              {(hasJoker || hasBonusPt) && (
+                                <span className="text-[9px] font-bold text-primary leading-none">
+                                  = {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
+                                </span>
+                              )}
 
                               {/* Help initials + category bonus */}
                               <div className="flex items-center gap-0.5">

@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { DataTable, Column, FilterConfig } from '@/components/DataTable';
+import { DataTable, Column, FilterConfig, ServerParams } from '@/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,6 +31,8 @@ interface CategoryRow {
   avgPoints: number | null;
 }
 
+const PAGE_SIZE = 15;
+
 export default function CategoriesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -38,6 +40,7 @@ export default function CategoriesPage() {
   const { toast } = useToast();
 
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -47,84 +50,122 @@ export default function CategoriesPage() {
   const [saving, setSaving] = useState(false);
   const [deleteItem, setDeleteItem] = useState<CategoryRow | null>(null);
 
+  const [serverParams, setServerParams] = useState<ServerParams>({
+    page: 1, pageSize: PAGE_SIZE, search: '', sortKey: 'name', sortDir: 'asc', filters: {},
+  });
+
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async (params: ServerParams) => {
     if (!currentOrg) return;
     setLoading(true);
-    const { data: catData } = await supabase
+
+    // Count query
+    let countQuery = supabase
+      .from('categories')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', currentOrg.id)
+      .eq('is_deleted', false);
+
+    // Data query
+    let dataQuery = supabase
       .from('categories')
       .select('*')
       .eq('organization_id', currentOrg.id)
-      .eq('is_deleted', false)
-      .order('name') as { data: any[] | null };
+      .eq('is_deleted', false);
 
-    const cats = catData || [];
-
-    if (cats.length > 0) {
-      const catIds = cats.map((c) => c.id);
-
-      // Get quiz_categories for these categories
-      const { data: qcData } = await supabase
-        .from('quiz_categories')
-        .select('id, category_id, quiz_id')
-        .in('category_id', catIds);
-
-      const qcList = qcData || [];
-      const qcIds = qcList.map((qc: any) => qc.id);
-
-      // Get finished quiz IDs
-      const qcQuizIds = [...new Set(qcList.map((qc: any) => qc.quiz_id))];
-      let finishedQuizIds = new Set<string>();
-      if (qcQuizIds.length > 0) {
-        const { data: quizData } = await supabase
-          .from('quizzes')
-          .select('id')
-          .in('id', qcQuizIds)
-          .eq('status', 'finished');
-        finishedQuizIds = new Set((quizData || []).map((q: any) => q.id));
-      }
-
-      // Filter qcList to only finished quizzes
-      const finishedQcIds = new Set(qcList.filter((qc: any) => finishedQuizIds.has(qc.quiz_id)).map((qc: any) => qc.id));
-
-      // Get scores for these quiz_categories
-      let scoreMap = new Map<string, { total: number; count: number }>();
-      if (qcIds.length > 0) {
-        const { data: scoreData } = await supabase
-          .from('scores')
-          .select('quiz_category_id, points')
-          .in('quiz_category_id', qcIds);
-
-        // Map quiz_category_id -> category_id
-        const qcToCat = new Map<string, string>();
-        qcList.forEach((qc: any) => qcToCat.set(qc.id, qc.category_id));
-
-        (scoreData || []).forEach((s: any) => {
-          if (!finishedQcIds.has(s.quiz_category_id)) return;
-          const catId = qcToCat.get(s.quiz_category_id);
-          if (!catId) return;
-          const agg = scoreMap.get(catId) || { total: 0, count: 0 };
-          agg.total += Number(s.points || 0);
-          agg.count++;
-          scoreMap.set(catId, agg);
-        });
-      }
-
-      setCategories(cats.map((c) => {
-        const agg = scoreMap.get(c.id);
-        return {
-          ...c,
-          avgPoints: agg && agg.count > 0 ? Math.round((agg.total / agg.count) * 10) / 10 : null,
-        };
-      }));
-    } else {
-      setCategories([]);
+    // Filter: is_default
+    const defaultFilter = params.filters.is_default;
+    if (defaultFilter && defaultFilter !== 'all') {
+      const isDefaultVal = defaultFilter === 'true';
+      countQuery = countQuery.eq('is_default', isDefaultVal);
+      dataQuery = dataQuery.eq('is_default', isDefaultVal);
     }
-    setLoading(false);
-  };
 
-  useEffect(() => { fetchCategories(); }, [currentOrg?.id]);
+    // Search
+    if (params.search) {
+      const pattern = `%${params.search}%`;
+      countQuery = countQuery.ilike('name', pattern);
+      dataQuery = dataQuery.ilike('name', pattern);
+    }
+
+    // Sort
+    const sortCol = params.sortKey || 'name';
+    if (['name', 'is_default', 'created_at'].includes(sortCol)) {
+      dataQuery = dataQuery.order(sortCol, { ascending: params.sortDir === 'asc' });
+    } else {
+      dataQuery = dataQuery.order('name', { ascending: true });
+    }
+
+    // Pagination
+    const from = (params.page - 1) * params.pageSize;
+    dataQuery = dataQuery.range(from, from + params.pageSize - 1);
+
+    const [countRes, dataRes] = await Promise.all([countQuery, dataQuery]);
+    setTotalCount(countRes.count || 0);
+
+    const cats = (dataRes.data || []) as any[];
+    if (cats.length === 0) {
+      setCategories([]);
+      setLoading(false);
+      return;
+    }
+
+    // Aggregates for current page
+    const catIds = cats.map((c) => c.id);
+    const { data: qcData } = await supabase
+      .from('quiz_categories')
+      .select('id, category_id, quiz_id')
+      .in('category_id', catIds);
+
+    const qcList = qcData || [];
+    const qcIds = qcList.map((qc: any) => qc.id);
+    const qcQuizIds = [...new Set(qcList.map((qc: any) => qc.quiz_id))];
+
+    let finishedQuizIds = new Set<string>();
+    if (qcQuizIds.length > 0) {
+      const { data: quizData } = await supabase
+        .from('quizzes').select('id').in('id', qcQuizIds).eq('status', 'finished');
+      finishedQuizIds = new Set((quizData || []).map((q: any) => q.id));
+    }
+
+    const finishedQcIds = new Set(qcList.filter((qc: any) => finishedQuizIds.has(qc.quiz_id)).map((qc: any) => qc.id));
+
+    let scoreMap = new Map<string, { total: number; count: number }>();
+    if (qcIds.length > 0) {
+      const { data: scoreData } = await supabase
+        .from('scores').select('quiz_category_id, points').in('quiz_category_id', qcIds);
+
+      const qcToCat = new Map<string, string>();
+      qcList.forEach((qc: any) => qcToCat.set(qc.id, qc.category_id));
+
+      (scoreData || []).forEach((s: any) => {
+        if (!finishedQcIds.has(s.quiz_category_id)) return;
+        const catId = qcToCat.get(s.quiz_category_id);
+        if (!catId) return;
+        const agg = scoreMap.get(catId) || { total: 0, count: 0 };
+        agg.total += Number(s.points || 0);
+        agg.count++;
+        scoreMap.set(catId, agg);
+      });
+    }
+
+    setCategories(cats.map((c) => {
+      const agg = scoreMap.get(c.id);
+      return {
+        ...c,
+        avgPoints: agg && agg.count > 0 ? Math.round((agg.total / agg.count) * 10) / 10 : null,
+      };
+    }));
+    setLoading(false);
+  }, [currentOrg?.id]);
+
+  useEffect(() => { fetchCategories(serverParams); }, [currentOrg?.id]);
+
+  const handleServerChange = useCallback((params: ServerParams) => {
+    setServerParams(params);
+    fetchCategories(params);
+  }, [fetchCategories]);
 
   const openCreate = () => { setEditing(null); setCatName(''); setIsDefault(false); setDialogOpen(true); };
   const openEdit = (cat: CategoryRow) => { setEditing(cat); setCatName(cat.name); setIsDefault(cat.is_default); setDialogOpen(true); };
@@ -139,14 +180,14 @@ export default function CategoriesPage() {
       await supabase.from('categories').insert({ name: catName.trim(), organization_id: currentOrg.id, is_default: isDefault });
       toast({ title: '✓', description: t('categories.created') });
     }
-    setSaving(false); setDialogOpen(false); fetchCategories();
+    setSaving(false); setDialogOpen(false); fetchCategories(serverParams);
   };
 
   const handleDelete = async () => {
     if (!deleteItem) return;
     await supabase.from('categories').update({ is_deleted: true }).eq('id', deleteItem.id);
     toast({ title: '✓', description: t('categories.deleted') });
-    setDeleteItem(null); fetchCategories();
+    setDeleteItem(null); fetchCategories(serverParams);
   };
 
   const columns: Column<CategoryRow>[] = useMemo(() => [
@@ -156,7 +197,7 @@ export default function CategoriesPage() {
       getValue: (r) => r.name,
     },
     {
-      key: 'avgPoints', label: t('categoriesTable.avgPoints'), sortable: true,
+      key: 'avgPoints', label: t('categoriesTable.avgPoints'), sortable: false,
       render: (r) => r.avgPoints != null ? r.avgPoints : '—',
       getValue: (r) => r.avgPoints,
     },
@@ -210,15 +251,14 @@ export default function CategoriesPage() {
         columns={columns}
         data={categories}
         loading={loading}
-        pageSize={15}
-        defaultSortKey="avgPoints"
-        defaultSortDir="desc"
+        pageSize={PAGE_SIZE}
+        defaultSortKey="name"
+        defaultSortDir="asc"
         title={t('categories.title')}
         emptyIcon={<FolderOpen className="h-12 w-12 text-muted-foreground/30 mx-auto" />}
         emptyMessage={t('categories.noCategories')}
         emptyAction={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('categories.addCategory')}</Button> : undefined}
         headerActions={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('categories.addCategory')}</Button> : undefined}
-        searchFn={(row, q) => row.name.toLowerCase().includes(q)}
         filters={[
           {
             key: 'is_default',
@@ -230,12 +270,9 @@ export default function CategoriesPage() {
             ],
           },
         ]}
-        filterFn={(row, filters) => {
-          if (filters.is_default && filters.is_default !== 'all') {
-            return row.is_default === (filters.is_default === 'true');
-          }
-          return true;
-        }}
+        serverSide
+        totalCount={totalCount}
+        onServerChange={handleServerChange}
         onRowClick={(r) => navigate(`/dashboard/categories/${r.id}`)}
       />
 

@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { DataTable, Column } from '@/components/DataTable';
+import { DataTable, Column, ServerParams } from '@/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,6 +37,8 @@ interface TeamAlias {
   alias: string;
 }
 
+const PAGE_SIZE = 15;
+
 export default function TeamsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -44,7 +46,7 @@ export default function TeamsPage() {
   const { toast } = useToast();
 
   const [teams, setTeams] = useState<TeamRow[]>([]);
-  const [aliases, setAliases] = useState<Record<string, TeamAlias[]>>({});
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -53,79 +55,115 @@ export default function TeamsPage() {
   const [teamAliases, setTeamAliases] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleteTeam, setDeleteTeam] = useState<TeamRow | null>(null);
+  const [aliases, setAliases] = useState<Record<string, TeamAlias[]>>({});
+
+  const [serverParams, setServerParams] = useState<ServerParams>({
+    page: 1, pageSize: PAGE_SIZE, search: '', sortKey: 'name', sortDir: 'asc', filters: {},
+  });
 
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
 
-  const fetchTeams = async () => {
+  const fetchTeams = useCallback(async (params: ServerParams) => {
     if (!currentOrg) return;
     setLoading(true);
 
-    const { data: teamData } = await supabase
+    // Count query
+    let countQuery = supabase
+      .from('teams')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', currentOrg.id)
+      .eq('is_deleted', false);
+
+    // Data query
+    let dataQuery = supabase
       .from('teams')
       .select('*')
       .eq('organization_id', currentOrg.id)
-      .eq('is_deleted', false)
-      .order('name') as { data: any[] | null };
+      .eq('is_deleted', false);
 
-    const loadedTeams = teamData || [];
-
-    // Fetch aliases
-    let aliasMap: Record<string, TeamAlias[]> = {};
-    if (loadedTeams.length > 0) {
-      const teamIds = loadedTeams.map((t) => t.id);
-      const { data: aliasData } = await supabase
-        .from('team_aliases')
-        .select('*')
-        .in('team_id', teamIds) as { data: TeamAlias[] | null };
-      (aliasData || []).forEach((a) => {
-        if (!aliasMap[a.team_id]) aliasMap[a.team_id] = [];
-        aliasMap[a.team_id].push(a);
-      });
-
-      // Fetch quiz_teams aggregates (only finished quizzes)
-      const { data: qtData } = await supabase
-        .from('quiz_teams')
-        .select('team_id, total_points, rank, quiz_id')
-        .in('team_id', teamIds);
-
-      // Get finished quiz IDs
-      const qtQuizIds = [...new Set((qtData || []).map((qt: any) => qt.quiz_id))];
-      let finishedQuizIds = new Set<string>();
-      if (qtQuizIds.length > 0) {
-        const { data: quizData } = await supabase
-          .from('quizzes')
-          .select('id')
-          .in('id', qtQuizIds)
-          .eq('status', 'finished');
-        finishedQuizIds = new Set((quizData || []).map((q: any) => q.id));
-      }
-
-      const aggMap = new Map<string, { count: number; wins: number; totalPts: number }>();
-      (qtData || []).filter((qt: any) => finishedQuizIds.has(qt.quiz_id)).forEach((qt: any) => {
-        const agg = aggMap.get(qt.team_id) || { count: 0, wins: 0, totalPts: 0 };
-        agg.count++;
-        agg.totalPts += Number(qt.total_points || 0);
-        if (qt.rank === 1) agg.wins++;
-        aggMap.set(qt.team_id, agg);
-      });
-
-      setTeams(loadedTeams.map((t) => {
-        const agg = aggMap.get(t.id);
-        return {
-          ...t,
-          participations: agg?.count || 0,
-          wins: agg?.wins || 0,
-          avgPoints: agg && agg.count > 0 ? Math.round((agg.totalPts / agg.count) * 10) / 10 : null,
-        };
-      }));
-    } else {
-      setTeams([]);
+    // Search
+    if (params.search) {
+      const pattern = `%${params.search}%`;
+      countQuery = countQuery.ilike('name', pattern);
+      dataQuery = dataQuery.ilike('name', pattern);
     }
-    setAliases(aliasMap);
-    setLoading(false);
-  };
 
-  useEffect(() => { fetchTeams(); }, [currentOrg?.id]);
+    // Sort
+    const sortCol = params.sortKey || 'name';
+    if (['name', 'created_at'].includes(sortCol)) {
+      dataQuery = dataQuery.order(sortCol, { ascending: params.sortDir === 'asc' });
+    } else {
+      dataQuery = dataQuery.order('name', { ascending: true });
+    }
+
+    // Pagination
+    const from = (params.page - 1) * params.pageSize;
+    dataQuery = dataQuery.range(from, from + params.pageSize - 1);
+
+    const [countRes, dataRes] = await Promise.all([countQuery, dataQuery]);
+    setTotalCount(countRes.count || 0);
+
+    const loadedTeams = (dataRes.data || []) as any[];
+    if (loadedTeams.length === 0) {
+      setTeams([]);
+      setAliases({});
+      setLoading(false);
+      return;
+    }
+
+    const teamIds = loadedTeams.map((t) => t.id);
+
+    // Fetch aliases + aggregates for current page only
+    const [aliasRes, qtRes] = await Promise.all([
+      supabase.from('team_aliases').select('*').in('team_id', teamIds),
+      supabase.from('quiz_teams').select('team_id, total_points, rank, quiz_id').in('team_id', teamIds),
+    ]);
+
+    // Aliases
+    const aliasMap: Record<string, TeamAlias[]> = {};
+    ((aliasRes.data || []) as TeamAlias[]).forEach((a) => {
+      if (!aliasMap[a.team_id]) aliasMap[a.team_id] = [];
+      aliasMap[a.team_id].push(a);
+    });
+    setAliases(aliasMap);
+
+    // Aggregates - only finished quizzes
+    const qtData = (qtRes.data || []) as any[];
+    const qtQuizIds = [...new Set(qtData.map((qt: any) => qt.quiz_id))];
+    let finishedQuizIds = new Set<string>();
+    if (qtQuizIds.length > 0) {
+      const { data: quizData } = await supabase
+        .from('quizzes').select('id').in('id', qtQuizIds).eq('status', 'finished');
+      finishedQuizIds = new Set((quizData || []).map((q: any) => q.id));
+    }
+
+    const aggMap = new Map<string, { count: number; wins: number; totalPts: number }>();
+    qtData.filter((qt: any) => finishedQuizIds.has(qt.quiz_id)).forEach((qt: any) => {
+      const agg = aggMap.get(qt.team_id) || { count: 0, wins: 0, totalPts: 0 };
+      agg.count++;
+      agg.totalPts += Number(qt.total_points || 0);
+      if (qt.rank === 1) agg.wins++;
+      aggMap.set(qt.team_id, agg);
+    });
+
+    setTeams(loadedTeams.map((t) => {
+      const agg = aggMap.get(t.id);
+      return {
+        ...t,
+        participations: agg?.count || 0,
+        wins: agg?.wins || 0,
+        avgPoints: agg && agg.count > 0 ? Math.round((agg.totalPts / agg.count) * 10) / 10 : null,
+      };
+    }));
+    setLoading(false);
+  }, [currentOrg?.id]);
+
+  useEffect(() => { fetchTeams(serverParams); }, [currentOrg?.id]);
+
+  const handleServerChange = useCallback((params: ServerParams) => {
+    setServerParams(params);
+    fetchTeams(params);
+  }, [fetchTeams]);
 
   const openCreate = () => { setEditingTeam(null); setTeamName(''); setTeamAliases([]); setDialogOpen(true); };
   const openEdit = (team: TeamRow) => {
@@ -156,14 +194,14 @@ export default function TeamsPage() {
       }
       toast({ title: '✓', description: t('teams.created') });
     }
-    setSaving(false); setDialogOpen(false); fetchTeams();
+    setSaving(false); setDialogOpen(false); fetchTeams(serverParams);
   };
 
   const handleDelete = async () => {
     if (!deleteTeam) return;
     await supabase.from('teams').update({ is_deleted: true }).eq('id', deleteTeam.id);
     toast({ title: '✓', description: t('teams.deleted') });
-    setDeleteTeam(null); fetchTeams();
+    setDeleteTeam(null); fetchTeams(serverParams);
   };
 
   const columns: Column<TeamRow>[] = useMemo(() => [
@@ -173,15 +211,15 @@ export default function TeamsPage() {
       getValue: (r) => r.name,
     },
     {
-      key: 'participations', label: t('teamsTable.participations'), sortable: true,
+      key: 'participations', label: t('teamsTable.participations'), sortable: false,
       getValue: (r) => r.participations,
     },
     {
-      key: 'wins', label: t('teamsTable.wins'), sortable: true,
+      key: 'wins', label: t('teamsTable.wins'), sortable: false,
       getValue: (r) => r.wins,
     },
     {
-      key: 'avgPoints', label: t('teamsTable.avgPoints'), sortable: true,
+      key: 'avgPoints', label: t('teamsTable.avgPoints'), sortable: false,
       render: (r) => r.avgPoints != null ? r.avgPoints : '—',
       getValue: (r) => r.avgPoints,
     },
@@ -228,22 +266,20 @@ export default function TeamsPage() {
         columns={columns}
         data={teams}
         loading={loading}
-        pageSize={15}
-        defaultSortKey="wins"
-        defaultSortDir="desc"
+        pageSize={PAGE_SIZE}
+        defaultSortKey="name"
+        defaultSortDir="asc"
         title={t('teams.title')}
         emptyIcon={<Users className="h-12 w-12 text-muted-foreground/30 mx-auto" />}
         emptyMessage={t('teams.noTeams')}
         emptyAction={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('teams.addTeam')}</Button> : undefined}
         headerActions={canEdit ? <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />{t('teams.addTeam')}</Button> : undefined}
-        searchFn={(row, q) => {
-          if (row.name.toLowerCase().includes(q)) return true;
-          return (aliases[row.id] || []).some((a) => a.alias.toLowerCase().includes(q));
-        }}
+        serverSide
+        totalCount={totalCount}
+        onServerChange={handleServerChange}
         onRowClick={(r) => navigate(`/dashboard/teams/${r.id}`)}
       />
 
-      {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
