@@ -862,6 +862,90 @@ export default function CreateQuizPage() {
                       {t("quiz.prefillApplied")}
                     </p>
                   )}
+
+                  {/* Scoring Mode */}
+                  <div className="space-y-3 pt-2 border-t border-border">
+                    <Label className="flex items-center gap-2">
+                      <Layers className="h-4 w-4 text-muted-foreground" />
+                      {t("quiz.scoringMode")}
+                    </Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setScoringMode("per_category")}
+                        className={cn(
+                          "rounded-lg border-2 p-3 text-left transition-colors",
+                          scoringMode === "per_category"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50",
+                        )}
+                      >
+                        <p className="text-sm font-medium">{t("quiz.scoringPerCategory")}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t("quiz.scoringPerCategoryDesc")}</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setScoringMode("per_part")}
+                        className={cn(
+                          "rounded-lg border-2 p-3 text-left transition-colors",
+                          scoringMode === "per_part"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50",
+                        )}
+                      >
+                        <p className="text-sm font-medium">{t("quiz.scoringPerPart")}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t("quiz.scoringPerPartDesc")}</p>
+                      </button>
+                    </div>
+
+                    {scoringMode === "per_part" && (
+                      <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+                        <div className="space-y-2">
+                          <Label>{t("quiz.partsCount")}</Label>
+                          <Select
+                            value={String(partsCount)}
+                            onValueChange={(v) => {
+                              const n = Number(v);
+                              setPartsCount(n);
+                              setPartNames((prev) => {
+                                const next = [...prev];
+                                while (next.length < n) next.push("");
+                                return next.slice(0, n);
+                              });
+                            }}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[2, 3, 4, 5, 6].map((n) => (
+                                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          {Array.from({ length: partsCount }, (_, i) => (
+                            <div key={i} className="space-y-1">
+                              <Label className="text-xs">{t("quiz.partName", { num: i + 1 })}</Label>
+                              <Input
+                                value={partNames[i] || ""}
+                                onChange={(e) => {
+                                  setPartNames((prev) => {
+                                    const next = [...prev];
+                                    next[i] = e.target.value;
+                                    return next;
+                                  });
+                                }}
+                                placeholder={t("quiz.partNamePlaceholder")}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
