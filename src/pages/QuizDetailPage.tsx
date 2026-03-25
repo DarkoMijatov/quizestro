@@ -417,7 +417,47 @@ export default function QuizDetailPage() {
     return total;
   };
 
-  const rankedTeams = [...teams].sort((a, b) => getTeamTotal(b.id) - getTeamTotal(a.id));
+  // Part-based helpers
+  const getPartScore = (teamId: string, partId: string) =>
+    partScores.find((ps) => ps.quiz_team_id === teamId && ps.quiz_part_id === partId);
+
+  const getPartCategories = (partIdx: number) => {
+    if (quizParts.length === 0) return [];
+    const catsPerPart = Math.ceil(categories.length / quizParts.length);
+    const start = partIdx * catsPerPart;
+    return categories.slice(start, start + catsPerPart);
+  };
+
+  const getPartCategorySum = (teamId: string, partIdx: number) => {
+    const partCats = getPartCategories(partIdx);
+    return partCats.reduce((sum, cat) => sum + getDisplayPoints(teamId, cat.id), 0);
+  };
+
+  const getTeamPartTotal = (teamId: string) => {
+    return quizParts.reduce((sum, part) => {
+      const ps = getPartScore(teamId, part.id);
+      return sum + (ps?.points || 0);
+    }, 0);
+  };
+
+  const updatePartScore = async (partScoreId: string, value: number) => {
+    setPartScores((prev) => prev.map((ps) => (ps.id === partScoreId ? { ...ps, points: value } : ps)));
+    if (isOnline) {
+      await supabase.from("part_scores").update({ points: value }).eq("id", partScoreId);
+    } else {
+      enqueueScoreUpdate(partScoreId, "points", value);
+    }
+  };
+
+  // Use part totals for ranking when in per_part mode, otherwise use category totals
+  const getTeamRankTotal = (teamId: string) => {
+    if (quiz?.scoring_mode === "per_part" && quizParts.length > 0) {
+      return getTeamPartTotal(teamId);
+    }
+    return getTeamTotal(teamId);
+  };
+
+  const rankedTeams = [...teams].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id));
 
   const handleExport = () => {
     if (!quiz) return;
