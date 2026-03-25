@@ -41,6 +41,7 @@ export default function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [orgName, setOrgName] = useState('');
+  const [autoSortScores, setAutoSortScores] = useState(false);
   const [defaultCats, setDefaultCats] = useState(6);
   const [defaultQpc, setDefaultQpc] = useState(10);
   const [brandingColor, setBrandingColor] = useState('#d97706');
@@ -84,6 +85,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (currentOrg) {
       setOrgName(currentOrg.name || '');
+      setAutoSortScores((currentOrg as any).auto_sort_scores ?? false);
       setDefaultCats(currentOrg.default_categories_count ?? 6);
       setDefaultQpc(currentOrg.default_questions_per_category ?? 10);
       setBrandingColor(currentOrg.branding_color || '#d97706');
@@ -496,6 +498,28 @@ export default function SettingsPage() {
               <Label>{t('settings.defaultQuestionsPerCategory')}</Label>
               <Input type="number" min={1} max={50} value={defaultQpc} onChange={(e) => setDefaultQpc(Number(e.target.value))} disabled={!canEdit} />
             </div>
+          </div>
+
+          {/* Auto-sort scores */}
+          <div className="flex items-center justify-between rounded-lg border border-border p-4">
+            <div className="flex items-center gap-2">
+              <ArrowDownCircle className="h-4 w-4 text-primary" />
+              <div>
+                <p className="font-medium">{t('scoring.autoSort')}</p>
+                <p className="text-xs text-muted-foreground">{t('scoring.autoSortDescription')}</p>
+              </div>
+            </div>
+            <Switch
+              checked={autoSortScores}
+              onCheckedChange={async (v) => {
+                setAutoSortScores(v);
+                if (currentOrg) {
+                  await supabase.from('organizations').update({ auto_sort_scores: v } as any).eq('id', currentOrg.id);
+                  refetch();
+                }
+              }}
+              disabled={!canEdit}
+            />
           </div>
 
           {canEdit && (

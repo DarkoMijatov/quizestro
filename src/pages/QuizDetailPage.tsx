@@ -29,7 +29,6 @@ import {
   Layers,
   ArrowDownUp,
 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
 
@@ -127,9 +126,6 @@ export default function QuizDetailPage() {
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
   const [scoringView, setScoringView] = useState<"categories" | "parts">("categories");
   const [expandedPart, setExpandedPart] = useState<string | null>(null);
-  const [autoSort, setAutoSort] = useState(() => {
-    try { return localStorage.getItem("quiz_auto_sort") === "true"; } catch { return false; }
-  });
   const [manualSorted, setManualSorted] = useState(false);
   const scoringRef = useRef<HTMLDivElement>(null);
 
@@ -499,17 +495,13 @@ export default function QuizDetailPage() {
     return getTeamTotal(teamId);
   };
 
+  const autoSort = currentOrg?.auto_sort_scores ?? false;
   const shouldSort = autoSort || manualSorted;
   const rankedTeams = shouldSort
     ? [...teams].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id))
     : teams;
 
   const handleManualSort = () => setManualSorted(true);
-  const toggleAutoSort = (v: boolean) => {
-    setAutoSort(v);
-    try { localStorage.setItem("quiz_auto_sort", String(v)); } catch {}
-    if (v) setManualSorted(true);
-  };
 
   const handleExport = () => {
     if (!quiz) return;
@@ -707,10 +699,7 @@ export default function QuizDetailPage() {
             <Button variant="outline" size="sm" onClick={handleManualSort} className="gap-1" title={t("scoring.sortByTotal")}>
               <ArrowDownUp className="h-4 w-4" /> {t("scoring.sortByTotal")}
             </Button>
-            <div className="flex items-center gap-1.5">
-              <Switch checked={autoSort} onCheckedChange={toggleAutoSort} />
-              <span className="text-xs text-muted-foreground hidden sm:inline">{t("scoring.autoSort")}</span>
-            </div>
+            
             <Button variant="outline" size="sm" onClick={toggleFullscreen} className="gap-1">
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </Button>
@@ -755,12 +744,18 @@ export default function QuizDetailPage() {
           }}
         >
         {scoringView === "categories" ? (
-          <div className="min-h-full" style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
+          (() => {
+            // Dynamic column sizing: team col = 2x, category cols = 1x each, total col = 1x
+            const units = categories.length + 3; // 2 for team + N cats + 1 total
+            const teamFr = 2;
+            const colTemplate = `${teamFr}fr ${categories.map(() => "1fr").join(" ")} 1fr`;
+            return (
+          <div className="min-h-full flex flex-col" style={{ minWidth: `${units * 60}px` }}>
             {/* Header row */}
             <div
               className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
               style={{
-                gridTemplateColumns: `140px ${categories.map(() => "1fr").join(" ")} 70px`,
+                gridTemplateColumns: colTemplate,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
@@ -814,7 +809,7 @@ export default function QuizDetailPage() {
               </div>
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col flex-1">
               {rankedTeams.map((team, rowIdx) => {
                 const total = getTeamRankTotal(team.id);
                 const teamName = team.alias || (team.team as any)?.name || "";
@@ -823,11 +818,11 @@ export default function QuizDetailPage() {
                   <div
                     key={team.id}
                     className={cn(
-                      "grid border-b-2 border-foreground/20 last:border-0",
+                      "grid border-b-2 border-foreground/20 last:border-0 flex-1",
                       rowIdx === 0 && "bg-primary/[0.04]",
                     )}
                     style={{
-                      gridTemplateColumns: `140px ${categories.map(() => "1fr").join(" ")} 70px`,
+                      gridTemplateColumns: colTemplate,
                     }}
                   >
                     {/* Rank + Team */}
@@ -1054,14 +1049,20 @@ export default function QuizDetailPage() {
               })}
             </div>
           </div>
+            );
+          })()
         ) : (
           /* Parts-based scoring view */
-          <div className="min-h-full" style={{ minWidth: `${140 + quizParts.length * 120 + 70}px` }}>
+          (() => {
+            const partsUnits = quizParts.length + 3;
+            const partsColTemplate = `2fr ${quizParts.map(() => "1fr").join(" ")} 1fr`;
+            return (
+          <div className="min-h-full flex flex-col" style={{ minWidth: `${partsUnits * 60}px` }}>
             {/* Header row */}
             <div
               className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
               style={{
-                gridTemplateColumns: `140px ${quizParts.map(() => "1fr").join(" ")} 70px`,
+                gridTemplateColumns: partsColTemplate,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
@@ -1104,7 +1105,7 @@ export default function QuizDetailPage() {
               </div>
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col flex-1">
               {rankedTeams.map((team, rowIdx) => {
                 const total = getTeamRankTotal(team.id);
                 const teamName = team.alias || (team.team as any)?.name || "";
@@ -1113,11 +1114,11 @@ export default function QuizDetailPage() {
                   <div
                     key={team.id}
                     className={cn(
-                      "grid border-b-2 border-foreground/20 last:border-0",
+                      "grid border-b-2 border-foreground/20 last:border-0 flex-1",
                       rowIdx === 0 && "bg-primary/[0.04]",
                     )}
                     style={{
-                      gridTemplateColumns: `140px ${quizParts.map(() => "1fr").join(" ")} 70px`,
+                      gridTemplateColumns: partsColTemplate,
                     }}
                   >
                     {/* Rank + Team */}
@@ -1396,6 +1397,8 @@ export default function QuizDetailPage() {
               </div>
             )}
           </div>
+            );
+          })()
         )}
         </div>
       </div>

@@ -22,6 +22,7 @@ export interface Organization {
   premium_override: boolean;
   premium_override_until: string | null;
   premium_override_reason: string | null;
+  auto_sort_scores: boolean;
   created_at: string;
 }
 
