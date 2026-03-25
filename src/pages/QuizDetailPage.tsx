@@ -112,11 +112,15 @@ export default function QuizDetailPage() {
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
   const [helpUsages, setHelpUsages] = useState<HelpUsage[]>([]);
   const [categoryBonuses, setCategoryBonuses] = useState<CategoryBonus[]>([]);
+  const [quizParts, setQuizParts] = useState<QuizPart[]>([]);
+  const [partScores, setPartScores] = useState<PartScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingAliasTeamId, setEditingAliasTeamId] = useState<string | null>(null);
   const [editingAliasValue, setEditingAliasValue] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
+  const [scoringView, setScoringView] = useState<"categories" | "parts">("categories");
+  const [expandedPart, setExpandedPart] = useState<string | null>(null);
   const scoringRef = useRef<HTMLDivElement>(null);
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
