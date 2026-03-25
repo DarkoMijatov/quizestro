@@ -1156,6 +1156,7 @@ export default function QuizDetailPage() {
                           <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
                         )}
                       </div>
+                    </div>
 
                     {/* Part scores */}
                     {quizParts.map((part, partIdx) => {
