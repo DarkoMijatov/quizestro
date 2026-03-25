@@ -443,8 +443,14 @@ export default function QuizDetailPage() {
   };
 
   const getTeamPartTotal = (teamId: string) => {
-    return quizParts.reduce((sum, part) => {
-      const ps = getPartScore(teamId, part.id);
+    return quizParts.reduce((sum, _part, partIdx) => {
+      const catSum = getPartCategorySum(teamId, partIdx);
+      if (catSum > 0) {
+        // When category-level scores exist (drill-down), use effective scores (with Joker/Bonus)
+        return sum + catSum;
+      }
+      // Fallback to raw part score when no category scores entered
+      const ps = getPartScore(teamId, _part.id);
       return sum + (ps?.points || 0);
     }, 0);
   };
