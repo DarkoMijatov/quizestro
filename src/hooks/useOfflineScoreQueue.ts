@@ -212,6 +212,12 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
         description: `Svi offline podaci su uspešno sačuvani.`,
       });
       onSynced?.();
+    } else {
+      toast({
+        title: 'Greška pri sinhronizaciji',
+        description: `${failed.length} ${failed.length === 1 ? 'promena nije sačuvana' : 'promena nisu sačuvane'}. Pokušaćemo ponovo.`,
+        variant: 'destructive',
+      });
     }
   }, [quizId, onSynced]);
 
