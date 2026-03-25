@@ -861,7 +861,7 @@ export default function QuizDetailPage() {
                           />
                         ) : (
                           <div
-                            className="flex items-center gap-1 group cursor-pointer"
+                            className="flex items-center gap-1 group cursor-pointer flex-wrap"
                             onClick={() => canEdit && startEditAlias(team)}
                           >
                             <p
@@ -876,6 +876,13 @@ export default function QuizDetailPage() {
                             >
                               {teamName}
                             </p>
+                            {/* Help usage icons */}
+                            {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
+                              <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                            )}
+                            {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
+                              <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                            )}
                             {canEdit && (
                               <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                             )}
