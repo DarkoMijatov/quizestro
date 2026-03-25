@@ -427,6 +427,11 @@ export default function QuizDetailPage() {
 
   const getPartCategories = (partIdx: number) => {
     if (quizParts.length === 0) return [];
+    const part = quizParts[partIdx];
+    // Use explicit quiz_part_id assignment if available
+    const assigned = categories.filter((c) => c.quiz_part_id === part.id);
+    if (assigned.length > 0) return assigned;
+    // Fallback: auto-distribute by sort order
     const catsPerPart = Math.ceil(categories.length / quizParts.length);
     const start = partIdx * catsPerPart;
     return categories.slice(start, start + catsPerPart);
