@@ -101,6 +101,7 @@ export default function QuizDetailPage() {
   const [editingAliasTeamId, setEditingAliasTeamId] = useState<string | null>(null);
   const [editingAliasValue, setEditingAliasValue] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [focusedCell, setFocusedCell] = useState<string | null>(null);
   const scoringRef = useRef<HTMLDivElement>(null);
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
@@ -751,32 +752,37 @@ export default function QuizDetailPage() {
                         >
                           {canScore ? (
                             <>
-                              <input
-                                ref={(el) => setInputRef(rowIdx, colIdx, el)}
-                                type="number"
-                                min={0}
-                                step={0.5}
-                                value={score?.points ?? 0}
-                                onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
-                                onFocus={(e) => e.target.select()}
-                                onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
-                                tabIndex={rowIdx * colCount + colIdx + 1}
-                                className={cn(
-                                  "w-full text-center font-black text-foreground bg-transparent border-2 border-foreground/15 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors",
-                                  sizeClass === "size-lg"
-                                    ? "h-14 text-3xl"
-                                    : sizeClass === "size-md"
-                                      ? "h-10 text-2xl"
-                                      : sizeClass === "size-sm"
-                                        ? "h-8 text-xl"
-                                        : "h-6 text-base",
-                                )}
-                              />
-                              {(hasJoker || hasBonusPt) && (
-                                <span className="text-[9px] font-bold text-primary leading-none">
-                                  = {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
-                                </span>
-                              )}
+                              {(() => {
+                                const cellKey = `${team.id}-${cat.id}`;
+                                const isFocused = focusedCell === cellKey;
+                                const showEffective = (hasJoker || hasBonusPt) && !isFocused;
+                                const displayValue = showEffective ? displayPts : (score?.points ?? 0);
+                                return (
+                                  <input
+                                    ref={(el) => setInputRef(rowIdx, colIdx, el)}
+                                    type="number"
+                                    min={0}
+                                    step={0.5}
+                                    value={displayValue}
+                                    onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
+                                    onFocus={(e) => { setFocusedCell(cellKey); e.target.select(); }}
+                                    onBlur={() => setFocusedCell(null)}
+                                    onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
+                                    tabIndex={rowIdx * colCount + colIdx + 1}
+                                    className={cn(
+                                      "w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors",
+                                      showEffective ? "text-primary border-primary/30" : "text-foreground border-foreground/15",
+                                      sizeClass === "size-lg"
+                                        ? "h-14 text-3xl"
+                                        : sizeClass === "size-md"
+                                          ? "h-10 text-2xl"
+                                          : sizeClass === "size-sm"
+                                            ? "h-8 text-xl"
+                                            : "h-6 text-base",
+                                    )}
+                                  />
+                                );
+                              })()}
 
                               {/* Help initials + category bonus */}
                               <div className="flex items-center gap-0.5">
