@@ -91,7 +91,7 @@ export default function CategoriesPage() {
 
     // Sort
     const sortCol = params.sortKey || 'name';
-    if (['name', 'is_default', 'created_at'].includes(sortCol)) {
+     if (['name', 'is_default', 'created_at'].includes(sortCol)) {
       dataQuery = dataQuery.order(sortCol, { ascending: params.sortDir === 'asc' });
     } else {
       dataQuery = dataQuery.order('name', { ascending: true });

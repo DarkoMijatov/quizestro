@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, X, Search, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +22,7 @@ interface QuizCategory {
   id: string;
   category_id: string;
   sort_order: number | null;
+  quiz_part_id: string | null;
   category: { name: string };
 }
 
@@ -33,15 +35,24 @@ interface QuizTeam {
   team: { name: string };
 }
 
+interface QuizPart {
+  id: string;
+  quiz_id: string;
+  part_number: number;
+  name: string;
+}
+
 interface Props {
   quizId: string;
   organizationId: string;
   quizCategories: QuizCategory[];
   quizTeams: QuizTeam[];
+  quizParts?: QuizPart[];
+  scoringMode?: "per_category" | "per_part";
   onChanged: () => void;
 }
 
-export function QuizDraftManager({ quizId, organizationId, quizCategories, quizTeams, onChanged }: Props) {
+export function QuizDraftManager({ quizId, organizationId, quizCategories, quizTeams, quizParts = [], scoringMode, onChanged }: Props) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -52,6 +63,8 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
   const [loading, setLoading] = useState(false);
   const [creatingCat, setCreatingCat] = useState(false);
   const [creatingTeam, setCreatingTeam] = useState(false);
+
+  const isPerPart = scoringMode === "per_part" && quizParts.length > 0;
 
   useEffect(() => {
     if (!open) return;
@@ -146,7 +159,6 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
       .single();
 
     if (qc) {
-      // Create score rows for all existing teams
       const scoreInserts = quizTeams.map((qt) => ({
         quiz_id: quizId,
         quiz_team_id: qt.id,
@@ -167,11 +179,8 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
 
   const removeCategory = async (quizCatId: string) => {
     setLoading(true);
-    // Delete scores for this category
     await supabase.from("scores").delete().eq("quiz_category_id", quizCatId).eq("quiz_id", quizId);
-    // Delete help_usages for this category
     await supabase.from("help_usages").delete().eq("quiz_category_id", quizCatId).eq("quiz_id", quizId);
-    // Delete the quiz_category
     await supabase.from("quiz_categories").delete().eq("id", quizCatId);
 
     toast({ title: "✓" });
@@ -194,7 +203,6 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
       .single();
 
     if (qt) {
-      // Create score rows for all existing categories
       const scoreInserts = quizCategories.map((qc) => ({
         quiz_id: quizId,
         quiz_team_id: (qt as any).id,
@@ -215,14 +223,21 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
 
   const removeTeam = async (quizTeamId: string) => {
     setLoading(true);
-    // Delete scores for this team
     await supabase.from("scores").delete().eq("quiz_team_id", quizTeamId).eq("quiz_id", quizId);
-    // Delete help_usages for this team
     await supabase.from("help_usages").delete().eq("quiz_team_id", quizTeamId).eq("quiz_id", quizId);
-    // Delete the quiz_team
     await supabase.from("quiz_teams").delete().eq("id", quizTeamId);
 
     toast({ title: "✓" });
+    setLoading(false);
+    onChanged();
+  };
+
+  const updateCategoryPart = async (quizCatId: string, partId: string | null) => {
+    setLoading(true);
+    await supabase
+      .from("quiz_categories")
+      .update({ quiz_part_id: partId })
+      .eq("id", quizCatId);
     setLoading(false);
     onChanged();
   };
@@ -249,16 +264,34 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
               {quizCategories.map((qc) => (
                 <div
                   key={qc.id}
-                  className="flex items-center justify-between rounded-lg border border-border px-3 py-1.5 text-sm"
+                  className="flex items-center justify-between rounded-lg border border-border px-3 py-1.5 text-sm gap-2"
                 >
-                  <span>{(qc.category as any)?.name}</span>
-                  <button
-                    onClick={() => removeCategory(qc.id)}
-                    disabled={loading || quizCategories.length <= 1}
-                    className="text-destructive hover:text-destructive/80 disabled:opacity-30"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                  <span className="truncate">{(qc.category as any)?.name}</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isPerPart && (
+                      <Select
+                        value={qc.quiz_part_id || "__none__"}
+                        onValueChange={(v) => updateCategoryPart(qc.id, v === "__none__" ? null : v)}
+                      >
+                        <SelectTrigger className="h-7 w-[120px] text-xs">
+                          <SelectValue placeholder={t("scoring.assignPart", "Deo")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">—</SelectItem>
+                          {quizParts.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <button
+                      onClick={() => removeCategory(qc.id)}
+                      disabled={loading || quizCategories.length <= 1}
+                      className="text-destructive hover:text-destructive/80 disabled:opacity-30"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

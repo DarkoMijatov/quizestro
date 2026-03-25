@@ -103,7 +103,7 @@ export default function QuizzesPage() {
     // Apply sorting
     const sortCol = params.sortKey || 'date';
     const ascending = params.sortDir === 'asc';
-    if (['name', 'date', 'location', 'status'].includes(sortCol)) {
+     if (['name', 'date', 'location', 'status'].includes(sortCol)) {
       dataQuery = dataQuery.order(sortCol, { ascending });
     } else {
       dataQuery = dataQuery.order('date', { ascending: false });
@@ -201,16 +201,16 @@ export default function QuizzesPage() {
       getValue: (r) => r.location,
     },
     {
-      key: 'teamCount', label: t('quizzes.teamCount'), sortable: false,
+      key: 'teamCount', label: t('quizzes.teamCount'),
       getValue: (r) => r.teamCount,
     },
     {
-      key: 'winner', label: t('quizzes.winner'), sortable: false,
+      key: 'winner', label: t('quizzes.winner'),
       render: (r) => r.winner || '—',
       getValue: (r) => r.winner,
     },
     {
-      key: 'avgPoints', label: t('quizzes.avgPoints'), sortable: false,
+      key: 'avgPoints', label: t('quizzes.avgPoints'),
       render: (r) => r.avgPoints != null ? r.avgPoints : '—',
       getValue: (r) => r.avgPoints,
     },

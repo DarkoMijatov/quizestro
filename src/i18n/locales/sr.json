@@ -297,7 +297,8 @@
     "distributeHint": "Kliknite na deo da rasporedite poene po oblastima",
     "partMismatch": "Zbir po oblastima ({{sum}}) se ne poklapa sa ukupnim za deo ({{total}})",
     "expandPart": "Rasporedi poene",
-    "collapsePart": "Sakrij oblasti"
+    "collapsePart": "Sakrij oblasti",
+    "assignPart": "Deo"
   },
   "offline": {
     "pending": "na čekanju",

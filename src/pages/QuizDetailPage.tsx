@@ -641,6 +641,8 @@ export default function QuizDetailPage() {
                 organizationId={currentOrg!.id}
                 quizCategories={categories}
                 quizTeams={teams}
+                quizParts={quizParts}
+                scoringMode={quiz.scoring_mode}
                 onChanged={fetchAll}
               />
             )}
