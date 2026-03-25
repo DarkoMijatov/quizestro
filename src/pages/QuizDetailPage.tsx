@@ -776,8 +776,8 @@ export default function QuizDetailPage() {
                 <div
                   key={cat.id}
                   className={cn(
-                    "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center",
-                    sizeClass === "size-xs" ? "text-[9px]" : "text-[11px]",
+                    "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0",
+                    sizeClass === "size-xs" ? "text-[8px]" : sizeClass === "size-sm" ? "text-[9px]" : "text-[10px]",
                   )}
                   style={{ color: currentOrg?.branding_text_color || undefined }}
                 >
