@@ -126,7 +126,6 @@ export default function QuizDetailPage() {
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
   const [scoringView, setScoringView] = useState<"categories" | "parts">("categories");
   const [expandedPart, setExpandedPart] = useState<string | null>(null);
-  const [manualSorted, setManualSorted] = useState(false);
   const scoringRef = useRef<HTMLDivElement>(null);
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
@@ -495,13 +494,11 @@ export default function QuizDetailPage() {
     return getTeamTotal(teamId);
   };
 
-  const autoSort = currentOrg?.auto_sort_scores ?? false;
-  const shouldSort = autoSort || manualSorted;
-  const rankedTeams = shouldSort
-    ? [...teams].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id))
-    : teams;
+  const rankedTeams = teams;
 
-  const handleManualSort = () => setManualSorted(true);
+  const handleManualSort = () => {
+    setTeams((prev) => [...prev].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id)));
+  };
 
   const handleExport = () => {
     if (!quiz) return;
