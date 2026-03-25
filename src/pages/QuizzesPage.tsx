@@ -201,16 +201,16 @@ export default function QuizzesPage() {
       getValue: (r) => r.location,
     },
     {
-      key: 'teamCount', label: t('quizzes.teamCount'), sortable: false,
+      key: 'teamCount', label: t('quizzes.teamCount'),
       getValue: (r) => r.teamCount,
     },
     {
-      key: 'winner', label: t('quizzes.winner'), sortable: false,
+      key: 'winner', label: t('quizzes.winner'),
       render: (r) => r.winner || '—',
       getValue: (r) => r.winner,
     },
     {
-      key: 'avgPoints', label: t('quizzes.avgPoints'), sortable: false,
+      key: 'avgPoints', label: t('quizzes.avgPoints'),
       render: (r) => r.avgPoints != null ? r.avgPoints : '—',
       getValue: (r) => r.avgPoints,
     },

@@ -640,7 +640,7 @@ export default function QuestionBankPage() {
       getValue: (r) => r.question_text,
     },
     {
-      key: 'categories', label: t('qb.categoriesCol'),
+      key: 'categories', label: t('qb.categoriesCol'), sortable: true,
       render: (r) => (
         <div className="flex flex-wrap gap-1">
           {r.categories.map(c => (
@@ -648,9 +648,10 @@ export default function QuestionBankPage() {
           ))}
         </div>
       ),
+      getValue: (r) => r.categories.map(c => c.name).join(', '),
     },
     {
-      key: 'quizzes', label: t('qb.quizzesCol'),
+      key: 'quizzes', label: t('qb.quizzesCol'), sortable: true,
       render: (r) => (
         <div className="flex flex-wrap gap-1">
           {r.quizzes.map(q => (
@@ -659,6 +660,7 @@ export default function QuestionBankPage() {
           {r.quizzes.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
         </div>
       ),
+      getValue: (r) => r.quizzes.map(q => q.name).join(', '),
     },
     {
       key: 'used', label: t('qb.usedCol'), sortable: true,

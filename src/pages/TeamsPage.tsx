@@ -211,15 +211,15 @@ export default function TeamsPage() {
       getValue: (r) => r.name,
     },
     {
-      key: 'participations', label: t('teamsTable.participations'), sortable: false,
+      key: 'participations', label: t('teamsTable.participations'),
       getValue: (r) => r.participations,
     },
     {
-      key: 'wins', label: t('teamsTable.wins'), sortable: false,
+      key: 'wins', label: t('teamsTable.wins'),
       getValue: (r) => r.wins,
     },
     {
-      key: 'avgPoints', label: t('teamsTable.avgPoints'), sortable: false,
+      key: 'avgPoints', label: t('teamsTable.avgPoints'),
       render: (r) => r.avgPoints != null ? r.avgPoints : '—',
       getValue: (r) => r.avgPoints,
     },

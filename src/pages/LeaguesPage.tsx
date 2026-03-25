@@ -229,10 +229,10 @@ export default function LeaguesPage() {
         {r.season && <span className="text-xs text-muted-foreground">({r.season})</span>}
       </div>
     )},
-    { key: 'firstDate', label: t('leagues.startDate', 'Početak'), sortable: false, render: (r) => (
+    { key: 'firstDate', label: t('leagues.startDate', 'Početak'), render: (r) => (
       <span className="text-sm text-muted-foreground">{formatDate(r.firstDate)}</span>
     ), getValue: (r) => r.firstDate || '' },
-    { key: 'lastDate', label: t('leagues.endDate', 'Kraj'), sortable: false, render: (r) => (
+    { key: 'lastDate', label: t('leagues.endDate', 'Kraj'), render: (r) => (
       <span className="text-sm text-muted-foreground">{formatDate(r.lastDate)}</span>
     ), getValue: (r) => r.lastDate || '' },
     { key: 'is_active', label: t('filters.status'), sortable: true, render: (r) => (
@@ -240,8 +240,8 @@ export default function LeaguesPage() {
         {r.is_active ? t('leagues.active') : t('leagues.inactive')}
       </Badge>
     ), getValue: (r) => r.is_active ? 1 : 0 },
-    { key: 'quizCount', label: t('leagueDetail.quizCount'), sortable: false, getValue: (r) => r.quizCount },
-    { key: 'leaderName', label: t('leagueDetail.leaderOrWinner'), sortable: false, render: (r) => (
+    { key: 'quizCount', label: t('leagueDetail.quizCount'), getValue: (r) => r.quizCount },
+    { key: 'leaderName', label: t('leagueDetail.leaderOrWinner'), render: (r) => (
       <span className="text-sm">{r.leaderName || '-'}</span>
     ), getValue: (r) => r.leaderName || '' },
     ...(canEdit ? [{
