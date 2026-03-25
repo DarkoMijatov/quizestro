@@ -1054,12 +1054,16 @@ export default function QuizDetailPage() {
           })()
         ) : (
           /* Parts-based scoring view */
-          <div className="min-h-full" style={{ minWidth: `${140 + quizParts.length * 120 + 70}px` }}>
+          (() => {
+            const partsUnits = quizParts.length + 3;
+            const partsColTemplate = `2fr ${quizParts.map(() => "1fr").join(" ")} 1fr`;
+            return (
+          <div className="min-h-full flex flex-col" style={{ minWidth: `${partsUnits * 60}px` }}>
             {/* Header row */}
             <div
               className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
               style={{
-                gridTemplateColumns: `140px ${quizParts.map(() => "1fr").join(" ")} 70px`,
+                gridTemplateColumns: partsColTemplate,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
@@ -1102,7 +1106,7 @@ export default function QuizDetailPage() {
               </div>
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col flex-1">
               {rankedTeams.map((team, rowIdx) => {
                 const total = getTeamRankTotal(team.id);
                 const teamName = team.alias || (team.team as any)?.name || "";
@@ -1111,11 +1115,11 @@ export default function QuizDetailPage() {
                   <div
                     key={team.id}
                     className={cn(
-                      "grid border-b-2 border-foreground/20 last:border-0",
+                      "grid border-b-2 border-foreground/20 last:border-0 flex-1",
                       rowIdx === 0 && "bg-primary/[0.04]",
                     )}
                     style={{
-                      gridTemplateColumns: `140px ${quizParts.map(() => "1fr").join(" ")} 70px`,
+                      gridTemplateColumns: partsColTemplate,
                     }}
                   >
                     {/* Rank + Team */}
