@@ -298,7 +298,10 @@
     "partMismatch": "Zbir po oblastima ({{sum}}) se ne poklapa sa ukupnim za deo ({{total}})",
     "expandPart": "Rasporedi poene",
     "collapsePart": "Sakrij oblasti",
-    "assignPart": "Deo"
+    "assignPart": "Deo",
+    "sortByTotal": "Sortiraj po ukupnom",
+    "autoSort": "Automatsko sortiranje",
+    "autoSortDescription": "Automatski sortiraj timove po ukupnom broju poena pri promeni rezultata."
   },
   "offline": {
     "pending": "na čekanju",

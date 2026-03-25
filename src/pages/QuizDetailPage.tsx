@@ -27,7 +27,9 @@ import {
   Maximize2,
   Minimize2,
   Layers,
+  ArrowDownUp,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
 
@@ -125,6 +127,10 @@ export default function QuizDetailPage() {
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
   const [scoringView, setScoringView] = useState<"categories" | "parts">("categories");
   const [expandedPart, setExpandedPart] = useState<string | null>(null);
+  const [autoSort, setAutoSort] = useState(() => {
+    try { return localStorage.getItem("quiz_auto_sort") === "true"; } catch { return false; }
+  });
+  const [manualSorted, setManualSorted] = useState(false);
   const scoringRef = useRef<HTMLDivElement>(null);
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
@@ -493,7 +499,17 @@ export default function QuizDetailPage() {
     return getTeamTotal(teamId);
   };
 
-  const rankedTeams = [...teams].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id));
+  const shouldSort = autoSort || manualSorted;
+  const rankedTeams = shouldSort
+    ? [...teams].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id))
+    : teams;
+
+  const handleManualSort = () => setManualSorted(true);
+  const toggleAutoSort = (v: boolean) => {
+    setAutoSort(v);
+    try { localStorage.setItem("quiz_auto_sort", String(v)); } catch {}
+    if (v) setManualSorted(true);
+  };
 
   const handleExport = () => {
     if (!quiz) return;
@@ -688,6 +704,13 @@ export default function QuizDetailPage() {
                 onChanged={fetchAll}
               />
             )}
+            <Button variant="outline" size="sm" onClick={handleManualSort} className="gap-1" title={t("scoring.sortByTotal")}>
+              <ArrowDownUp className="h-4 w-4" /> {t("scoring.sortByTotal")}
+            </Button>
+            <div className="flex items-center gap-1.5">
+              <Switch checked={autoSort} onCheckedChange={toggleAutoSort} />
+              <span className="text-xs text-muted-foreground hidden sm:inline">{t("scoring.autoSort")}</span>
+            </div>
             <Button variant="outline" size="sm" onClick={toggleFullscreen} className="gap-1">
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </Button>
@@ -732,7 +755,7 @@ export default function QuizDetailPage() {
           }}
         >
         {scoringView === "categories" ? (
-          <div style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
+          <div className="min-h-full" style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
             {/* Header row */}
             <div
               className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
@@ -838,7 +861,7 @@ export default function QuizDetailPage() {
                           />
                         ) : (
                           <div
-                            className="flex items-center gap-1 group cursor-pointer"
+                            className="flex items-center gap-1 group cursor-pointer flex-wrap"
                             onClick={() => canEdit && startEditAlias(team)}
                           >
                             <p
@@ -853,6 +876,13 @@ export default function QuizDetailPage() {
                             >
                               {teamName}
                             </p>
+                            {/* Help usage icons */}
+                            {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
+                              <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                            )}
+                            {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
+                              <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                            )}
                             {canEdit && (
                               <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                             )}
@@ -1026,7 +1056,7 @@ export default function QuizDetailPage() {
           </div>
         ) : (
           /* Parts-based scoring view */
-          <div style={{ minWidth: `${140 + quizParts.length * 120 + 70}px` }}>
+          <div className="min-h-full" style={{ minWidth: `${140 + quizParts.length * 120 + 70}px` }}>
             {/* Header row */}
             <div
               className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
@@ -1106,18 +1136,26 @@ export default function QuizDetailPage() {
                       >
                         {rowIdx + 1}
                       </div>
-                      <p
-                        className={cn(
-                          "font-bold text-foreground break-words leading-tight",
-                          sizeClass === "size-lg"
-                            ? "text-lg"
-                            : sizeClass === "size-md"
-                              ? "text-md"
-                              : "text-[10px]",
+                      <div className="min-w-0 flex-1 flex items-center gap-1 flex-wrap">
+                        <p
+                          className={cn(
+                            "font-bold text-foreground break-words leading-tight",
+                            sizeClass === "size-lg"
+                              ? "text-lg"
+                              : sizeClass === "size-md"
+                                ? "text-md"
+                                : "text-[10px]",
+                          )}
+                        >
+                          {teamName}
+                        </p>
+                        {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
+                          <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
                         )}
-                      >
-                        {teamName}
-                      </p>
+                        {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
+                          <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                        )}
+                      </div>
                     </div>
 
                     {/* Part scores */}
