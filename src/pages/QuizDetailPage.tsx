@@ -1136,19 +1136,26 @@ export default function QuizDetailPage() {
                       >
                         {rowIdx + 1}
                       </div>
-                      <p
-                        className={cn(
-                          "font-bold text-foreground break-words leading-tight",
-                          sizeClass === "size-lg"
-                            ? "text-lg"
-                            : sizeClass === "size-md"
-                              ? "text-md"
-                              : "text-[10px]",
+                      <div className="min-w-0 flex-1 flex items-center gap-1 flex-wrap">
+                        <p
+                          className={cn(
+                            "font-bold text-foreground break-words leading-tight",
+                            sizeClass === "size-lg"
+                              ? "text-lg"
+                              : sizeClass === "size-md"
+                                ? "text-md"
+                                : "text-[10px]",
+                          )}
+                        >
+                          {teamName}
+                        </p>
+                        {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
+                          <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
                         )}
-                      >
-                        {teamName}
-                      </p>
-                    </div>
+                        {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
+                          <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                        )}
+                      </div>
 
                     {/* Part scores */}
                     {quizParts.map((part, partIdx) => {
