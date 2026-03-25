@@ -940,13 +940,13 @@ export default function QuizDetailPage() {
                                 {jokerType && (
                                   <button
                                     onClick={() => toggleHelp(team.id, cat.id, jokerType)}
-                                    disabled={!!jokerDisabledElsewhere}
+                                    disabled={jokerDisabled}
                                     tabIndex={-1}
                                     className={cn(
                                       "w-6 h-5 rounded text-[9px] font-black border transition-colors",
                                       hasJoker
                                         ? "bg-primary text-primary-foreground border-primary"
-                                        : jokerDisabledElsewhere
+                                        : jokerDisabled
                                           ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
                                           : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
                                     )}
