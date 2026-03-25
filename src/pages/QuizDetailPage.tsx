@@ -29,7 +29,7 @@ import {
   Layers,
   ArrowDownUp,
 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+// Switch import removed - no longer used here
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
 
@@ -745,12 +745,18 @@ export default function QuizDetailPage() {
           }}
         >
         {scoringView === "categories" ? (
-          <div className="min-h-full" style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
+          (() => {
+            // Dynamic column sizing: team col = 2x, category cols = 1x each, total col = 1x
+            const units = categories.length + 3; // 2 for team + N cats + 1 total
+            const teamFr = 2;
+            const colTemplate = `${teamFr}fr ${categories.map(() => "1fr").join(" ")} 1fr`;
+            return (
+          <div className="min-h-full flex flex-col" style={{ minWidth: `${units * 60}px` }}>
             {/* Header row */}
             <div
               className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
               style={{
-                gridTemplateColumns: `140px ${categories.map(() => "1fr").join(" ")} 70px`,
+                gridTemplateColumns: colTemplate,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
