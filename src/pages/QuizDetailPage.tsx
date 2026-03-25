@@ -957,13 +957,13 @@ export default function QuizDetailPage() {
                                 {markerType && (
                                   <button
                                     onClick={() => toggleHelp(team.id, cat.id, markerType)}
-                                    disabled={!!markerDisabledElsewhere}
+                                    disabled={markerDisabled}
                                     tabIndex={-1}
                                     className={cn(
                                       "w-6 h-5 rounded text-[9px] font-black border transition-colors",
                                       hasMarker
                                         ? "bg-accent text-accent-foreground border-accent"
-                                        : markerDisabledElsewhere
+                                        : markerDisabled
                                           ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
                                           : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
                                     )}
