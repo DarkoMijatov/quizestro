@@ -27,7 +27,9 @@ import {
   Maximize2,
   Minimize2,
   Layers,
+  ArrowDownUp,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
 
