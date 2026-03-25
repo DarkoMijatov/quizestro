@@ -1,0 +1,1 @@
+ALTER TABLE public.quiz_categories ADD COLUMN quiz_part_id uuid REFERENCES public.quiz_parts(id) ON DELETE SET NULL;
