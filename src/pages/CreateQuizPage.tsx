@@ -92,6 +92,11 @@ export default function CreateQuizPage() {
   const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
 
+  // Scoring mode
+  const [scoringMode, setScoringMode] = useState<"per_category" | "per_part">("per_category");
+  const [partsCount, setPartsCount] = useState(2);
+  const [partNames, setPartNames] = useState<string[]>(["", ""]);
+
   // Data
   const [categories, setCategories] = useState<Category[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
