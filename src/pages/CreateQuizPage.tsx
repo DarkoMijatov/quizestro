@@ -1243,7 +1243,8 @@ export default function CreateQuizPage() {
                         ))}
                       </div>
                     </div>
-                  )
+                  )}
+
                   <div>
                     <h4 className="text-sm font-semibold mb-2">
                       {t("quiz.reviewCategories")} ({selectedCats.length})
