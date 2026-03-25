@@ -90,7 +90,7 @@ export default function TeamsPage() {
 
     // Sort
     const sortCol = params.sortKey || 'name';
-    if (['name', 'created_at'].includes(sortCol)) {
+     if (['name', 'created_at'].includes(sortCol)) {
       dataQuery = dataQuery.order(sortCol, { ascending: params.sortDir === 'asc' });
     } else {
       dataQuery = dataQuery.order('name', { ascending: true });

@@ -103,7 +103,7 @@ export default function QuizzesPage() {
     // Apply sorting
     const sortCol = params.sortKey || 'date';
     const ascending = params.sortDir === 'asc';
-    if (['name', 'date', 'location', 'status'].includes(sortCol)) {
+     if (['name', 'date', 'location', 'status'].includes(sortCol)) {
       dataQuery = dataQuery.order(sortCol, { ascending });
     } else {
       dataQuery = dataQuery.order('date', { ascending: false });

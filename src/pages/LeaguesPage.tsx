@@ -93,7 +93,7 @@ export default function LeaguesPage() {
 
     // Sort
     const sortCol = params.sortKey || 'created_at';
-    if (['name', 'created_at', 'is_active'].includes(sortCol)) {
+    if (['name', 'created_at', 'is_active', 'season'].includes(sortCol)) {
       dataQuery = dataQuery.order(sortCol, { ascending: params.sortDir === 'asc' });
     } else {
       dataQuery = dataQuery.order('created_at', { ascending: false });
