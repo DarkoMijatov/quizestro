@@ -1018,310 +1018,345 @@ export default function QuizDetailPage() {
             const partsRowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
 
             return (
-          <div className="min-h-full w-full flex flex-col">
-            {/* Header row */}
-            <div
-              className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
-              style={{
-                gridTemplateColumns: partsColTemplate,
-                minHeight: partsRowHeight,
-                backgroundColor: currentOrg?.branding_header_color || undefined,
-              }}
-            >
-...
-            <div className="flex flex-col flex-1 w-full">
-              {rankedTeams.map((team, rowIdx) => {
-                const total = getTeamRankTotal(team.id);
-                const teamName = team.alias || (team.team as any)?.name || "";
-
-                return (
+              <div className="min-h-full w-full flex flex-col">
+                {/* Header row */}
+                <div
+                  className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
+                  style={{
+                    gridTemplateColumns: partsColTemplate,
+                    minHeight: partsRowHeight,
+                    backgroundColor: currentOrg?.branding_header_color || undefined,
+                  }}
+                >
                   <div
-                    key={team.id}
                     className={cn(
-                      "grid w-full border-b-2 border-foreground/20 last:border-0",
-                      rowIdx === 0 && "bg-primary/[0.04]",
+                      "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
+                      sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
                     )}
-                    style={{
-                      gridTemplateColumns: partsColTemplate,
-                      minHeight: partsRowHeight,
-                    }}
+                    style={{ color: currentOrg?.branding_text_color || undefined }}
                   >
-                    {/* Rank + Team */}
-                    <div className={cn("flex items-center gap-1.5", sizeClass === "size-xs" ? "p-0.5" : "p-1")}>
-                      <div
-                        className={cn(
-                          "flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
-                          sizeClass === "size-lg"
-                            ? "w-8 h-8 text-base"
-                            : sizeClass === "size-md"
-                              ? "w-7 h-7 text-sm"
-                              : sizeClass === "size-sm"
-                                ? "w-6 h-6 text-xs"
-                                : "w-5 h-5 text-[10px]",
-                        )}
-                      >
-                        {rowIdx + 1}
-                      </div>
-                      <div className="min-w-0 flex-1 flex items-center gap-1 flex-wrap">
-                        <p
-                          className={cn(
-                            "font-bold text-foreground break-words leading-tight",
-                            sizeClass === "size-lg"
-                              ? "text-lg"
-                              : sizeClass === "size-md"
-                                ? "text-md"
-                                : "text-[10px]",
-                          )}
-                        >
-                          {teamName}
-                        </p>
-                        {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
-                          <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
-                        )}
-                        {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
-                          <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
-                        )}
-                      </div>
+                    {t("scoring.team")}
+                  </div>
+                  {quizParts.map((part) => (
+                    <div
+                      key={part.id}
+                      className={cn(
+                        "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors",
+                        sizeClass === "size-xs" ? "text-[9px]" : "text-[11px]",
+                        expandedPart === part.id && "bg-primary/10",
+                      )}
+                      style={{ color: currentOrg?.branding_text_color || undefined }}
+                      onClick={() => setExpandedPart(expandedPart === part.id ? null : part.id)}
+                    >
+                      <span>{part.name}</span>
+                      {expandedPart === part.id ? (
+                        <ChevronUp className="h-3 w-3 mt-0.5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3 mt-0.5 text-muted-foreground" />
+                      )}
                     </div>
+                  ))}
+                  <div
+                    className={cn(
+                      "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
+                      sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                    )}
+                    style={{ color: currentOrg?.branding_text_color || undefined }}
+                  >
+                    Σ
+                  </div>
+                </div>
 
-                    {/* Part scores */}
-                    {quizParts.map((part, partIdx) => {
-                      const ps = getPartScore(team.id, part.id);
-                      const catSum = getPartCategorySum(team.id, partIdx);
-                      const mismatch = ps && ps.points > 0 && catSum > 0 && Math.abs(catSum - ps.points) > 0.01;
+                <div className="flex flex-col flex-1 w-full">
+                  {rankedTeams.map((team, rowIdx) => {
+                    const total = getTeamRankTotal(team.id);
+                    const teamName = team.alias || (team.team as any)?.name || "";
 
-                      return (
-                        <div
-                          key={part.id}
-                          className="p-1 flex flex-col items-center justify-center border-l-2 border-foreground/20"
-                        >
-                          {canScore ? (
-                            <div className="flex flex-col items-center gap-0.5">
-                              <input
-                                type="number"
-                                min={0}
-                                step={0.5}
-                                value={ps?.points ?? 0}
-                                onChange={(e) => ps && updatePartScore(ps.id, Number(e.target.value) || 0)}
-                                onFocus={(e) => e.target.select()}
-                                className={cn(
-                                  "w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15",
-                                  sizeClass === "size-lg"
-                                    ? "h-14 text-3xl"
-                                    : sizeClass === "size-md"
-                                      ? "h-10 text-2xl"
-                                      : sizeClass === "size-sm"
-                                        ? "h-8 text-xl"
-                                        : "h-6 text-base",
-                                )}
-                              />
-                              {mismatch && (
-                                <span className="text-[8px] text-destructive font-medium">
-                                  ≠ {catSum}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
+                    return (
+                      <div
+                        key={team.id}
+                        className={cn(
+                          "grid w-full border-b-2 border-foreground/20 last:border-0",
+                          rowIdx === 0 && "bg-primary/[0.04]",
+                        )}
+                        style={{
+                          gridTemplateColumns: partsColTemplate,
+                          minHeight: partsRowHeight,
+                        }}
+                      >
+                        {/* Rank + Team */}
+                        <div className={cn("flex items-center gap-1.5", sizeClass === "size-xs" ? "p-0.5" : "p-1")}>
+                          <div
+                            className={cn(
+                              "flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
+                              sizeClass === "size-lg"
+                                ? "w-8 h-8 text-base"
+                                : sizeClass === "size-md"
+                                  ? "w-7 h-7 text-sm"
+                                  : sizeClass === "size-sm"
+                                    ? "w-6 h-6 text-xs"
+                                    : "w-5 h-5 text-[10px]",
+                            )}
+                          >
+                            {rowIdx + 1}
+                          </div>
+                          <div className="min-w-0 flex-1 flex items-center gap-1 flex-wrap">
                             <p
                               className={cn(
-                                "font-black text-foreground",
+                                "font-bold text-foreground break-words leading-tight",
                                 sizeClass === "size-lg"
-                                  ? "text-3xl"
+                                  ? "text-lg"
                                   : sizeClass === "size-md"
-                                    ? "text-2xl"
-                                    : sizeClass === "size-sm"
-                                      ? "text-xl"
-                                      : "text-base",
+                                    ? "text-md"
+                                    : "text-[10px]",
                               )}
                             >
-                              {(ps?.points ?? 0) % 1 === 0 ? (ps?.points ?? 0) : (ps?.points ?? 0).toFixed(1)}
+                              {teamName}
                             </p>
-                          )}
+                            {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
+                              <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                            )}
+                            {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
+                              <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                            )}
+                          </div>
                         </div>
-                      );
-                    })}
 
-                    {/* Total */}
-                    <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
-                      <span
-                        className={cn(
-                          "font-black text-primary",
-                          sizeClass === "size-lg"
-                            ? "text-3xl"
-                            : sizeClass === "size-md"
-                              ? "text-2xl"
-                              : sizeClass === "size-sm"
-                                ? "text-xl"
-                                : "text-base",
-                        )}
-                      >
-                        {total % 1 === 0 ? total : total.toFixed(1)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                        {/* Part scores */}
+                        {quizParts.map((part, partIdx) => {
+                          const ps = getPartScore(team.id, part.id);
+                          const catSum = getPartCategorySum(team.id, partIdx);
+                          const mismatch = ps && ps.points > 0 && catSum > 0 && Math.abs(catSum - ps.points) > 0.01;
 
-            {/* Expanded part: show categories within that part */}
-            {expandedPart && (
-              <div className="border-t-2 border-primary/30 bg-primary/[0.02] p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-bold text-primary">
-                    {quizParts.find((p) => p.id === expandedPart)?.name} — {t("scoring.expandPart")}
-                  </h3>
-                  <Button variant="ghost" size="sm" onClick={() => setExpandedPart(null)} className="gap-1 text-xs">
-                    {t("scoring.collapsePart")}
-                  </Button>
-                </div>
-                {(() => {
-                  const partIdx = quizParts.findIndex((p) => p.id === expandedPart);
-                  const partCats = getPartCategories(partIdx);
-                  if (partCats.length === 0) return <p className="text-xs text-muted-foreground">No categories</p>;
-
-                  return (
-                    <div className="overflow-x-auto">
-                      <div style={{ minWidth: `${140 + partCats.length * 90 + 70}px` }}>
-                        {/* Category headers */}
-                        <div
-                          className="grid border-b border-foreground/10"
-                          style={{ gridTemplateColumns: `140px ${partCats.map(() => "1fr").join(" ")}` }}
-                        >
-                          <div className="p-1 text-xs font-semibold text-muted-foreground">{t("scoring.team")}</div>
-                          {partCats.map((cat) => (
-                            <div key={cat.id} className="p-1 text-[10px] font-semibold text-center text-muted-foreground border-l border-foreground/10">
-                              {(cat.category as any)?.name}
-                            </div>
-                          ))}
-                        </div>
-                        {/* Team rows */}
-                        {rankedTeams.map((team) => {
-                          const teamName = team.alias || (team.team as any)?.name || "";
                           return (
                             <div
-                              key={team.id}
-                              className="grid border-b border-foreground/10 last:border-0"
-                              style={{ gridTemplateColumns: `140px ${partCats.map(() => "1fr").join(" ")}` }}
+                              key={part.id}
+                              className="p-1 flex flex-col items-center justify-center border-l-2 border-foreground/20"
                             >
-                              <div className="p-1 text-xs font-medium truncate">{teamName}</div>
-                              {partCats.map((cat) => {
-                                const score = getScore(team.id, cat.id);
-                                const hasJoker = jokerType && getHelpUsage(team.id, cat.id, jokerType.id);
-                                const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
-                                const hasBonusPt = hasCategoryBonus(team.id, cat.id);
-                                const displayPts = getDisplayPoints(team.id, cat.id);
-                                const catBonusExisting = getCategoryBonus(cat.id);
-                                const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
-                                const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
-                                const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
-
-                                const cellKey = `drill-${team.id}-${cat.id}`;
-                                const isFocused = focusedCell === cellKey;
-                                const showEffective = (hasJoker || hasBonusPt) && !isFocused;
-                                const displayValue = showEffective ? displayPts : (score?.points ?? 0);
-
-                                return (
-                                  <div
-                                    key={cat.id}
+                              {canScore ? (
+                                <div className="flex flex-col items-center gap-0.5">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step={0.5}
+                                    value={ps?.points ?? 0}
+                                    onChange={(e) => ps && updatePartScore(ps.id, Number(e.target.value) || 0)}
+                                    onFocus={(e) => e.target.select()}
                                     className={cn(
-                                      "p-1 border-l border-foreground/10 flex flex-col items-center gap-0.5",
-                                      hasJoker && "bg-primary/[0.08]",
-                                      hasBonusPt && !hasJoker && "bg-yellow-500/[0.06]",
+                                      "w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15",
+                                      sizeClass === "size-lg"
+                                        ? "h-14 text-3xl"
+                                        : sizeClass === "size-md"
+                                          ? "h-10 text-2xl"
+                                          : sizeClass === "size-sm"
+                                            ? "h-8 text-xl"
+                                            : "h-6 text-base",
                                     )}
-                                  >
-                                    {canScore ? (
-                                      <>
-                                        <input
-                                          type="number"
-                                          min={0}
-                                          step={0.5}
-                                          value={displayValue}
-                                          onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
-                                          onFocus={(e) => { setFocusedCell(cellKey); e.target.select(); }}
-                                          onBlur={() => setFocusedCell(null)}
-                                          className={cn(
-                                            "w-full text-center font-bold text-sm bg-transparent border rounded focus:border-primary focus:outline-none h-7",
-                                            showEffective ? "text-primary border-primary/30" : "text-foreground border-foreground/15",
-                                          )}
-                                        />
-                                        {/* Help & Bonus buttons */}
-                                        <div className="flex items-center gap-0.5">
-                                          {jokerType && (
-                                            <button
-                                              onClick={() => toggleHelp(team.id, cat.id, jokerType)}
-                                              disabled={!!jokerDisabledElsewhere}
-                                              tabIndex={-1}
-                                              className={cn(
-                                                "w-5 h-4 rounded text-[8px] font-black border transition-colors",
-                                                hasJoker
-                                                  ? "bg-primary text-primary-foreground border-primary"
-                                                  : jokerDisabledElsewhere
-                                                    ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                                    : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
-                                              )}
-                                            >
-                                              <Zap className="h-2.5 w-2.5 mx-auto" />
-                                            </button>
-                                          )}
-                                          {markerType && (
-                                            <button
-                                              onClick={() => toggleHelp(team.id, cat.id, markerType)}
-                                              disabled={!!markerDisabledElsewhere}
-                                              tabIndex={-1}
-                                              className={cn(
-                                                "w-5 h-4 rounded text-[8px] font-black border transition-colors",
-                                                hasMarker
-                                                  ? "bg-accent text-accent-foreground border-accent"
-                                                  : markerDisabledElsewhere
-                                                    ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                                    : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
-                                              )}
-                                            >
-                                              <CopyCheck className="h-2.5 w-2.5 mx-auto" />
-                                            </button>
-                                          )}
-                                          {categoryBonusEnabled && (
-                                            <button
-                                              onClick={() => toggleCategoryBonus(team.id, cat.id)}
-                                              disabled={bonusDisabled}
-                                              tabIndex={-1}
-                                              className={cn(
-                                                "w-5 h-4 rounded text-[8px] font-black border transition-colors",
-                                                hasBonusPt
-                                                  ? "bg-yellow-500 text-white border-yellow-500"
-                                                  : bonusDisabled
-                                                    ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                                    : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
-                                              )}
-                                            >
-                                              <Crown className="h-2.5 w-2.5 mx-auto" />
-                                            </button>
-                                          )}
-                                        </div>
-                                      </>
-                                    ) : (
-                                      <div className="flex flex-col items-center gap-0.5">
-                                        <p className="text-sm font-bold text-center">{displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}</p>
-                                        <div className="flex items-center gap-0.5">
-                                          {hasJoker && <Zap className="h-2.5 w-2.5 text-primary" />}
-                                          {hasMarker && <CopyCheck className="h-2.5 w-2.5 text-accent-foreground" />}
-                                          {hasBonusPt && <Crown className="h-2.5 w-2.5 text-yellow-500" />}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
+                                  />
+                                  {mismatch && (
+                                    <span className="text-[8px] text-destructive font-medium">
+                                      ≠ {catSum}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <p
+                                  className={cn(
+                                    "font-black text-foreground",
+                                    sizeClass === "size-lg"
+                                      ? "text-3xl"
+                                      : sizeClass === "size-md"
+                                        ? "text-2xl"
+                                        : sizeClass === "size-sm"
+                                          ? "text-xl"
+                                          : "text-base",
+                                  )}
+                                >
+                                  {(ps?.points ?? 0) % 1 === 0 ? (ps?.points ?? 0) : (ps?.points ?? 0).toFixed(1)}
+                                </p>
+                              )}
                             </div>
                           );
                         })}
+
+                        {/* Total */}
+                        <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
+                          <span
+                            className={cn(
+                              "font-black text-primary",
+                              sizeClass === "size-lg"
+                                ? "text-3xl"
+                                : sizeClass === "size-md"
+                                  ? "text-2xl"
+                                  : sizeClass === "size-sm"
+                                    ? "text-xl"
+                                    : "text-base",
+                            )}
+                          >
+                            {total % 1 === 0 ? total : total.toFixed(1)}
+                          </span>
+                        </div>
                       </div>
+                    );
+                  })}
+                </div>
+
+                {/* Expanded part: show categories within that part */}
+                {expandedPart && (
+                  <div className="border-t-2 border-primary/30 bg-primary/[0.02] p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-bold text-primary">
+                        {quizParts.find((p) => p.id === expandedPart)?.name} — {t("scoring.expandPart")}
+                      </h3>
+                      <Button variant="ghost" size="sm" onClick={() => setExpandedPart(null)} className="gap-1 text-xs">
+                        {t("scoring.collapsePart")}
+                      </Button>
                     </div>
-                  );
-                })()}
+                    {(() => {
+                      const partIdx = quizParts.findIndex((p) => p.id === expandedPart);
+                      const partCats = getPartCategories(partIdx);
+                      if (partCats.length === 0) return <p className="text-xs text-muted-foreground">No categories</p>;
+
+                      return (
+                        <div className="overflow-x-auto">
+                          <div style={{ minWidth: `${140 + partCats.length * 90 + 70}px` }}>
+                            <div
+                              className="grid border-b border-foreground/10"
+                              style={{ gridTemplateColumns: `140px ${partCats.map(() => "1fr").join(" ")}` }}
+                            >
+                              <div className="p-1 text-xs font-semibold text-muted-foreground">{t("scoring.team")}</div>
+                              {partCats.map((cat) => (
+                                <div key={cat.id} className="p-1 text-[10px] font-semibold text-center text-muted-foreground border-l border-foreground/10">
+                                  {(cat.category as any)?.name}
+                                </div>
+                              ))}
+                            </div>
+                            {rankedTeams.map((team) => {
+                              const teamName = team.alias || (team.team as any)?.name || "";
+                              return (
+                                <div
+                                  key={team.id}
+                                  className="grid border-b border-foreground/10 last:border-0"
+                                  style={{ gridTemplateColumns: `140px ${partCats.map(() => "1fr").join(" ")}` }}
+                                >
+                                  <div className="p-1 text-xs font-medium truncate">{teamName}</div>
+                                  {partCats.map((cat) => {
+                                    const score = getScore(team.id, cat.id);
+                                    const hasJoker = jokerType && getHelpUsage(team.id, cat.id, jokerType.id);
+                                    const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
+                                    const hasBonusPt = hasCategoryBonus(team.id, cat.id);
+                                    const displayPts = getDisplayPoints(team.id, cat.id);
+                                    const catBonusExisting = getCategoryBonus(cat.id);
+                                    const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
+                                    const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
+                                    const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
+
+                                    const cellKey = `drill-${team.id}-${cat.id}`;
+                                    const isFocused = focusedCell === cellKey;
+                                    const showEffective = (hasJoker || hasBonusPt) && !isFocused;
+                                    const displayValue = showEffective ? displayPts : (score?.points ?? 0);
+
+                                    return (
+                                      <div
+                                        key={cat.id}
+                                        className={cn(
+                                          "p-1 border-l border-foreground/10 flex flex-col items-center gap-0.5",
+                                          hasJoker && "bg-primary/[0.08]",
+                                          hasBonusPt && !hasJoker && "bg-yellow-500/[0.06]",
+                                        )}
+                                      >
+                                        {canScore ? (
+                                          <>
+                                            <input
+                                              type="number"
+                                              min={0}
+                                              step={0.5}
+                                              value={displayValue}
+                                              onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
+                                              onFocus={(e) => { setFocusedCell(cellKey); e.target.select(); }}
+                                              onBlur={() => setFocusedCell(null)}
+                                              className={cn(
+                                                "w-full text-center font-bold text-sm bg-transparent border rounded focus:border-primary focus:outline-none h-7",
+                                                showEffective ? "text-primary border-primary/30" : "text-foreground border-foreground/15",
+                                              )}
+                                            />
+                                            <div className="flex items-center gap-0.5">
+                                              {jokerType && (
+                                                <button
+                                                  onClick={() => toggleHelp(team.id, cat.id, jokerType)}
+                                                  disabled={!!jokerDisabledElsewhere}
+                                                  tabIndex={-1}
+                                                  className={cn(
+                                                    "w-5 h-4 rounded text-[8px] font-black border transition-colors",
+                                                    hasJoker
+                                                      ? "bg-primary text-primary-foreground border-primary"
+                                                      : jokerDisabledElsewhere
+                                                        ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                                        : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
+                                                  )}
+                                                >
+                                                  <Zap className="h-2.5 w-2.5 mx-auto" />
+                                                </button>
+                                              )}
+                                              {markerType && (
+                                                <button
+                                                  onClick={() => toggleHelp(team.id, cat.id, markerType)}
+                                                  disabled={!!markerDisabledElsewhere}
+                                                  tabIndex={-1}
+                                                  className={cn(
+                                                    "w-5 h-4 rounded text-[8px] font-black border transition-colors",
+                                                    hasMarker
+                                                      ? "bg-accent text-accent-foreground border-accent"
+                                                      : markerDisabledElsewhere
+                                                        ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                                        : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
+                                                  )}
+                                                >
+                                                  <CopyCheck className="h-2.5 w-2.5 mx-auto" />
+                                                </button>
+                                              )}
+                                              {categoryBonusEnabled && (
+                                                <button
+                                                  onClick={() => toggleCategoryBonus(team.id, cat.id)}
+                                                  disabled={bonusDisabled}
+                                                  tabIndex={-1}
+                                                  className={cn(
+                                                    "w-5 h-4 rounded text-[8px] font-black border transition-colors",
+                                                    hasBonusPt
+                                                      ? "bg-yellow-500 text-white border-yellow-500"
+                                                      : bonusDisabled
+                                                        ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                                        : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
+                                                  )}
+                                                >
+                                                  <Crown className="h-2.5 w-2.5 mx-auto" />
+                                                </button>
+                                              )}
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <div className="flex flex-col items-center gap-0.5">
+                                            <p className="text-sm font-bold text-center">{displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}</p>
+                                            <div className="flex items-center gap-0.5">
+                                              {hasJoker && <Zap className="h-2.5 w-2.5 text-primary" />}
+                                              {hasMarker && <CopyCheck className="h-2.5 w-2.5 text-accent-foreground" />}
+                                              {hasBonusPt && <Crown className="h-2.5 w-2.5 text-yellow-500" />}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
             );
           })()
         )}
