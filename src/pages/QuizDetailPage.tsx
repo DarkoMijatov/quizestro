@@ -509,7 +509,7 @@ export default function QuizDetailPage() {
         await supabase
           .from("quiz_teams")
           .update({
-            total_points: getTeamTotal(team.id),
+            total_points: getTeamRankTotal(team.id),
             rank: i + 1,
           })
           .eq("id", team.id);
