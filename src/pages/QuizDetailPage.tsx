@@ -443,14 +443,8 @@ export default function QuizDetailPage() {
   };
 
   const getTeamPartTotal = (teamId: string) => {
-    return quizParts.reduce((sum, _part, partIdx) => {
-      const catSum = getPartCategorySum(teamId, partIdx);
-      if (catSum > 0) {
-        // When category-level scores exist (drill-down), use effective scores (with Joker/Bonus)
-        return sum + catSum;
-      }
-      // Fallback to raw part score when no category scores entered
-      const ps = getPartScore(teamId, _part.id);
+    return quizParts.reduce((sum, part) => {
+      const ps = getPartScore(teamId, part.id);
       return sum + (ps?.points || 0);
     }, 0);
   };
@@ -463,6 +457,24 @@ export default function QuizDetailPage() {
       enqueueScoreUpdate(partScoreId, "points", value);
     }
   };
+
+  /** Sync a team's part_score to match the sum of its category display points for that part */
+  const syncPartScoreFromCategories = useCallback((teamId: string, partIdx: number) => {
+    if (quiz?.scoring_mode !== "per_part" || quizParts.length === 0) return;
+    const part = quizParts[partIdx];
+    if (!part) return;
+    const catSum = getPartCategorySum(teamId, partIdx);
+    const ps = getPartScore(teamId, part.id);
+    if (ps && Math.abs(ps.points - catSum) > 0.001) {
+      // Update local + remote
+      setPartScores((prev) => prev.map((p) => (p.id === ps.id ? { ...p, points: catSum } : p)));
+      if (isOnline) {
+        supabase.from("part_scores").update({ points: catSum }).eq("id", ps.id);
+      } else {
+        enqueueScoreUpdate(ps.id, "points", catSum);
+      }
+    }
+  }, [quiz, quizParts, categories, scores, helpUsages, categoryBonuses, helpTypes, partScores, isOnline]);
 
   // Use part totals for ranking when in per_part mode, otherwise use category totals
   const getTeamRankTotal = (teamId: string) => {
