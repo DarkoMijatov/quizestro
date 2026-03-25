@@ -276,7 +276,14 @@
     "manageDraft": "Manage",
     "categoryBonus": "Category bonus point",
     "categoryBonusAwarded": "Bonus point awarded",
-    "categoryBonusRemoved": "Bonus point removed"
+    "categoryBonusRemoved": "Bonus point removed",
+    "viewParts": "By parts",
+    "viewCategories": "By categories",
+    "partTotal": "Part total",
+    "distributeHint": "Click a part to distribute points across categories",
+    "partMismatch": "Category sum ({{sum}}) doesn't match part total ({{total}})",
+    "expandPart": "Distribute points",
+    "collapsePart": "Hide categories"
   },
   "offline": {
     "pending": "pending",

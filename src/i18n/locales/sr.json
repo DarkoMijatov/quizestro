@@ -285,7 +285,14 @@
     "manageDraft": "Upravljaj",
     "categoryBonus": "Bonus poen za kategoriju",
     "categoryBonusAwarded": "Bonus poen dodeljen",
-    "categoryBonusRemoved": "Bonus poen uklonjen"
+    "categoryBonusRemoved": "Bonus poen uklonjen",
+    "viewParts": "Po delovima",
+    "viewCategories": "Po oblastima",
+    "partTotal": "Ukupno za deo",
+    "distributeHint": "Kliknite na deo da rasporedite poene po oblastima",
+    "partMismatch": "Zbir po oblastima ({{sum}}) se ne poklapa sa ukupnim za deo ({{total}})",
+    "expandPart": "Rasporedi poene",
+    "collapsePart": "Sakrij oblasti"
   },
   "offline": {
     "pending": "na čekanju",
