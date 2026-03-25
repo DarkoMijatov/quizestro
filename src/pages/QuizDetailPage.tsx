@@ -29,7 +29,6 @@ import {
   Layers,
   ArrowDownUp,
 } from "lucide-react";
-// Switch import removed - no longer used here
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
 
