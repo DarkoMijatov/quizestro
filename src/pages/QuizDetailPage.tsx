@@ -883,10 +883,14 @@ export default function QuizDetailPage() {
                       const catBonusExisting = getCategoryBonus(cat.id);
                       const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
 
-                      // Disable help if team already used it in another category
+                      // Disable help if team already used it in another category OR if the other mutual-exclusive help is active in this cell
                       const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
                       const markerDisabledElsewhere =
                         markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
+                      const jokerDisabledByMarker = jokerType && !hasJoker && !!hasMarker;
+                      const markerDisabledByJoker = markerType && !hasMarker && !!hasJoker;
+                      const jokerDisabled = !!jokerDisabledElsewhere || !!jokerDisabledByMarker;
+                      const markerDisabled = !!markerDisabledElsewhere || !!markerDisabledByJoker;
 
                       return (
                         <div
@@ -936,13 +940,13 @@ export default function QuizDetailPage() {
                                 {jokerType && (
                                   <button
                                     onClick={() => toggleHelp(team.id, cat.id, jokerType)}
-                                    disabled={!!jokerDisabledElsewhere}
+                                    disabled={jokerDisabled}
                                     tabIndex={-1}
                                     className={cn(
                                       "w-6 h-5 rounded text-[9px] font-black border transition-colors",
                                       hasJoker
                                         ? "bg-primary text-primary-foreground border-primary"
-                                        : jokerDisabledElsewhere
+                                        : jokerDisabled
                                           ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
                                           : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
                                     )}
@@ -953,13 +957,13 @@ export default function QuizDetailPage() {
                                 {markerType && (
                                   <button
                                     onClick={() => toggleHelp(team.id, cat.id, markerType)}
-                                    disabled={!!markerDisabledElsewhere}
+                                    disabled={markerDisabled}
                                     tabIndex={-1}
                                     className={cn(
                                       "w-6 h-5 rounded text-[9px] font-black border transition-colors",
                                       hasMarker
                                         ? "bg-accent text-accent-foreground border-accent"
-                                        : markerDisabledElsewhere
+                                        : markerDisabled
                                           ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
                                           : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
                                     )}
@@ -1277,6 +1281,10 @@ export default function QuizDetailPage() {
                                     const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
                                     const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
                                     const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
+                                    const jokerDisabledByMarker2 = jokerType && !hasJoker && !!hasMarker;
+                                    const markerDisabledByJoker2 = markerType && !hasMarker && !!hasJoker;
+                                    const jokerDisabled = !!jokerDisabledElsewhere || !!jokerDisabledByMarker2;
+                                    const markerDisabled = !!markerDisabledElsewhere || !!markerDisabledByJoker2;
 
                                     const cellKey = `drill-${team.id}-${cat.id}`;
                                     const isFocused = focusedCell === cellKey;
@@ -1311,13 +1319,13 @@ export default function QuizDetailPage() {
                                               {jokerType && (
                                                 <button
                                                   onClick={() => toggleHelp(team.id, cat.id, jokerType)}
-                                                  disabled={!!jokerDisabledElsewhere}
+                                                  disabled={jokerDisabled}
                                                   tabIndex={-1}
                                                   className={cn(
                                                     "w-5 h-4 rounded text-[8px] font-black border transition-colors",
                                                     hasJoker
                                                       ? "bg-primary text-primary-foreground border-primary"
-                                                      : jokerDisabledElsewhere
+                                                      : jokerDisabled
                                                         ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
                                                         : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
                                                   )}
@@ -1328,13 +1336,13 @@ export default function QuizDetailPage() {
                                               {markerType && (
                                                 <button
                                                   onClick={() => toggleHelp(team.id, cat.id, markerType)}
-                                                  disabled={!!markerDisabledElsewhere}
+                                                  disabled={markerDisabled}
                                                   tabIndex={-1}
                                                   className={cn(
                                                     "w-5 h-4 rounded text-[8px] font-black border transition-colors",
                                                     hasMarker
                                                       ? "bg-accent text-accent-foreground border-accent"
-                                                      : markerDisabledElsewhere
+                                                      : markerDisabled
                                                         ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
                                                         : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
                                                   )}
