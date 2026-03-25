@@ -458,23 +458,32 @@ export default function QuizDetailPage() {
     }
   };
 
-  /** Sync a team's part_score to match the sum of its category display points for that part */
-  const syncPartScoreFromCategories = useCallback((teamId: string, partIdx: number) => {
-    if (quiz?.scoring_mode !== "per_part" || quizParts.length === 0) return;
-    const part = quizParts[partIdx];
-    if (!part) return;
-    const catSum = getPartCategorySum(teamId, partIdx);
-    const ps = getPartScore(teamId, part.id);
-    if (ps && Math.abs(ps.points - catSum) > 0.001) {
-      // Update local + remote
-      setPartScores((prev) => prev.map((p) => (p.id === ps.id ? { ...p, points: catSum } : p)));
-      if (isOnline) {
-        supabase.from("part_scores").update({ points: catSum }).eq("id", ps.id);
-      } else {
-        enqueueScoreUpdate(ps.id, "points", catSum);
+  /** Auto-sync part_scores from category display points when drill-down scores change */
+  useEffect(() => {
+    if (quiz?.scoring_mode !== "per_part" || quizParts.length === 0 || teams.length === 0) return;
+    let changed = false;
+    const updated = partScores.map((ps) => {
+      const partIdx = quizParts.findIndex((p) => p.id === ps.quiz_part_id);
+      if (partIdx < 0) return ps;
+      const catSum = getPartCategorySum(ps.quiz_team_id, partIdx);
+      // Only sync if there are category scores entered (catSum > 0)
+      if (catSum > 0 && Math.abs(ps.points - catSum) > 0.001) {
+        changed = true;
+        // Persist to DB
+        if (isOnline) {
+          supabase.from("part_scores").update({ points: catSum }).eq("id", ps.id);
+        } else {
+          enqueueScoreUpdate(ps.id, "points", catSum);
+        }
+        return { ...ps, points: catSum };
       }
+      return ps;
+    });
+    if (changed) {
+      setPartScores(updated);
     }
-  }, [quiz, quizParts, categories, scores, helpUsages, categoryBonuses, helpTypes, partScores, isOnline]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scores, helpUsages, categoryBonuses]);
 
   // Use part totals for ranking when in per_part mode, otherwise use category totals
   const getTeamRankTotal = (teamId: string) => {
