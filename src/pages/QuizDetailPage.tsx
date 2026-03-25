@@ -755,7 +755,7 @@ export default function QuizDetailPage() {
           }}
         >
         {scoringView === "categories" ? (
-          <div style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
+          <div className="min-h-full" style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
             {/* Header row */}
             <div
               className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
