@@ -499,7 +499,17 @@ export default function QuizDetailPage() {
     return getTeamTotal(teamId);
   };
 
-  const rankedTeams = [...teams].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id));
+  const shouldSort = autoSort || manualSorted;
+  const rankedTeams = shouldSort
+    ? [...teams].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id))
+    : teams;
+
+  const handleManualSort = () => setManualSorted(true);
+  const toggleAutoSort = (v: boolean) => {
+    setAutoSort(v);
+    try { localStorage.setItem("quiz_auto_sort", String(v)); } catch {}
+    if (v) setManualSorted(true);
+  };
 
   const handleExport = () => {
     if (!quiz) return;
