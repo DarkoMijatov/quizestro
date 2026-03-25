@@ -756,7 +756,27 @@ export default function QuizDetailPage() {
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
-...
+              <div
+                className={cn(
+                  "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
+                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                )}
+                style={{ color: currentOrg?.branding_text_color || undefined }}
+              >
+                {t("scoring.team")}
+              </div>
+              {categories.map((cat) => (
+                <div
+                  key={cat.id}
+                  className={cn(
+                    "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center",
+                    sizeClass === "size-xs" ? "text-[9px]" : "text-[11px]",
+                  )}
+                  style={{ color: currentOrg?.branding_text_color || undefined }}
+                >
+                  {(cat.category as any)?.name || "?"}
+                </div>
+              ))}
               <div
                 className={cn(
                   "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
