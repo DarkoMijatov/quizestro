@@ -704,6 +704,13 @@ export default function QuizDetailPage() {
                 onChanged={fetchAll}
               />
             )}
+            <Button variant="outline" size="sm" onClick={handleManualSort} className="gap-1" title={t("scoring.sortByTotal")}>
+              <ArrowDownUp className="h-4 w-4" /> {t("scoring.sortByTotal")}
+            </Button>
+            <div className="flex items-center gap-1.5">
+              <Switch checked={autoSort} onCheckedChange={toggleAutoSort} />
+              <span className="text-xs text-muted-foreground hidden sm:inline">{t("scoring.autoSort")}</span>
+            </div>
             <Button variant="outline" size="sm" onClick={toggleFullscreen} className="gap-1">
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </Button>
