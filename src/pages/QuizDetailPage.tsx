@@ -761,9 +761,6 @@ export default function QuizDetailPage() {
                                 onFocus={(e) => e.target.select()}
                                 onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                 tabIndex={rowIdx * colCount + colIdx + 1}
-                                onFocus={(e) => e.target.select()}
-                                onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
-                                tabIndex={rowIdx * colCount + colIdx + 1}
                                 className={cn(
                                   "w-full text-center font-black text-foreground bg-transparent border-2 border-foreground/15 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors",
                                   sizeClass === "size-lg"
