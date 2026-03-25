@@ -382,6 +382,7 @@ export default function CreateQuizPage() {
         league_id: selectedLeague || null,
         created_by: user.id,
         status: "draft",
+        scoring_mode: scoringMode,
       })
       .select()
       .single();
@@ -425,6 +426,33 @@ export default function CreateQuizPage() {
         }
       }
       await supabase.from("scores").insert(scoreInserts);
+
+      // Create parts and part_scores if scoring mode is per_part
+      if (scoringMode === "per_part") {
+        const partInserts = Array.from({ length: partsCount }, (_, i) => ({
+          quiz_id: quizId,
+          part_number: i,
+          name: partNames[i]?.trim() || t("quiz.defaultPartName", { num: i + 1 }),
+          organization_id: currentOrg.id,
+        }));
+        const { data: insertedParts } = await supabase.from("quiz_parts").insert(partInserts).select();
+
+        if (insertedParts) {
+          const partScoreInserts: any[] = [];
+          for (const qt of insertedTeams as any[]) {
+            for (const part of insertedParts as any[]) {
+              partScoreInserts.push({
+                quiz_id: quizId,
+                quiz_part_id: part.id,
+                quiz_team_id: qt.id,
+                points: 0,
+                organization_id: currentOrg.id,
+              });
+            }
+          }
+          await supabase.from("part_scores").insert(partScoreInserts);
+        }
+      }
     }
 
     toast({ title: "✓", description: t("quiz.created") });
