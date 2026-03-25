@@ -397,12 +397,42 @@ export default function CreateQuizPage() {
 
     const quizId = (quiz as any).id;
 
-    const catInserts = selectedCats.map((catId, i) => ({
-      quiz_id: quizId,
-      category_id: catId,
-      organization_id: currentOrg.id,
-      sort_order: i,
-    }));
+    // Create parts first if per_part mode (we need part IDs for category assignment)
+    let insertedParts: any[] = [];
+    if (scoringMode === "per_part") {
+      const partInserts = Array.from({ length: partsCount }, (_, i) => ({
+        quiz_id: quizId,
+        part_number: i,
+        name: partNames[i]?.trim() || t("quiz.defaultPartName", { num: i + 1 }),
+        organization_id: currentOrg.id,
+      }));
+      const { data } = await supabase.from("quiz_parts").insert(partInserts).select();
+      insertedParts = (data as any[]) || [];
+    }
+
+    const catInserts = selectedCats.map((catId, i) => {
+      const base: any = {
+        quiz_id: quizId,
+        category_id: catId,
+        organization_id: currentOrg.id,
+        sort_order: i,
+      };
+      // Assign quiz_part_id if per_part mode
+      if (scoringMode === "per_part" && insertedParts.length > 0) {
+        const partIdx = categoryPartAssignment[catId];
+        if (partIdx !== undefined && insertedParts[partIdx]) {
+          base.quiz_part_id = insertedParts[partIdx].id;
+        } else {
+          // Auto-assign by sort order if not manually assigned
+          const catsPerPart = Math.ceil(selectedCats.length / partsCount);
+          const autoIdx = Math.min(Math.floor(i / catsPerPart), partsCount - 1);
+          if (insertedParts[autoIdx]) {
+            base.quiz_part_id = insertedParts[autoIdx].id;
+          }
+        }
+      }
+      return base;
+    });
     const { data: insertedCats } = await supabase.from("quiz_categories").insert(catInserts).select();
 
     const teamInserts = selectedTeams.map((t) => ({
@@ -429,31 +459,21 @@ export default function CreateQuizPage() {
       }
       await supabase.from("scores").insert(scoreInserts);
 
-      // Create parts and part_scores if scoring mode is per_part
-      if (scoringMode === "per_part") {
-        const partInserts = Array.from({ length: partsCount }, (_, i) => ({
-          quiz_id: quizId,
-          part_number: i,
-          name: partNames[i]?.trim() || t("quiz.defaultPartName", { num: i + 1 }),
-          organization_id: currentOrg.id,
-        }));
-        const { data: insertedParts } = await supabase.from("quiz_parts").insert(partInserts).select();
-
-        if (insertedParts) {
-          const partScoreInserts: any[] = [];
-          for (const qt of insertedTeams as any[]) {
-            for (const part of insertedParts as any[]) {
-              partScoreInserts.push({
-                quiz_id: quizId,
-                quiz_part_id: part.id,
-                quiz_team_id: qt.id,
-                points: 0,
-                organization_id: currentOrg.id,
-              });
-            }
+      // Create part_scores if scoring mode is per_part
+      if (scoringMode === "per_part" && insertedParts.length > 0) {
+        const partScoreInserts: any[] = [];
+        for (const qt of insertedTeams as any[]) {
+          for (const part of insertedParts) {
+            partScoreInserts.push({
+              quiz_id: quizId,
+              quiz_part_id: part.id,
+              quiz_team_id: qt.id,
+              points: 0,
+              organization_id: currentOrg.id,
+            });
           }
-          await supabase.from("part_scores").insert(partScoreInserts);
         }
+        await supabase.from("part_scores").insert(partScoreInserts);
       }
     }
 
