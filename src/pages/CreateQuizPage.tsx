@@ -1065,6 +1065,63 @@ export default function CreateQuizPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Category-to-Part assignment (only in per_part mode) */}
+                  {scoringMode === "per_part" && selectedCats.length > 0 && (
+                    <div className="mt-6 space-y-3 border-t border-border pt-4">
+                      <div>
+                        <p className="text-sm font-semibold">{t("quiz.assignCategoryToPart")}</p>
+                        <p className="text-xs text-muted-foreground">{t("quiz.assignCategoryToPartDesc")}</p>
+                      </div>
+                      <div className="space-y-2">
+                        {selectedCats.map((catId, idx) => {
+                          const cat = categories.find((c) => c.id === catId);
+                          const assignedPart = categoryPartAssignment[catId];
+                          return (
+                            <div key={catId} className="flex items-center gap-3 p-2 rounded-md bg-muted/30 border border-border">
+                              <span className="text-xs text-muted-foreground">#{idx + 1}</span>
+                              <FolderOpen className="h-3.5 w-3.5 text-primary shrink-0" />
+                              <span className="text-sm font-medium flex-1">{cat?.name}</span>
+                              <Select
+                                value={assignedPart !== undefined ? String(assignedPart) : ""}
+                                onValueChange={(v) => {
+                                  setCategoryPartAssignment((prev) => ({ ...prev, [catId]: Number(v) }));
+                                }}
+                              >
+                                <SelectTrigger className="w-44 h-8 text-xs">
+                                  <SelectValue placeholder={t("quiz.unassigned")} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({ length: partsCount }, (_, i) => (
+                                    <SelectItem key={i} value={String(i)}>
+                                      {partNames[i]?.trim() || t("quiz.defaultPartName", { num: i + 1 })}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Auto-assign button */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const assignment: Record<string, number> = {};
+                          const catsPerPart = Math.ceil(selectedCats.length / partsCount);
+                          selectedCats.forEach((catId, idx) => {
+                            assignment[catId] = Math.min(Math.floor(idx / catsPerPart), partsCount - 1);
+                          });
+                          setCategoryPartAssignment(assignment);
+                        }}
+                        className="text-xs"
+                      >
+                        {t("quiz.autoAssign", "Automatski raspodeli")}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 
