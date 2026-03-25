@@ -288,7 +288,8 @@
     "distributeHint": "Click a part to distribute points across categories",
     "partMismatch": "Category sum ({{sum}}) doesn't match part total ({{total}})",
     "expandPart": "Distribute points",
-    "collapsePart": "Hide categories"
+    "collapsePart": "Hide categories",
+    "assignPart": "Part"
   },
   "offline": {
     "pending": "pending",
