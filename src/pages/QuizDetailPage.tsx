@@ -443,14 +443,8 @@ export default function QuizDetailPage() {
   };
 
   const getTeamPartTotal = (teamId: string) => {
-    return quizParts.reduce((sum, _part, partIdx) => {
-      const catSum = getPartCategorySum(teamId, partIdx);
-      if (catSum > 0) {
-        // When category-level scores exist (drill-down), use effective scores (with Joker/Bonus)
-        return sum + catSum;
-      }
-      // Fallback to raw part score when no category scores entered
-      const ps = getPartScore(teamId, _part.id);
+    return quizParts.reduce((sum, part) => {
+      const ps = getPartScore(teamId, part.id);
       return sum + (ps?.points || 0);
     }, 0);
   };
@@ -463,6 +457,33 @@ export default function QuizDetailPage() {
       enqueueScoreUpdate(partScoreId, "points", value);
     }
   };
+
+  /** Auto-sync part_scores from category display points when drill-down scores change */
+  useEffect(() => {
+    if (quiz?.scoring_mode !== "per_part" || quizParts.length === 0 || teams.length === 0) return;
+    let changed = false;
+    const updated = partScores.map((ps) => {
+      const partIdx = quizParts.findIndex((p) => p.id === ps.quiz_part_id);
+      if (partIdx < 0) return ps;
+      const catSum = getPartCategorySum(ps.quiz_team_id, partIdx);
+      // Only sync if there are category scores entered (catSum > 0)
+      if (catSum > 0 && Math.abs(ps.points - catSum) > 0.001) {
+        changed = true;
+        // Persist to DB
+        if (isOnline) {
+          supabase.from("part_scores").update({ points: catSum }).eq("id", ps.id);
+        } else {
+          enqueueScoreUpdate(ps.id, "points", catSum);
+        }
+        return { ...ps, points: catSum };
+      }
+      return ps;
+    });
+    if (changed) {
+      setPartScores(updated);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scores, helpUsages, categoryBonuses]);
 
   // Use part totals for ranking when in per_part mode, otherwise use category totals
   const getTeamRankTotal = (teamId: string) => {
