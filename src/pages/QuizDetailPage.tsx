@@ -35,6 +35,21 @@ interface QuizData {
   location: string | null;
   status: "draft" | "live" | "finished";
   organization_id: string;
+  scoring_mode: "per_category" | "per_part";
+}
+
+interface QuizPart {
+  id: string;
+  quiz_id: string;
+  part_number: number;
+  name: string;
+}
+
+interface PartScore {
+  id: string;
+  quiz_part_id: string;
+  quiz_team_id: string;
+  points: number;
 }
 
 interface QuizCategory {
