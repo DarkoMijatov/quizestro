@@ -811,6 +811,68 @@ export type Database = {
         }
         Relationships: []
       }
+      part_scores: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          points: number
+          quiz_id: string
+          quiz_part_id: string
+          quiz_team_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          points?: number
+          quiz_id: string
+          quiz_part_id: string
+          quiz_team_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          points?: number
+          quiz_id?: string
+          quiz_part_id?: string
+          quiz_team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "part_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "part_scores_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "part_scores_quiz_part_id_fkey"
+            columns: ["quiz_part_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "part_scores_quiz_team_id_fkey"
+            columns: ["quiz_team_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pending_invites: {
         Row: {
           created_at: string
@@ -1027,6 +1089,48 @@ export type Database = {
           },
         ]
       }
+      quiz_parts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+          part_number: number
+          quiz_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          part_number?: number
+          quiz_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          part_number?: number
+          quiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_parts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_parts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_questions: {
         Row: {
           category_id: string
@@ -1155,6 +1259,7 @@ export type Database = {
           organization_id: string
           override_categories_count: number | null
           override_questions_per_category: number | null
+          scoring_mode: string
           share_token: string | null
           status: Database["public"]["Enums"]["quiz_status"]
           updated_at: string
@@ -1172,6 +1277,7 @@ export type Database = {
           organization_id: string
           override_categories_count?: number | null
           override_questions_per_category?: number | null
+          scoring_mode?: string
           share_token?: string | null
           status?: Database["public"]["Enums"]["quiz_status"]
           updated_at?: string
@@ -1189,6 +1295,7 @@ export type Database = {
           organization_id?: string
           override_categories_count?: number | null
           override_questions_per_category?: number | null
+          scoring_mode?: string
           share_token?: string | null
           status?: Database["public"]["Enums"]["quiz_status"]
           updated_at?: string

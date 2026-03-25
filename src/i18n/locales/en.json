@@ -250,7 +250,18 @@
     "prefillDescription": "This league already has quizzes. You can reuse the same teams and categories from the last quiz and modify them as needed.",
     "prefillApply": "Apply",
     "prefillSkip": "Skip",
-    "prefillApplied": "Teams and categories loaded from previous quiz."
+    "prefillApplied": "Teams and categories loaded from previous quiz.",
+    "scoringMode": "Scoring mode",
+    "scoringPerCategory": "Per category",
+    "scoringPerCategoryDesc": "Enter points for each category separately.",
+    "scoringPerPart": "By parts",
+    "scoringPerPartDesc": "Enter totals per part first, then optionally distribute across categories.",
+    "partsCount": "Number of parts",
+    "partName": "Part {{num}} name",
+    "partNamePlaceholder": "e.g. First half",
+    "defaultPartName": "Part {{num}}",
+    "parts": "Parts",
+    "reviewParts": "Scoring parts"
   },
   "scoring": {
     "team": "Team",
@@ -265,7 +276,14 @@
     "manageDraft": "Manage",
     "categoryBonus": "Category bonus point",
     "categoryBonusAwarded": "Bonus point awarded",
-    "categoryBonusRemoved": "Bonus point removed"
+    "categoryBonusRemoved": "Bonus point removed",
+    "viewParts": "By parts",
+    "viewCategories": "By categories",
+    "partTotal": "Part total",
+    "distributeHint": "Click a part to distribute points across categories",
+    "partMismatch": "Category sum ({{sum}}) doesn't match part total ({{total}})",
+    "expandPart": "Distribute points",
+    "collapsePart": "Hide categories"
   },
   "offline": {
     "pending": "pending",

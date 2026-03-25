@@ -259,7 +259,18 @@
     "prefillDescription": "Ova liga već ima kvizove. Možete preuzeti iste timove i kategorije iz poslednjeg kviza i izmeniti ih po želji.",
     "prefillApply": "Preuzmi",
     "prefillSkip": "Preskoči",
-    "prefillApplied": "Timovi i kategorije su preuzeti iz prethodnog kviza."
+    "prefillApplied": "Timovi i kategorije su preuzeti iz prethodnog kviza.",
+    "scoringMode": "Režim bodovanja",
+    "scoringPerCategory": "Po oblastima",
+    "scoringPerCategoryDesc": "Unosite poene za svaku oblast posebno.",
+    "scoringPerPart": "Po delovima",
+    "scoringPerPartDesc": "Prvo unesite ukupne poene po delovima, pa ih opcionalno rasporedite po oblastima.",
+    "partsCount": "Broj delova",
+    "partName": "Naziv dela {{num}}",
+    "partNamePlaceholder": "npr. Prvo poluvreme",
+    "defaultPartName": "Deo {{num}}",
+    "parts": "Delovi",
+    "reviewParts": "Delovi bodovanja"
   },
   "scoring": {
     "team": "Tim",
@@ -274,7 +285,14 @@
     "manageDraft": "Upravljaj",
     "categoryBonus": "Bonus poen za kategoriju",
     "categoryBonusAwarded": "Bonus poen dodeljen",
-    "categoryBonusRemoved": "Bonus poen uklonjen"
+    "categoryBonusRemoved": "Bonus poen uklonjen",
+    "viewParts": "Po delovima",
+    "viewCategories": "Po oblastima",
+    "partTotal": "Ukupno za deo",
+    "distributeHint": "Kliknite na deo da rasporedite poene po oblastima",
+    "partMismatch": "Zbir po oblastima ({{sum}}) se ne poklapa sa ukupnim za deo ({{total}})",
+    "expandPart": "Rasporedi poene",
+    "collapsePart": "Sakrij oblasti"
   },
   "offline": {
     "pending": "na čekanju",

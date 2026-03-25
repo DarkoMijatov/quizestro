@@ -18,12 +18,15 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Pencil,
   Crown,
   Zap,
   CopyCheck,
   Maximize2,
   Minimize2,
+  Layers,
 } from "lucide-react";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
@@ -35,6 +38,21 @@ interface QuizData {
   location: string | null;
   status: "draft" | "live" | "finished";
   organization_id: string;
+  scoring_mode: "per_category" | "per_part";
+}
+
+interface QuizPart {
+  id: string;
+  quiz_id: string;
+  part_number: number;
+  name: string;
+}
+
+interface PartScore {
+  id: string;
+  quiz_part_id: string;
+  quiz_team_id: string;
+  points: number;
 }
 
 interface QuizCategory {
@@ -97,11 +115,15 @@ export default function QuizDetailPage() {
   const [helpTypes, setHelpTypes] = useState<HelpType[]>([]);
   const [helpUsages, setHelpUsages] = useState<HelpUsage[]>([]);
   const [categoryBonuses, setCategoryBonuses] = useState<CategoryBonus[]>([]);
+  const [quizParts, setQuizParts] = useState<QuizPart[]>([]);
+  const [partScores, setPartScores] = useState<PartScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingAliasTeamId, setEditingAliasTeamId] = useState<string | null>(null);
   const [editingAliasValue, setEditingAliasValue] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
+  const [scoringView, setScoringView] = useState<"categories" | "parts">("categories");
+  const [expandedPart, setExpandedPart] = useState<string | null>(null);
   const scoringRef = useRef<HTMLDivElement>(null);
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
@@ -115,7 +137,7 @@ export default function QuizDetailPage() {
     if (!quizId || !currentOrg) return;
     setLoading(true);
 
-    const [quizRes, catRes, teamRes, scoreRes, helpTypeRes, helpUsageRes, catBonusRes] = await Promise.all([
+    const [quizRes, catRes, teamRes, scoreRes, helpTypeRes, helpUsageRes, catBonusRes, partsRes, partScoresRes] = await Promise.all([
       supabase.from("quizzes").select("*").eq("id", quizId).single(),
       supabase.from("quiz_categories").select("*, category:categories(name)").eq("quiz_id", quizId).order("sort_order"),
       supabase
@@ -127,15 +149,26 @@ export default function QuizDetailPage() {
       supabase.from("help_types").select("*").eq("organization_id", currentOrg.id),
       supabase.from("help_usages").select("*").eq("quiz_id", quizId),
       supabase.from("category_bonuses").select("*").eq("quiz_id", quizId),
+      supabase.from("quiz_parts").select("*").eq("quiz_id", quizId).order("part_number"),
+      supabase.from("part_scores").select("*").eq("quiz_id", quizId),
     ]);
 
-    setQuiz(quizRes.data as any);
+    const quizData = quizRes.data as any;
+    setQuiz(quizData);
     setCategories((catRes.data as any) || []);
     setTeams((teamRes.data as any) || []);
     setScores((scoreRes.data as any) || []);
     setHelpTypes((helpTypeRes.data as any) || []);
     setHelpUsages((helpUsageRes.data as any) || []);
     setCategoryBonuses((catBonusRes.data as any) || []);
+    setQuizParts((partsRes.data as any) || []);
+    setPartScores((partScoresRes.data as any) || []);
+
+    // Default view based on scoring mode
+    if (quizData?.scoring_mode === "per_part") {
+      setScoringView("parts");
+    }
+
     setLoading(false);
   }, [quizId, currentOrg?.id]);
 
@@ -387,7 +420,47 @@ export default function QuizDetailPage() {
     return total;
   };
 
-  const rankedTeams = [...teams].sort((a, b) => getTeamTotal(b.id) - getTeamTotal(a.id));
+  // Part-based helpers
+  const getPartScore = (teamId: string, partId: string) =>
+    partScores.find((ps) => ps.quiz_team_id === teamId && ps.quiz_part_id === partId);
+
+  const getPartCategories = (partIdx: number) => {
+    if (quizParts.length === 0) return [];
+    const catsPerPart = Math.ceil(categories.length / quizParts.length);
+    const start = partIdx * catsPerPart;
+    return categories.slice(start, start + catsPerPart);
+  };
+
+  const getPartCategorySum = (teamId: string, partIdx: number) => {
+    const partCats = getPartCategories(partIdx);
+    return partCats.reduce((sum, cat) => sum + getDisplayPoints(teamId, cat.id), 0);
+  };
+
+  const getTeamPartTotal = (teamId: string) => {
+    return quizParts.reduce((sum, part) => {
+      const ps = getPartScore(teamId, part.id);
+      return sum + (ps?.points || 0);
+    }, 0);
+  };
+
+  const updatePartScore = async (partScoreId: string, value: number) => {
+    setPartScores((prev) => prev.map((ps) => (ps.id === partScoreId ? { ...ps, points: value } : ps)));
+    if (isOnline) {
+      await supabase.from("part_scores").update({ points: value }).eq("id", partScoreId);
+    } else {
+      enqueueScoreUpdate(partScoreId, "points", value);
+    }
+  };
+
+  // Use part totals for ranking when in per_part mode, otherwise use category totals
+  const getTeamRankTotal = (teamId: string) => {
+    if (quiz?.scoring_mode === "per_part" && quizParts.length > 0) {
+      return getTeamPartTotal(teamId);
+    }
+    return getTeamTotal(teamId);
+  };
+
+  const rankedTeams = [...teams].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id));
 
   const handleExport = () => {
     if (!quiz) return;
@@ -407,7 +480,7 @@ export default function QuizDetailPage() {
           teamName,
           teamAlias: team.alias,
           scores: rowScores,
-          total: getTeamTotal(team.id),
+          total: getTeamRankTotal(team.id),
           rank: idx + 1,
         };
       }),
@@ -439,7 +512,7 @@ export default function QuizDetailPage() {
         await supabase
           .from("quiz_teams")
           .update({
-            total_points: getTeamTotal(team.id),
+            total_points: getTeamRankTotal(team.id),
             rank: i + 1,
           })
           .eq("id", team.id);
@@ -571,6 +644,17 @@ export default function QuizDetailPage() {
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-1">
               <Download className="h-4 w-4" /> {t("excel.export")}
             </Button>
+            {quiz.scoring_mode === "per_part" && quizParts.length > 0 && (
+              <Button
+                variant={scoringView === "parts" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setScoringView(scoringView === "parts" ? "categories" : "parts")}
+                className="gap-1"
+              >
+                <Layers className="h-4 w-4" />
+                {scoringView === "parts" ? t("scoring.viewCategories") : t("scoring.viewParts")}
+              </Button>
+            )}
             {canEdit && quiz.status === "draft" && (
               <Button onClick={() => updateQuizStatus("live")} className="gap-2">
                 <Play className="h-4 w-4" /> {t("scoring.goLive")}
@@ -597,6 +681,7 @@ export default function QuizDetailPage() {
             color: currentOrg?.branding_text_color || undefined,
           }}
         >
+        {scoringView === "categories" ? (
           <div style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
             {/* Header row */}
             <div
@@ -658,7 +743,7 @@ export default function QuizDetailPage() {
 
             <div className="flex flex-col">
               {rankedTeams.map((team, rowIdx) => {
-                const total = getTeamTotal(team.id);
+                const total = getTeamRankTotal(team.id);
                 const teamName = team.alias || (team.team as any)?.name || "";
 
                 return (
@@ -889,6 +974,254 @@ export default function QuizDetailPage() {
               })}
             </div>
           </div>
+        ) : (
+          /* Parts-based scoring view */
+          <div style={{ minWidth: `${140 + quizParts.length * 120 + 70}px` }}>
+            {/* Header row */}
+            <div
+              className="grid border-b-2 border-foreground/20 sticky top-0 z-10"
+              style={{
+                gridTemplateColumns: `140px ${quizParts.map(() => "1fr").join(" ")} 70px`,
+                backgroundColor: currentOrg?.branding_header_color || undefined,
+              }}
+            >
+              <div
+                className={cn(
+                  "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
+                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                )}
+                style={{ color: currentOrg?.branding_text_color || undefined }}
+              >
+                {t("scoring.team")}
+              </div>
+              {quizParts.map((part) => (
+                <div
+                  key={part.id}
+                  className={cn(
+                    "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors",
+                    sizeClass === "size-xs" ? "text-[9px]" : "text-[11px]",
+                    expandedPart === part.id && "bg-primary/10",
+                  )}
+                  style={{ color: currentOrg?.branding_text_color || undefined }}
+                  onClick={() => setExpandedPart(expandedPart === part.id ? null : part.id)}
+                >
+                  <span>{part.name}</span>
+                  {expandedPart === part.id ? (
+                    <ChevronUp className="h-3 w-3 mt-0.5 text-primary" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3 mt-0.5 text-muted-foreground" />
+                  )}
+                </div>
+              ))}
+              <div
+                className={cn(
+                  "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
+                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                )}
+                style={{ color: currentOrg?.branding_text_color || undefined }}
+              >
+                Σ
+              </div>
+            </div>
+
+            <div className="flex flex-col">
+              {rankedTeams.map((team, rowIdx) => {
+                const total = getTeamRankTotal(team.id);
+                const teamName = team.alias || (team.team as any)?.name || "";
+
+                return (
+                  <div
+                    key={team.id}
+                    className={cn(
+                      "grid border-b-2 border-foreground/20 last:border-0",
+                      rowIdx === 0 && "bg-primary/[0.04]",
+                    )}
+                    style={{
+                      gridTemplateColumns: `140px ${quizParts.map(() => "1fr").join(" ")} 70px`,
+                    }}
+                  >
+                    {/* Rank + Team */}
+                    <div className={cn("flex items-center gap-1.5", sizeClass === "size-xs" ? "p-0.5" : "p-1")}>
+                      <div
+                        className={cn(
+                          "flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
+                          sizeClass === "size-lg"
+                            ? "w-8 h-8 text-base"
+                            : sizeClass === "size-md"
+                              ? "w-7 h-7 text-sm"
+                              : sizeClass === "size-sm"
+                                ? "w-6 h-6 text-xs"
+                                : "w-5 h-5 text-[10px]",
+                        )}
+                      >
+                        {rowIdx + 1}
+                      </div>
+                      <p
+                        className={cn(
+                          "font-bold text-foreground break-words leading-tight",
+                          sizeClass === "size-lg"
+                            ? "text-lg"
+                            : sizeClass === "size-md"
+                              ? "text-md"
+                              : "text-[10px]",
+                        )}
+                      >
+                        {teamName}
+                      </p>
+                    </div>
+
+                    {/* Part scores */}
+                    {quizParts.map((part, partIdx) => {
+                      const ps = getPartScore(team.id, part.id);
+                      const catSum = getPartCategorySum(team.id, partIdx);
+                      const mismatch = ps && ps.points > 0 && catSum > 0 && Math.abs(catSum - ps.points) > 0.01;
+
+                      return (
+                        <div
+                          key={part.id}
+                          className="p-1 flex flex-col items-center justify-center border-l-2 border-foreground/20"
+                        >
+                          {canScore ? (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <input
+                                type="number"
+                                min={0}
+                                step={0.5}
+                                value={ps?.points ?? 0}
+                                onChange={(e) => ps && updatePartScore(ps.id, Number(e.target.value) || 0)}
+                                onFocus={(e) => e.target.select()}
+                                className={cn(
+                                  "w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15",
+                                  sizeClass === "size-lg"
+                                    ? "h-14 text-3xl"
+                                    : sizeClass === "size-md"
+                                      ? "h-10 text-2xl"
+                                      : sizeClass === "size-sm"
+                                        ? "h-8 text-xl"
+                                        : "h-6 text-base",
+                                )}
+                              />
+                              {mismatch && (
+                                <span className="text-[8px] text-destructive font-medium">
+                                  ≠ {catSum}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <p
+                              className={cn(
+                                "font-black text-foreground",
+                                sizeClass === "size-lg"
+                                  ? "text-3xl"
+                                  : sizeClass === "size-md"
+                                    ? "text-2xl"
+                                    : sizeClass === "size-sm"
+                                      ? "text-xl"
+                                      : "text-base",
+                              )}
+                            >
+                              {(ps?.points ?? 0) % 1 === 0 ? (ps?.points ?? 0) : (ps?.points ?? 0).toFixed(1)}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* Total */}
+                    <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
+                      <span
+                        className={cn(
+                          "font-black text-primary",
+                          sizeClass === "size-lg"
+                            ? "text-3xl"
+                            : sizeClass === "size-md"
+                              ? "text-2xl"
+                              : sizeClass === "size-sm"
+                                ? "text-xl"
+                                : "text-base",
+                        )}
+                      >
+                        {total % 1 === 0 ? total : total.toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Expanded part: show categories within that part */}
+            {expandedPart && (
+              <div className="border-t-2 border-primary/30 bg-primary/[0.02] p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold text-primary">
+                    {quizParts.find((p) => p.id === expandedPart)?.name} — {t("scoring.expandPart")}
+                  </h3>
+                  <Button variant="ghost" size="sm" onClick={() => setExpandedPart(null)} className="gap-1 text-xs">
+                    {t("scoring.collapsePart")}
+                  </Button>
+                </div>
+                {(() => {
+                  const partIdx = quizParts.findIndex((p) => p.id === expandedPart);
+                  const partCats = getPartCategories(partIdx);
+                  if (partCats.length === 0) return <p className="text-xs text-muted-foreground">No categories</p>;
+
+                  return (
+                    <div className="overflow-x-auto">
+                      <div style={{ minWidth: `${140 + partCats.length * 90 + 70}px` }}>
+                        {/* Category headers */}
+                        <div
+                          className="grid border-b border-foreground/10"
+                          style={{ gridTemplateColumns: `140px ${partCats.map(() => "1fr").join(" ")}` }}
+                        >
+                          <div className="p-1 text-xs font-semibold text-muted-foreground">{t("scoring.team")}</div>
+                          {partCats.map((cat) => (
+                            <div key={cat.id} className="p-1 text-[10px] font-semibold text-center text-muted-foreground border-l border-foreground/10">
+                              {(cat.category as any)?.name}
+                            </div>
+                          ))}
+                        </div>
+                        {/* Team rows */}
+                        {rankedTeams.map((team) => {
+                          const teamName = team.alias || (team.team as any)?.name || "";
+                          return (
+                            <div
+                              key={team.id}
+                              className="grid border-b border-foreground/10 last:border-0"
+                              style={{ gridTemplateColumns: `140px ${partCats.map(() => "1fr").join(" ")}` }}
+                            >
+                              <div className="p-1 text-xs font-medium truncate">{teamName}</div>
+                              {partCats.map((cat) => {
+                                const score = getScore(team.id, cat.id);
+                                const displayPts = getDisplayPoints(team.id, cat.id);
+                                return (
+                                  <div key={cat.id} className="p-1 border-l border-foreground/10">
+                                    {canScore ? (
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        step={0.5}
+                                        value={score?.points ?? 0}
+                                        onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
+                                        onFocus={(e) => e.target.select()}
+                                        className="w-full text-center font-bold text-sm bg-transparent border border-foreground/15 rounded focus:border-primary focus:outline-none h-7"
+                                      />
+                                    ) : (
+                                      <p className="text-sm font-bold text-center">{displayPts}</p>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
         </div>
       </div>
     </DashboardLayout>

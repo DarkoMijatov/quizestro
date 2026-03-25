@@ -35,6 +35,7 @@ import {
   X,
   Search,
   MapPin,
+  Layers,
 } from "lucide-react";
 import { parseQuizExcel, generateImportTemplate } from "@/lib/excelUtils";
 import { ImportExcelDialog } from "@/components/ImportExcelDialog";
@@ -90,6 +91,11 @@ export default function CreateQuizPage() {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
+
+  // Scoring mode
+  const [scoringMode, setScoringMode] = useState<"per_category" | "per_part">("per_category");
+  const [partsCount, setPartsCount] = useState(2);
+  const [partNames, setPartNames] = useState<string[]>(["", ""]);
 
   // Data
   const [categories, setCategories] = useState<Category[]>([]);
@@ -376,6 +382,7 @@ export default function CreateQuizPage() {
         league_id: selectedLeague || null,
         created_by: user.id,
         status: "draft",
+        scoring_mode: scoringMode,
       })
       .select()
       .single();
@@ -419,6 +426,33 @@ export default function CreateQuizPage() {
         }
       }
       await supabase.from("scores").insert(scoreInserts);
+
+      // Create parts and part_scores if scoring mode is per_part
+      if (scoringMode === "per_part") {
+        const partInserts = Array.from({ length: partsCount }, (_, i) => ({
+          quiz_id: quizId,
+          part_number: i,
+          name: partNames[i]?.trim() || t("quiz.defaultPartName", { num: i + 1 }),
+          organization_id: currentOrg.id,
+        }));
+        const { data: insertedParts } = await supabase.from("quiz_parts").insert(partInserts).select();
+
+        if (insertedParts) {
+          const partScoreInserts: any[] = [];
+          for (const qt of insertedTeams as any[]) {
+            for (const part of insertedParts as any[]) {
+              partScoreInserts.push({
+                quiz_id: quizId,
+                quiz_part_id: part.id,
+                quiz_team_id: qt.id,
+                points: 0,
+                organization_id: currentOrg.id,
+              });
+            }
+          }
+          await supabase.from("part_scores").insert(partScoreInserts);
+        }
+      }
     }
 
     toast({ title: "✓", description: t("quiz.created") });
@@ -828,6 +862,90 @@ export default function CreateQuizPage() {
                       {t("quiz.prefillApplied")}
                     </p>
                   )}
+
+                  {/* Scoring Mode */}
+                  <div className="space-y-3 pt-2 border-t border-border">
+                    <Label className="flex items-center gap-2">
+                      <Layers className="h-4 w-4 text-muted-foreground" />
+                      {t("quiz.scoringMode")}
+                    </Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setScoringMode("per_category")}
+                        className={cn(
+                          "rounded-lg border-2 p-3 text-left transition-colors",
+                          scoringMode === "per_category"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50",
+                        )}
+                      >
+                        <p className="text-sm font-medium">{t("quiz.scoringPerCategory")}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t("quiz.scoringPerCategoryDesc")}</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setScoringMode("per_part")}
+                        className={cn(
+                          "rounded-lg border-2 p-3 text-left transition-colors",
+                          scoringMode === "per_part"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50",
+                        )}
+                      >
+                        <p className="text-sm font-medium">{t("quiz.scoringPerPart")}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t("quiz.scoringPerPartDesc")}</p>
+                      </button>
+                    </div>
+
+                    {scoringMode === "per_part" && (
+                      <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+                        <div className="space-y-2">
+                          <Label>{t("quiz.partsCount")}</Label>
+                          <Select
+                            value={String(partsCount)}
+                            onValueChange={(v) => {
+                              const n = Number(v);
+                              setPartsCount(n);
+                              setPartNames((prev) => {
+                                const next = [...prev];
+                                while (next.length < n) next.push("");
+                                return next.slice(0, n);
+                              });
+                            }}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[2, 3, 4, 5, 6].map((n) => (
+                                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          {Array.from({ length: partsCount }, (_, i) => (
+                            <div key={i} className="space-y-1">
+                              <Label className="text-xs">{t("quiz.partName", { num: i + 1 })}</Label>
+                              <Input
+                                value={partNames[i] || ""}
+                                onChange={(e) => {
+                                  setPartNames((prev) => {
+                                    const next = [...prev];
+                                    next[i] = e.target.value;
+                                    return next;
+                                  });
+                                }}
+                                placeholder={t("quiz.partNamePlaceholder")}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -1107,6 +1225,25 @@ export default function CreateQuizPage() {
                       </div>
                     )}
                   </div>
+
+                  {scoringMode === "per_part" && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2">
+                        {t("quiz.reviewParts")} ({partsCount})
+                      </h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Array.from({ length: partsCount }, (_, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1 text-xs rounded-full bg-primary/10 px-2.5 py-1 text-primary"
+                          >
+                            <Layers className="h-3 w-3" />
+                            {partNames[i]?.trim() || t("quiz.defaultPartName", { num: i + 1 })}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <h4 className="text-sm font-semibold mb-2">
