@@ -27,7 +27,6 @@ import {
   Maximize2,
   Minimize2,
   Layers,
-  ArrowDownUp,
 } from "lucide-react";
 import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
@@ -496,6 +495,12 @@ export default function QuizDetailPage() {
 
   const rankedTeams = teams;
 
+  // Check if teams are already sorted by total descending
+  const isSortedByTotal = rankedTeams.every((team, idx) => {
+    if (idx === 0) return true;
+    return getTeamRankTotal(rankedTeams[idx - 1].id) >= getTeamRankTotal(team.id);
+  });
+
   const handleManualSort = () => {
     setTeams((prev) => [...prev].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id)));
   };
@@ -693,9 +698,11 @@ export default function QuizDetailPage() {
                 onChanged={fetchAll}
               />
             )}
-            <Button variant="outline" size="sm" onClick={handleManualSort} className="gap-1" title={t("scoring.sortByTotal")}>
-              <ArrowDownUp className="h-4 w-4" /> {t("scoring.sortByTotal")}
-            </Button>
+            {!isSortedByTotal && (
+              <Button variant="outline" size="sm" onClick={handleManualSort} className="gap-1">
+                <ChevronDown className="h-4 w-4" /> {t("scoring.sort")}
+              </Button>
+            )}
             
             <Button variant="outline" size="sm" onClick={toggleFullscreen} className="gap-1">
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -769,8 +776,8 @@ export default function QuizDetailPage() {
                 <div
                   key={cat.id}
                   className={cn(
-                    "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center",
-                    sizeClass === "size-xs" ? "text-[9px]" : "text-[11px]",
+                    "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0",
+                    sizeClass === "size-xs" ? "text-[8px]" : sizeClass === "size-sm" ? "text-[9px]" : "text-[10px]",
                   )}
                   style={{ color: currentOrg?.branding_text_color || undefined }}
                 >
@@ -1061,8 +1068,8 @@ export default function QuizDetailPage() {
                     <div
                       key={part.id}
                       className={cn(
-                        "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors",
-                        sizeClass === "size-xs" ? "text-[9px]" : "text-[11px]",
+                        "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors overflow-hidden min-w-0",
+                        sizeClass === "size-xs" ? "text-[8px]" : sizeClass === "size-sm" ? "text-[9px]" : "text-[10px]",
                         expandedPart === part.id && "bg-primary/10",
                       )}
                       style={{ color: currentOrg?.branding_text_color || undefined }}

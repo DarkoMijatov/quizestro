@@ -291,6 +291,7 @@
     "collapsePart": "Hide categories",
     "assignPart": "Part",
     "sortByTotal": "Sort by total",
+    "sort": "Sort",
     "autoSort": "Auto-sort leaderboard",
     "autoSortDescription": "Automatically sort teams by total points when scores change."
   },
