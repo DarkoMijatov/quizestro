@@ -261,7 +261,11 @@
     "partNamePlaceholder": "e.g. First half",
     "defaultPartName": "Part {{num}}",
     "parts": "Parts",
-    "reviewParts": "Scoring parts"
+    "reviewParts": "Scoring parts",
+    "assignCategoryToPart": "Assign categories to parts",
+    "assignCategoryToPartDesc": "Select which part each category belongs to.",
+    "unassigned": "Unassigned",
+    "partLabel": "Part: {{name}}"
   },
   "scoring": {
     "team": "Team",
