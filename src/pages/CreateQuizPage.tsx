@@ -35,6 +35,7 @@ import {
   X,
   Search,
   MapPin,
+  Layers,
 } from "lucide-react";
 import { parseQuizExcel, generateImportTemplate } from "@/lib/excelUtils";
 import { ImportExcelDialog } from "@/components/ImportExcelDialog";
