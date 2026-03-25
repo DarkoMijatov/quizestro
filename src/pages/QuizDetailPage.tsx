@@ -1319,13 +1319,13 @@ export default function QuizDetailPage() {
                                               {jokerType && (
                                                 <button
                                                   onClick={() => toggleHelp(team.id, cat.id, jokerType)}
-                                                  disabled={!!jokerDisabledElsewhere}
+                                                  disabled={jokerDisabled}
                                                   tabIndex={-1}
                                                   className={cn(
                                                     "w-5 h-4 rounded text-[8px] font-black border transition-colors",
                                                     hasJoker
                                                       ? "bg-primary text-primary-foreground border-primary"
-                                                      : jokerDisabledElsewhere
+                                                      : jokerDisabled
                                                         ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
                                                         : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
                                                   )}
@@ -1336,13 +1336,13 @@ export default function QuizDetailPage() {
                                               {markerType && (
                                                 <button
                                                   onClick={() => toggleHelp(team.id, cat.id, markerType)}
-                                                  disabled={!!markerDisabledElsewhere}
+                                                  disabled={markerDisabled}
                                                   tabIndex={-1}
                                                   className={cn(
                                                     "w-5 h-4 rounded text-[8px] font-black border transition-colors",
                                                     hasMarker
                                                       ? "bg-accent text-accent-foreground border-accent"
-                                                      : markerDisabledElsewhere
+                                                      : markerDisabled
                                                         ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
                                                         : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
                                                   )}
