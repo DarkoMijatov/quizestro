@@ -772,6 +772,11 @@ export default function QuizDetailPage() {
                                         : "h-6 text-base",
                                 )}
                               />
+                              {(hasJoker || hasBonusPt) && (
+                                <span className="text-[9px] font-bold text-primary leading-none">
+                                  = {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
+                                </span>
+                              )}
 
                               {/* Help initials + category bonus */}
                               <div className="flex items-center gap-0.5">
