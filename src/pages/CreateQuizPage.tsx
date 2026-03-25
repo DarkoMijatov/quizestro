@@ -96,6 +96,8 @@ export default function CreateQuizPage() {
   const [scoringMode, setScoringMode] = useState<"per_category" | "per_part">("per_category");
   const [partsCount, setPartsCount] = useState(2);
   const [partNames, setPartNames] = useState<string[]>(["", ""]);
+  // Map categoryId -> partIndex for manual assignment
+  const [categoryPartAssignment, setCategoryPartAssignment] = useState<Record<string, number>>({});
 
   // Data
   const [categories, setCategories] = useState<Category[]>([]);
