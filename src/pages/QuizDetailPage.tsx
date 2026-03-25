@@ -127,9 +127,6 @@ export default function QuizDetailPage() {
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
   const [scoringView, setScoringView] = useState<"categories" | "parts">("categories");
   const [expandedPart, setExpandedPart] = useState<string | null>(null);
-  const [autoSort, setAutoSort] = useState(() => {
-    try { return localStorage.getItem("quiz_auto_sort") === "true"; } catch { return false; }
-  });
   const [manualSorted, setManualSorted] = useState(false);
   const scoringRef = useRef<HTMLDivElement>(null);
 
