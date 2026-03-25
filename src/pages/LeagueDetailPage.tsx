@@ -137,8 +137,8 @@ export default function LeagueDetailPage() {
             teamId: tid,
             teamName: teamNameMap.get(tid) || '?',
             quizzes: s.quizzes,
-            totalPoints: Math.round(s.totalPoints * 10) / 10,
-            avgPoints: s.quizzes > 0 ? Math.round((s.totalPoints / s.quizzes) * 10) / 10 : 0,
+            totalPoints: Math.round(s.totalPoints * 100) / 100,
+            avgPoints: s.quizzes > 0 ? Math.round((s.totalPoints / s.quizzes) * 100) / 100 : 0,
             wins: s.wins,
           }))
           .sort((a, b) => b.totalPoints - a.totalPoints)

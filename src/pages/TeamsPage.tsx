@@ -152,7 +152,7 @@ export default function TeamsPage() {
         ...t,
         participations: agg?.count || 0,
         wins: agg?.wins || 0,
-        avgPoints: agg && agg.count > 0 ? Math.round((agg.totalPts / agg.count) * 10) / 10 : null,
+        avgPoints: agg && agg.count > 0 ? Math.round((agg.totalPts / agg.count) * 100) / 100 : null,
       };
     }));
     setLoading(false);
