@@ -1050,6 +1050,8 @@ export default function QuizDetailPage() {
               })}
             </div>
           </div>
+            );
+          })()
         ) : (
           /* Parts-based scoring view */
           <div className="min-h-full" style={{ minWidth: `${140 + quizParts.length * 120 + 70}px` }}>
