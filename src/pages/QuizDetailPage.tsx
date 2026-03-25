@@ -496,6 +496,12 @@ export default function QuizDetailPage() {
 
   const rankedTeams = teams;
 
+  // Check if teams are already sorted by total descending
+  const isSortedByTotal = rankedTeams.every((team, idx) => {
+    if (idx === 0) return true;
+    return getTeamRankTotal(rankedTeams[idx - 1].id) >= getTeamRankTotal(team.id);
+  });
+
   const handleManualSort = () => {
     setTeams((prev) => [...prev].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id)));
   };
