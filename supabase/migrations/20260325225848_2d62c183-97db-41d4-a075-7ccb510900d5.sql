@@ -1,0 +1,1 @@
+ALTER TABLE public.organizations ADD COLUMN auto_sort_scores boolean NOT NULL DEFAULT false;

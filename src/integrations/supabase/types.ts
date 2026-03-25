@@ -729,6 +729,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          auto_sort_scores: boolean
           branding_bg_color: string | null
           branding_color: string | null
           branding_header_color: string | null
@@ -756,6 +757,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_sort_scores?: boolean
           branding_bg_color?: string | null
           branding_color?: string | null
           branding_header_color?: string | null
@@ -783,6 +785,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_sort_scores?: boolean
           branding_bg_color?: string | null
           branding_color?: string | null
           branding_header_color?: string | null
