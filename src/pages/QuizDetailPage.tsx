@@ -480,7 +480,7 @@ export default function QuizDetailPage() {
           teamName,
           teamAlias: team.alias,
           scores: rowScores,
-          total: getTeamTotal(team.id),
+          total: getTeamRankTotal(team.id),
           rank: idx + 1,
         };
       }),
