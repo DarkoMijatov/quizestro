@@ -681,6 +681,7 @@ export default function QuizDetailPage() {
             color: currentOrg?.branding_text_color || undefined,
           }}
         >
+        {scoringView === "categories" ? (
           <div style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
             {/* Header row */}
             <div
