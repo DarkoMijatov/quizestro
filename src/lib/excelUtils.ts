@@ -3,7 +3,8 @@ import * as XLSX from 'xlsx';
 interface ExportRow {
   teamName: string;
   teamAlias: string | null;
-  scores: Record<string, number>; // categoryName -> points
+  scores: Record<string, number>; // categoryName -> effective points (with joker/bonus)
+  helpUsages?: Record<string, string[]>; // categoryName -> ['Joker', 'Bonus', etc.]
   total: number;
   rank: number;
 }
