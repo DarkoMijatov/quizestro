@@ -1014,58 +1014,22 @@ export default function QuizDetailPage() {
         ) : (
           /* Parts-based scoring view */
           (() => {
-            const partsUnits = quizParts.length + 3;
-            const partsColTemplate = `2fr ${quizParts.map(() => "1fr").join(" ")} 1fr`;
+            const partsColTemplate = `minmax(0,2fr) ${quizParts.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
+            const partsRowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
+
             return (
-          <div className="min-h-full flex flex-col" style={{ minWidth: `${partsUnits * 60}px` }}>
+          <div className="min-h-full w-full flex flex-col">
             {/* Header row */}
             <div
-              className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
+              className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
               style={{
                 gridTemplateColumns: partsColTemplate,
+                minHeight: partsRowHeight,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
-              <div
-                className={cn(
-                  "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
-                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
-                )}
-                style={{ color: currentOrg?.branding_text_color || undefined }}
-              >
-                {t("scoring.team")}
-              </div>
-              {quizParts.map((part) => (
-                <div
-                  key={part.id}
-                  className={cn(
-                    "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors",
-                    sizeClass === "size-xs" ? "text-[9px]" : "text-[11px]",
-                    expandedPart === part.id && "bg-primary/10",
-                  )}
-                  style={{ color: currentOrg?.branding_text_color || undefined }}
-                  onClick={() => setExpandedPart(expandedPart === part.id ? null : part.id)}
-                >
-                  <span>{part.name}</span>
-                  {expandedPart === part.id ? (
-                    <ChevronUp className="h-3 w-3 mt-0.5 text-primary" />
-                  ) : (
-                    <ChevronDown className="h-3 w-3 mt-0.5 text-muted-foreground" />
-                  )}
-                </div>
-              ))}
-              <div
-                className={cn(
-                  "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
-                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
-                )}
-                style={{ color: currentOrg?.branding_text_color || undefined }}
-              >
-                Σ
-              </div>
-            </div>
-
-            <div className="flex flex-col flex-1">
+...
+            <div className="flex flex-col flex-1 w-full">
               {rankedTeams.map((team, rowIdx) => {
                 const total = getTeamRankTotal(team.id);
                 const teamName = team.alias || (team.team as any)?.name || "";
@@ -1074,11 +1038,12 @@ export default function QuizDetailPage() {
                   <div
                     key={team.id}
                     className={cn(
-                      "grid border-b-2 border-foreground/20 last:border-0 flex-1",
+                      "grid w-full border-b-2 border-foreground/20 last:border-0",
                       rowIdx === 0 && "bg-primary/[0.04]",
                     )}
                     style={{
                       gridTemplateColumns: partsColTemplate,
+                      minHeight: partsRowHeight,
                     }}
                   >
                     {/* Rank + Team */}
