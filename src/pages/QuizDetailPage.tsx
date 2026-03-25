@@ -693,7 +693,7 @@ export default function QuizDetailPage() {
           <div style={{ minWidth: `${140 + categories.length * 90 + 70}px` }}>
             {/* Header row */}
             <div
-              className="grid border-b-2 border-foreground/20 sticky top-0 z-10"
+              className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
               style={{
                 gridTemplateColumns: `140px ${categories.map(() => "1fr").join(" ")} 70px`,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
@@ -987,7 +987,7 @@ export default function QuizDetailPage() {
           <div style={{ minWidth: `${140 + quizParts.length * 120 + 70}px` }}>
             {/* Header row */}
             <div
-              className="grid border-b-2 border-foreground/20 sticky top-0 z-10"
+              className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
               style={{
                 gridTemplateColumns: `140px ${quizParts.map(() => "1fr").join(" ")} 70px`,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
