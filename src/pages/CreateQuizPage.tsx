@@ -1226,6 +1226,24 @@ export default function CreateQuizPage() {
                     )}
                   </div>
 
+                  {scoringMode === "per_part" && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2">
+                        {t("quiz.reviewParts")} ({partsCount})
+                      </h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Array.from({ length: partsCount }, (_, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1 text-xs rounded-full bg-primary/10 px-2.5 py-1 text-primary"
+                          >
+                            <Layers className="h-3 w-3" />
+                            {partNames[i]?.trim() || t("quiz.defaultPartName", { num: i + 1 })}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
                   <div>
                     <h4 className="text-sm font-semibold mb-2">
                       {t("quiz.reviewCategories")} ({selectedCats.length})
