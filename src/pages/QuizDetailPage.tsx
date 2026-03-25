@@ -756,14 +756,11 @@ export default function QuizDetailPage() {
                                 type="number"
                                 min={0}
                                 step={0.5}
-                                value={
-                                  hasJoker || hasBonusPt
-                                    ? displayPts % 1 === 0
-                                      ? displayPts
-                                      : displayPts.toFixed(1)
-                                    : (score?.points ?? 0)
-                                }
+                                value={score?.points ?? 0}
                                 onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
+                                onFocus={(e) => e.target.select()}
+                                onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
+                                tabIndex={rowIdx * colCount + colIdx + 1}
                                 onFocus={(e) => e.target.select()}
                                 onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                 tabIndex={rowIdx * colCount + colIdx + 1}
