@@ -1056,7 +1056,7 @@ export default function QuizDetailPage() {
           </div>
         ) : (
           /* Parts-based scoring view */
-          <div style={{ minWidth: `${140 + quizParts.length * 120 + 70}px` }}>
+          <div className="min-h-full" style={{ minWidth: `${140 + quizParts.length * 120 + 70}px` }}>
             {/* Header row */}
             <div
               className="grid border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
