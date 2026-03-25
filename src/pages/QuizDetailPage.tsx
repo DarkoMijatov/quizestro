@@ -1068,8 +1068,8 @@ export default function QuizDetailPage() {
                     <div
                       key={part.id}
                       className={cn(
-                        "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors",
-                        sizeClass === "size-xs" ? "text-[9px]" : "text-[11px]",
+                        "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors overflow-hidden min-w-0",
+                        sizeClass === "size-xs" ? "text-[8px]" : sizeClass === "size-sm" ? "text-[9px]" : "text-[10px]",
                         expandedPart === part.id && "bg-primary/10",
                       )}
                       style={{ color: currentOrg?.branding_text_color || undefined }}
