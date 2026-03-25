@@ -134,7 +134,7 @@ export default function QuizDetailPage() {
     if (!quizId || !currentOrg) return;
     setLoading(true);
 
-    const [quizRes, catRes, teamRes, scoreRes, helpTypeRes, helpUsageRes, catBonusRes] = await Promise.all([
+    const [quizRes, catRes, teamRes, scoreRes, helpTypeRes, helpUsageRes, catBonusRes, partsRes, partScoresRes] = await Promise.all([
       supabase.from("quizzes").select("*").eq("id", quizId).single(),
       supabase.from("quiz_categories").select("*, category:categories(name)").eq("quiz_id", quizId).order("sort_order"),
       supabase
@@ -146,15 +146,26 @@ export default function QuizDetailPage() {
       supabase.from("help_types").select("*").eq("organization_id", currentOrg.id),
       supabase.from("help_usages").select("*").eq("quiz_id", quizId),
       supabase.from("category_bonuses").select("*").eq("quiz_id", quizId),
+      supabase.from("quiz_parts").select("*").eq("quiz_id", quizId).order("part_number"),
+      supabase.from("part_scores").select("*").eq("quiz_id", quizId),
     ]);
 
-    setQuiz(quizRes.data as any);
+    const quizData = quizRes.data as any;
+    setQuiz(quizData);
     setCategories((catRes.data as any) || []);
     setTeams((teamRes.data as any) || []);
     setScores((scoreRes.data as any) || []);
     setHelpTypes((helpTypeRes.data as any) || []);
     setHelpUsages((helpUsageRes.data as any) || []);
     setCategoryBonuses((catBonusRes.data as any) || []);
+    setQuizParts((partsRes.data as any) || []);
+    setPartScores((partScoresRes.data as any) || []);
+
+    // Default view based on scoring mode
+    if (quizData?.scoring_mode === "per_part") {
+      setScoringView("parts");
+    }
+
     setLoading(false);
   }, [quizId, currentOrg?.id]);
 
