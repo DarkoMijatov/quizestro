@@ -497,6 +497,18 @@ export default function QuizDetailPage() {
 
   const handleExport = () => {
     if (!quiz) return;
+    // Build help info per team+category
+    const helpInfo: Record<string, string[]> = {};
+    for (const team of rankedTeams) {
+      for (const cat of categories) {
+        const key = `${team.id}-${cat.id}`;
+        const tags: string[] = [];
+        if (jokerType && getHelpUsage(team.id, cat.id, jokerType.id)) tags.push("Joker");
+        if (markerType && getHelpUsage(team.id, cat.id, markerType.id)) tags.push("DC");
+        if (hasCategoryBonus(team.id, cat.id)) tags.push("Bonus");
+        if (tags.length > 0) helpInfo[key] = tags;
+      }
+    }
     const exportData = {
       quizName: quiz.name,
       quizDate: quiz.date,
@@ -504,15 +516,18 @@ export default function QuizDetailPage() {
       rows: rankedTeams.map((team, idx) => {
         const teamName = (team.team as any)?.name || "";
         const rowScores: Record<string, number> = {};
+        const rowHelps: Record<string, string[]> = {};
         for (const cat of categories) {
           const catName = (cat.category as any)?.name || cat.category_id;
-          const score = getScore(team.id, cat.id);
-          rowScores[catName] = score?.points ?? 0;
+          rowScores[catName] = getDisplayPoints(team.id, cat.id);
+          const key = `${team.id}-${cat.id}`;
+          if (helpInfo[key]) rowHelps[catName] = helpInfo[key];
         }
         return {
           teamName,
           teamAlias: team.alias,
           scores: rowScores,
+          helpUsages: rowHelps,
           total: getTeamRankTotal(team.id),
           rank: idx + 1,
         };

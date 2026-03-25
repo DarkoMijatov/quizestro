@@ -3,7 +3,8 @@ import * as XLSX from 'xlsx';
 interface ExportRow {
   teamName: string;
   teamAlias: string | null;
-  scores: Record<string, number>; // categoryName -> points
+  scores: Record<string, number>; // categoryName -> effective points (with joker/bonus)
+  helpUsages?: Record<string, string[]>; // categoryName -> ['Joker', 'Bonus', etc.]
   total: number;
   rank: number;
 }
@@ -35,7 +36,14 @@ export function exportQuizToExcel(data: ExportData) {
       row.teamAlias || '',
     ];
     for (const cat of data.categories) {
-      scoreRow.push(row.scores[cat] ?? 0);
+      const pts = row.scores[cat] ?? 0;
+      const helps = row.helpUsages?.[cat];
+      if (helps && helps.length > 0) {
+        // Show points with help indicator, e.g. "12 (Joker)"
+        scoreRow.push(`${pts % 1 === 0 ? pts : pts.toFixed(1)} (${helps.join(', ')})`);
+      } else {
+        scoreRow.push(pts);
+      }
     }
     scoreRow.push(row.total);
     wsData.push(scoreRow);
