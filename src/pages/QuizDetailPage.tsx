@@ -883,10 +883,14 @@ export default function QuizDetailPage() {
                       const catBonusExisting = getCategoryBonus(cat.id);
                       const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
 
-                      // Disable help if team already used it in another category
+                      // Disable help if team already used it in another category OR if the other mutual-exclusive help is active in this cell
                       const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
                       const markerDisabledElsewhere =
                         markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
+                      const jokerDisabledByMarker = jokerType && !hasJoker && !!hasMarker;
+                      const markerDisabledByJoker = markerType && !hasMarker && !!hasJoker;
+                      const jokerDisabled = !!jokerDisabledElsewhere || !!jokerDisabledByMarker;
+                      const markerDisabled = !!markerDisabledElsewhere || !!markerDisabledByJoker;
 
                       return (
                         <div
