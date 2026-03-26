@@ -3,16 +3,10 @@
 import * as React from 'npm:react@18.3.1'
 
 import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Text,
+  Body, Button, Container, Head, Heading, Html, Link, Preview, Text, Hr,
 } from 'npm:@react-email/components@0.0.22'
+
+const SITE_NAME = "Quizestro"
 
 interface SignupEmailProps {
   siteName: string
@@ -27,32 +21,33 @@ export const SignupEmail = ({
   recipient,
   confirmationUrl,
 }: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="sr" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>Potvrdite vašu email adresu za {siteName || SITE_NAME}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
+        <Text style={logo}>🏆 {siteName || SITE_NAME}</Text>
+        <Hr style={hr} />
+        <Heading style={h1}>Potvrdite vašu email adresu</Heading>
         <Text style={text}>
-          Thanks for signing up for{' '}
+          Hvala vam što ste se registrovali na{' '}
           <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
+            <strong>{siteName || SITE_NAME}</strong>
+          </Link>!
         </Text>
         <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
+          Potvrdite vašu email adresu ({' '}
+          <Link href={`mailto:${recipient}`} style={link}>{recipient}</Link>
+          ) klikom na dugme ispod:
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Verify Email
+          Potvrdi email
         </Button>
-        <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
+        <Text style={hint}>
+          Ako niste kreirali nalog, možete slobodno ignorisati ovaj email.
         </Text>
+        <Hr style={hr} />
+        <Text style={footer}>© {new Date().getFullYear()} {siteName || SITE_NAME}</Text>
       </Container>
     </Body>
   </Html>
@@ -60,27 +55,22 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
+const main = { backgroundColor: '#ffffff', fontFamily: "'Space Grotesk', Arial, sans-serif" }
+const container = { padding: '32px 24px', maxWidth: '560px', margin: '0 auto' }
+const logo = { fontSize: '20px', fontWeight: '700' as const, color: '#e69500', margin: '0 0 16px' }
+const hr = { borderColor: '#e4e4e7', margin: '24px 0' }
+const h1 = { fontSize: '22px', fontWeight: '700' as const, color: '#1a1a2e', margin: '0 0 16px' }
+const text = { fontSize: '15px', color: '#3f3f46', lineHeight: '1.6', margin: '0 0 20px' }
 const link = { color: 'inherit', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
+  backgroundColor: '#e69500',
+  color: '#1a1a2e',
+  padding: '12px 32px',
   borderRadius: '8px',
-  padding: '12px 20px',
   textDecoration: 'none',
+  fontWeight: '700' as const,
+  fontSize: '15px',
+  display: 'inline-block' as const,
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const hint = { fontSize: '13px', color: '#a1a1aa', lineHeight: '1.5', margin: '24px 0 0' }
+const footer = { fontSize: '12px', color: '#a1a1aa', textAlign: 'center' as const, margin: '0' }
