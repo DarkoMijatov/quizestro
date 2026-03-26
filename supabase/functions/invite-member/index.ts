@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      sendInviteEmail(email).catch(() => {});
+      await sendInviteEmail(email);
 
       return new Response(JSON.stringify({ status: "added", email }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      sendInviteEmail(email).catch(() => {});
+      await sendInviteEmail(email);
 
       return new Response(JSON.stringify({ status: "invited", email }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
