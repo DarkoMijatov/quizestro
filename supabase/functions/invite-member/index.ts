@@ -66,21 +66,25 @@ Deno.serve(async (req) => {
     const appUrl = Deno.env.get("APP_URL") || "https://quizestro.com";
     const inviteUrl = `${appUrl}/register`;
 
-    // Send invite email via transactional email system (fire-and-forget)
+    // Send invite email via transactional email system
     const sendInviteEmail = async (toEmail: string) => {
       try {
-        await adminClient.functions.invoke("send-transactional-email", {
+        const { data, error } = await adminClient.functions.invoke("send-transactional-email", {
           body: {
             templateName: "organization-invite",
             recipientEmail: toEmail,
-            idempotencyKey: `org-invite-${organization_id}-${toEmail.toLowerCase()}`,
+            idempotencyKey: `org-invite-${organization_id}-${toEmail.toLowerCase()}-${Date.now()}`,
             templateData: {
               organizationName: orgName,
               inviteUrl,
             },
           },
         });
-        console.log(`Invite email queued for ${toEmail}`);
+        if (error) {
+          console.error(`Failed to queue invite email for ${toEmail}:`, error);
+        } else {
+          console.log(`Invite email queued for ${toEmail}`, data);
+        }
       } catch (err) {
         console.error(`Failed to queue invite email for ${toEmail}:`, (err as Error).message);
       }
