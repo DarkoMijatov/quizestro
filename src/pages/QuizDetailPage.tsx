@@ -1025,24 +1025,28 @@ export default function QuizDetailPage() {
         ) : (
           /* Parts-based scoring view */
           (() => {
+            const partsTotalCols = quizParts.length + 2;
             const partsColTemplate = `minmax(0,2fr) ${quizParts.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
             const partsRowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
+            const partsHeaderFont = partsTotalCols <= 5 ? "text-sm" : partsTotalCols <= 8 ? "text-xs" : "text-[10px]";
+            const partsTeamFont = partsTotalCols <= 5 ? "text-base" : partsTotalCols <= 8 ? "text-sm" : "text-xs";
+            const partsScoreFont = partsTotalCols <= 5 ? "text-3xl" : partsTotalCols <= 8 ? "text-2xl" : partsTotalCols <= 12 ? "text-xl" : "text-base";
 
             return (
-              <div className="min-h-full w-full flex flex-col">
+              <div className="h-full w-full flex flex-col">
                 {/* Header row */}
                 <div
-                  className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
+                  className="grid w-full border-b-2 border-foreground/20 z-10 bg-card"
                   style={{
                     gridTemplateColumns: partsColTemplate,
-                    minHeight: partsRowHeight,
+                    height: partsRowHeight,
                     backgroundColor: currentOrg?.branding_header_color || undefined,
                   }}
                 >
                   <div
                     className={cn(
-                      "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
-                      sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                      "p-1 font-bold uppercase tracking-wide flex items-center justify-center text-center overflow-hidden",
+                      partsHeaderFont,
                     )}
                     style={{ color: currentOrg?.branding_text_color || undefined }}
                   >
@@ -1052,8 +1056,8 @@ export default function QuizDetailPage() {
                     <div
                       key={part.id}
                       className={cn(
-                        "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors overflow-hidden min-w-0",
-                        sizeClass === "size-xs" ? "text-[8px]" : sizeClass === "size-sm" ? "text-[9px]" : "text-[10px]",
+                        "p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors overflow-hidden min-w-0",
+                        partsHeaderFont,
                         expandedPart === part.id && "bg-primary/10",
                       )}
                       style={{ color: currentOrg?.branding_text_color || undefined }}
@@ -1069,8 +1073,8 @@ export default function QuizDetailPage() {
                   ))}
                   <div
                     className={cn(
-                      "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
-                      sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                      "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center overflow-hidden",
+                      partsHeaderFont,
                     )}
                     style={{ color: currentOrg?.branding_text_color || undefined }}
                   >
@@ -1078,7 +1082,7 @@ export default function QuizDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col flex-1 w-full">
+                <div className="flex flex-col flex-1 w-full overflow-hidden">
                   {rankedTeams.map((team, rowIdx) => {
                     const total = getTeamRankTotal(team.id);
                     const teamName = team.alias || (team.team as any)?.name || "";
@@ -1087,48 +1091,38 @@ export default function QuizDetailPage() {
                       <div
                         key={team.id}
                         className={cn(
-                          "grid w-full border-b-2 border-foreground/20 last:border-0",
+                          "grid w-full border-b-2 border-foreground/20 last:border-0 overflow-hidden",
                           rowIdx === 0 && "bg-primary/[0.04]",
                         )}
                         style={{
                           gridTemplateColumns: partsColTemplate,
-                          minHeight: partsRowHeight,
+                          height: partsRowHeight,
                         }}
                       >
                         {/* Rank + Team */}
-                        <div className={cn("flex items-center gap-1.5", sizeClass === "size-xs" ? "p-0.5" : "p-1")}>
+                        <div className="flex items-center gap-1 p-0.5 overflow-hidden">
                           <div
                             className={cn(
                               "flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
-                              sizeClass === "size-lg"
-                                ? "w-8 h-8 text-base"
-                                : sizeClass === "size-md"
-                                  ? "w-7 h-7 text-sm"
-                                  : sizeClass === "size-sm"
-                                    ? "w-6 h-6 text-xs"
-                                    : "w-5 h-5 text-[10px]",
+                              teamCount <= 10 ? "w-6 h-6 text-xs" : "w-5 h-5 text-[10px]",
                             )}
                           >
                             {rowIdx + 1}
                           </div>
-                          <div className="min-w-0 flex-1 flex items-center gap-1 flex-wrap">
+                          <div className="min-w-0 flex-1 flex items-center gap-0.5 overflow-hidden">
                             <p
                               className={cn(
-                                "font-bold text-foreground break-words leading-tight",
-                                sizeClass === "size-lg"
-                                  ? "text-lg"
-                                  : sizeClass === "size-md"
-                                    ? "text-md"
-                                    : "text-[10px]",
+                                "font-bold text-foreground truncate leading-tight",
+                                partsTeamFont,
                               )}
                             >
                               {teamName}
                             </p>
                             {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
-                              <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                              <Zap className="text-primary flex-shrink-0 h-3 w-3" />
                             )}
                             {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
-                              <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                              <CopyCheck className="text-accent-foreground flex-shrink-0 h-3 w-3" />
                             )}
                           </div>
                         </div>
@@ -1142,10 +1136,10 @@ export default function QuizDetailPage() {
                           return (
                             <div
                               key={part.id}
-                              className="p-1 flex flex-col items-center justify-center border-l-2 border-foreground/20"
+                              className="flex items-center justify-center border-l-2 border-foreground/20 overflow-hidden"
                             >
                               {canScore ? (
-                                <div className="flex flex-col items-center gap-0.5">
+                                <div className="flex flex-col items-center justify-center w-full h-full px-0.5">
                                   <input
                                     type="number"
                                     min={0}
@@ -1154,14 +1148,8 @@ export default function QuizDetailPage() {
                                     onChange={(e) => ps && updatePartScore(ps.id, Number(e.target.value) || 0)}
                                     onFocus={(e) => e.target.select()}
                                     className={cn(
-                                      "w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15",
-                                      sizeClass === "size-lg"
-                                        ? "h-14 text-3xl"
-                                        : sizeClass === "size-md"
-                                          ? "h-10 text-2xl"
-                                          : sizeClass === "size-sm"
-                                            ? "h-8 text-xl"
-                                            : "h-6 text-base",
+                                      "w-full text-center font-black bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-colors text-foreground",
+                                      partsScoreFont,
                                     )}
                                   />
                                   {mismatch && (
@@ -1174,13 +1162,7 @@ export default function QuizDetailPage() {
                                 <p
                                   className={cn(
                                     "font-black text-foreground",
-                                    sizeClass === "size-lg"
-                                      ? "text-3xl"
-                                      : sizeClass === "size-md"
-                                        ? "text-2xl"
-                                        : sizeClass === "size-sm"
-                                          ? "text-xl"
-                                          : "text-base",
+                                    partsScoreFont,
                                   )}
                                 >
                                   {(ps?.points ?? 0) % 1 === 0 ? (ps?.points ?? 0) : (ps?.points ?? 0).toFixed(1)}
@@ -1191,17 +1173,11 @@ export default function QuizDetailPage() {
                         })}
 
                         {/* Total */}
-                        <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
+                        <div className="flex items-center justify-center border-l-2 border-foreground/20 overflow-hidden">
                           <span
                             className={cn(
                               "font-black text-primary",
-                              sizeClass === "size-lg"
-                                ? "text-3xl"
-                                : sizeClass === "size-md"
-                                  ? "text-2xl"
-                                  : sizeClass === "size-sm"
-                                    ? "text-xl"
-                                    : "text-base",
+                              partsScoreFont,
                             )}
                           >
                             {total % 1 === 0 ? total : total.toFixed(1)}
