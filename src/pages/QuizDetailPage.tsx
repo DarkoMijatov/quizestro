@@ -817,28 +817,22 @@ export default function QuizDetailPage() {
                     }}
                   >
                     {/* Rank + Team */}
-                    <div className={cn("flex items-center gap-1.5", sizeClass === "size-xs" ? "p-0.5" : "p-1")}>
+                    <div className="flex items-center gap-1 p-0.5 overflow-hidden">
                       <div
                         className={cn(
                           "flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
-                          sizeClass === "size-lg"
-                            ? "w-8 h-8 text-base"
-                            : sizeClass === "size-md"
-                              ? "w-7 h-7 text-sm"
-                              : sizeClass === "size-sm"
-                                ? "w-6 h-6 text-xs"
-                                : "w-5 h-5 text-[10px]",
+                          teamCount <= 10 ? "w-6 h-6 text-xs" : "w-5 h-5 text-[10px]",
                         )}
                       >
                         {rowIdx + 1}
                       </div>
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 overflow-hidden">
                         {editingAliasTeamId === team.id ? (
                           <input
                             autoFocus
                             className={cn(
                               "w-full bg-transparent border-b border-primary outline-none font-bold text-foreground",
-                              sizeClass === "size-lg" ? "text-sm" : sizeClass === "size-md" ? "text-xs" : "text-[10px]",
+                              teamFontSize,
                             )}
                             value={editingAliasValue}
                             onChange={(e) => setEditingAliasValue(e.target.value)}
@@ -847,30 +841,25 @@ export default function QuizDetailPage() {
                           />
                         ) : (
                           <div
-                            className="flex items-center gap-1 group cursor-pointer flex-wrap"
+                            className="flex items-center gap-0.5 group cursor-pointer overflow-hidden"
                             onClick={() => canEdit && startEditAlias(team)}
                           >
                             <p
                               className={cn(
-                                "font-bold text-foreground break-words leading-tight text-lg",
-                                sizeClass === "size-lg"
-                                  ? "text-lg"
-                                  : sizeClass === "size-md"
-                                    ? "text-md"
-                                    : "text-[10px]",
+                                "font-bold text-foreground truncate leading-tight",
+                                teamFontSize,
                               )}
                             >
                               {teamName}
                             </p>
-                            {/* Help usage icons */}
                             {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
-                              <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                              <Zap className="text-primary flex-shrink-0 h-3 w-3" />
                             )}
                             {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
-                              <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                              <CopyCheck className="text-accent-foreground flex-shrink-0 h-3 w-3" />
                             )}
                             {canEdit && (
-                              <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                              <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                             )}
                           </div>
                         )}
