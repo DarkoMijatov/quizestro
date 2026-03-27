@@ -749,24 +749,28 @@ export default function QuizDetailPage() {
         >
         {scoringView === "categories" ? (
           (() => {
+            const totalCols = categories.length + 2; // team + cats + total
             const colTemplate = `minmax(0,2fr) ${categories.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
             const rowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
+            // Dynamic font size for headers based on column count
+            const headerFontSize = totalCols <= 5 ? "text-sm" : totalCols <= 8 ? "text-xs" : totalCols <= 12 ? "text-[10px]" : "text-[8px]";
+            const teamFontSize = totalCols <= 5 ? "text-base" : totalCols <= 8 ? "text-sm" : totalCols <= 12 ? "text-xs" : "text-[10px]";
 
             return (
-          <div className="min-h-full w-full flex flex-col">
+          <div className="h-full w-full flex flex-col">
             {/* Header row */}
             <div
-              className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
+              className="grid w-full border-b-2 border-foreground/20 z-10 bg-card"
               style={{
                 gridTemplateColumns: colTemplate,
-                minHeight: rowHeight,
+                height: rowHeight,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
               <div
                 className={cn(
-                  "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
-                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                  "p-1 font-bold uppercase tracking-wide flex items-center justify-center text-center overflow-hidden",
+                  headerFontSize,
                 )}
                 style={{ color: currentOrg?.branding_text_color || undefined }}
               >
@@ -776,8 +780,8 @@ export default function QuizDetailPage() {
                 <div
                   key={cat.id}
                   className={cn(
-                    "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0",
-                    sizeClass === "size-xs" ? "text-[8px]" : sizeClass === "size-sm" ? "text-[9px]" : "text-[10px]",
+                    "p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0",
+                    headerFontSize,
                   )}
                   style={{ color: currentOrg?.branding_text_color || undefined }}
                 >
@@ -786,8 +790,8 @@ export default function QuizDetailPage() {
               ))}
               <div
                 className={cn(
-                  "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
-                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                  "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center overflow-hidden",
+                  headerFontSize,
                 )}
                 style={{ color: currentOrg?.branding_text_color || undefined }}
               >
