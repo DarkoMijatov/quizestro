@@ -749,8 +749,12 @@ export default function QuizDetailPage() {
         >
         {scoringView === "categories" ? (
           (() => {
+            const colCount = categories.length + 2;
             const colTemplate = `minmax(0,2fr) ${categories.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
-            const rowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
+            const totalRows = Math.max(rankedTeams.length + 1, 2);
+            const rowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${totalRows})`;
+            const baseFontPx = Math.max(8, Math.min(28, 600 / totalRows));
+            const headerFontSize = Math.max(8, Math.min(14, 400 / (colCount * 2)));
 
             return (
           <div className="h-full w-full flex flex-col">
