@@ -749,7 +749,7 @@ export default function QuizDetailPage() {
         >
         {scoringView === "categories" ? (
           (() => {
-            const colCount = categories.length + 2;
+            const totalCols = categories.length + 2;
             const colTemplate = `minmax(0,2fr) ${categories.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
             const totalRows = Math.max(rankedTeams.length + 1, 2);
             const rowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${totalRows})`;
