@@ -1011,26 +1011,27 @@ export default function QuizDetailPage() {
         ) : (
           /* Parts-based scoring view */
           (() => {
+            const partsColCount = quizParts.length + 2;
             const partsColTemplate = `minmax(0,2fr) ${quizParts.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
-            const partsRowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
+            const partsTotalRows = Math.max(rankedTeams.length + 1, 2);
+            const partsRowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${partsTotalRows})`;
+            const partsBaseFontPx = Math.max(8, Math.min(28, 600 / partsTotalRows));
+            const partsHeaderFontSize = Math.max(8, Math.min(14, 400 / (partsColCount * 2)));
 
             return (
-              <div className="min-h-full w-full flex flex-col">
+              <div className="h-full w-full flex flex-col">
                 {/* Header row */}
                 <div
-                  className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
+                  className="grid w-full border-b-2 border-foreground/20 bg-card flex-shrink-0"
                   style={{
                     gridTemplateColumns: partsColTemplate,
-                    minHeight: partsRowHeight,
+                    height: partsRowHeight,
                     backgroundColor: currentOrg?.branding_header_color || undefined,
                   }}
                 >
                   <div
-                    className={cn(
-                      "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
-                      sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
-                    )}
-                    style={{ color: currentOrg?.branding_text_color || undefined }}
+                    className="p-0.5 font-bold uppercase tracking-wide flex items-center justify-center text-center overflow-hidden"
+                    style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(7px, ${partsHeaderFontSize}px, 14px)` }}
                   >
                     {t("scoring.team")}
                   </div>
@@ -1038,11 +1039,10 @@ export default function QuizDetailPage() {
                     <div
                       key={part.id}
                       className={cn(
-                        "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors overflow-hidden min-w-0",
-                        sizeClass === "size-xs" ? "text-[8px]" : sizeClass === "size-sm" ? "text-[9px]" : "text-[10px]",
+                        "p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors overflow-hidden min-w-0",
                         expandedPart === part.id && "bg-primary/10",
                       )}
-                      style={{ color: currentOrg?.branding_text_color || undefined }}
+                      style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(6px, ${partsHeaderFontSize * 0.85}px, 12px)` }}
                       onClick={() => setExpandedPart(expandedPart === part.id ? null : part.id)}
                     >
                       <span>{part.name}</span>
@@ -1054,17 +1054,14 @@ export default function QuizDetailPage() {
                     </div>
                   ))}
                   <div
-                    className={cn(
-                      "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
-                      sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
-                    )}
-                    style={{ color: currentOrg?.branding_text_color || undefined }}
+                    className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center overflow-hidden"
+                    style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(7px, ${partsHeaderFontSize}px, 14px)` }}
                   >
                     Σ
                   </div>
                 </div>
 
-                <div className="flex flex-col flex-1 w-full">
+                <div className="flex flex-col flex-1 w-full overflow-hidden">
                   {rankedTeams.map((team, rowIdx) => {
                     const total = getTeamRankTotal(team.id);
                     const teamName = team.alias || (team.team as any)?.name || "";
@@ -1073,49 +1070,39 @@ export default function QuizDetailPage() {
                       <div
                         key={team.id}
                         className={cn(
-                          "grid w-full border-b-2 border-foreground/20 last:border-0",
+                          "grid w-full border-b-2 border-foreground/20 last:border-0 overflow-hidden",
                           rowIdx === 0 && "bg-primary/[0.04]",
                         )}
                         style={{
                           gridTemplateColumns: partsColTemplate,
-                          minHeight: partsRowHeight,
+                          height: partsRowHeight,
                         }}
                       >
                         {/* Rank + Team */}
-                        <div className={cn("flex items-center gap-1.5", sizeClass === "size-xs" ? "p-0.5" : "p-1")}>
+                        <div className="flex items-center gap-1 p-0.5 overflow-hidden">
                           <div
-                            className={cn(
-                              "flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
-                              sizeClass === "size-lg"
-                                ? "w-8 h-8 text-base"
-                                : sizeClass === "size-md"
-                                  ? "w-7 h-7 text-sm"
-                                  : sizeClass === "size-sm"
-                                    ? "w-6 h-6 text-xs"
-                                    : "w-5 h-5 text-[10px]",
-                            )}
+                            className="flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground"
+                            style={{ width: `${Math.max(18, partsBaseFontPx * 0.9)}px`, height: `${Math.max(18, partsBaseFontPx * 0.9)}px`, fontSize: `${Math.max(8, partsBaseFontPx * 0.5)}px` }}
                           >
                             {rowIdx + 1}
                           </div>
-                          <div className="min-w-0 flex-1 flex items-center gap-1 flex-wrap">
+                          <div className="min-w-0 flex-1 overflow-hidden">
                             <p
-                              className={cn(
-                                "font-bold text-foreground break-words leading-tight",
-                                sizeClass === "size-lg"
-                                  ? "text-lg"
-                                  : sizeClass === "size-md"
-                                    ? "text-md"
-                                    : "text-[10px]",
-                              )}
+                              className="font-bold text-foreground leading-tight truncate"
+                              style={{ fontSize: `clamp(8px, ${partsBaseFontPx * 0.6}px, 18px)` }}
                             >
                               {teamName}
                             </p>
-                            {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
-                              <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
-                            )}
-                            {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
-                              <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
-                            )}
+                            {(jokerType && hasTeamUsedHelp(team.id, jokerType.id)) || (markerType && hasTeamUsedHelp(team.id, markerType.id)) ? (
+                              <div className="flex items-center gap-0.5 mt-0.5">
+                                {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
+                                  <Zap style={{ width: `${Math.max(10, partsBaseFontPx * 0.4)}px`, height: `${Math.max(10, partsBaseFontPx * 0.4)}px` }} className="text-primary flex-shrink-0" />
+                                )}
+                                {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
+                                  <CopyCheck style={{ width: `${Math.max(10, partsBaseFontPx * 0.4)}px`, height: `${Math.max(10, partsBaseFontPx * 0.4)}px` }} className="text-accent-foreground flex-shrink-0" />
+                                )}
+                              </div>
+                            ) : null}
                           </div>
                         </div>
 
@@ -1128,10 +1115,11 @@ export default function QuizDetailPage() {
                           return (
                             <div
                               key={part.id}
-                              className="p-1 flex flex-col items-center justify-center border-l-2 border-foreground/20"
+                              className="flex items-center justify-center border-l-2 border-foreground/20 overflow-hidden"
+                              style={{ padding: `${Math.max(1, partsBaseFontPx * 0.05)}px` }}
                             >
                               {canScore ? (
-                                <div className="flex flex-col items-center gap-0.5">
+                                <div className="flex flex-col items-center w-full">
                                   <input
                                     type="number"
                                     min={0}
@@ -1139,16 +1127,8 @@ export default function QuizDetailPage() {
                                     value={ps?.points ?? 0}
                                     onChange={(e) => ps && updatePartScore(ps.id, Number(e.target.value) || 0)}
                                     onFocus={(e) => e.target.select()}
-                                    className={cn(
-                                      "w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15",
-                                      sizeClass === "size-lg"
-                                        ? "h-14 text-3xl"
-                                        : sizeClass === "size-md"
-                                          ? "h-10 text-2xl"
-                                          : sizeClass === "size-sm"
-                                            ? "h-8 text-xl"
-                                            : "h-6 text-base",
-                                    )}
+                                    className="w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15"
+                                    style={{ fontSize: `clamp(10px, ${partsBaseFontPx * 0.85}px, 32px)`, height: `clamp(20px, ${partsBaseFontPx * 1.3}px, 56px)` }}
                                   />
                                   {mismatch && (
                                     <span className="text-[8px] text-destructive font-medium">
@@ -1158,18 +1138,10 @@ export default function QuizDetailPage() {
                                 </div>
                               ) : (
                                 <p
-                                  className={cn(
-                                    "font-black text-foreground",
-                                    sizeClass === "size-lg"
-                                      ? "text-3xl"
-                                      : sizeClass === "size-md"
-                                        ? "text-2xl"
-                                        : sizeClass === "size-sm"
-                                          ? "text-xl"
-                                          : "text-base",
-                                  )}
+                                  className="font-black text-foreground"
+                                  style={{ fontSize: `clamp(10px, ${partsBaseFontPx * 0.85}px, 32px)` }}
                                 >
-                                  {(ps?.points ?? 0) % 1 === 0 ? (ps?.points ?? 0) : (ps?.points ?? 0).toFixed(1)}
+                                  {(ps?.points ?? 0) % 1 === 0 ? (ps?.points ?? 0) : (ps?.points ?? 0).toFixed(2)}
                                 </p>
                               )}
                             </div>
@@ -1177,20 +1149,12 @@ export default function QuizDetailPage() {
                         })}
 
                         {/* Total */}
-                        <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
+                        <div className="flex items-center justify-center border-l-2 border-foreground/20 overflow-hidden p-0.5">
                           <span
-                            className={cn(
-                              "font-black text-primary",
-                              sizeClass === "size-lg"
-                                ? "text-3xl"
-                                : sizeClass === "size-md"
-                                  ? "text-2xl"
-                                  : sizeClass === "size-sm"
-                                    ? "text-xl"
-                                    : "text-base",
-                            )}
+                            className="font-black text-primary"
+                            style={{ fontSize: `clamp(10px, ${partsBaseFontPx * 0.85}px, 32px)` }}
                           >
-                            {total % 1 === 0 ? total : total.toFixed(1)}
+                            {total % 1 === 0 ? total : total.toFixed(2)}
                           </span>
                         </div>
                       </div>
