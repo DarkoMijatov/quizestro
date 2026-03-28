@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
-  Loader2,
   Play,
   CheckCircle,
   Unlock,
@@ -60,7 +59,7 @@ interface QuizCategory {
   category_id: string;
   sort_order: number | null;
   quiz_part_id: string | null;
-  category: { name: string };
+  category: { name: strinyg };
 }
 
 interface QuizTeam {
