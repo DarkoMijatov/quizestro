@@ -741,7 +741,7 @@ export default function QuizDetailPage() {
 
         {/* Scoring Table */}
         <div
-          className="rounded-xl border-2 border-foreground/20 shadow-md overflow-auto min-h-0 flex-1 mt-2"
+          className="rounded-xl border-2 border-foreground/20 shadow-md overflow-hidden min-h-0 flex-1 mt-2"
           style={{
             backgroundColor: currentOrg?.branding_bg_color || undefined,
             color: currentOrg?.branding_text_color || undefined,
@@ -753,43 +753,34 @@ export default function QuizDetailPage() {
             const rowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
 
             return (
-          <div className="min-h-full w-full flex flex-col">
+          <div className="h-full w-full flex flex-col">
             {/* Header row */}
             <div
-              className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
+              className="grid w-full border-b-2 border-foreground/20 bg-card flex-shrink-0"
               style={{
                 gridTemplateColumns: colTemplate,
-                minHeight: rowHeight,
+                height: rowHeight,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
               <div
-                className={cn(
-                  "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
-                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
-                )}
-                style={{ color: currentOrg?.branding_text_color || undefined }}
+                className="p-0.5 font-bold uppercase tracking-wide flex items-center justify-center text-center overflow-hidden"
+                style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(7px, ${headerFontSize}px, 14px)` }}
               >
                 {t("scoring.team")}
               </div>
               {categories.map((cat) => (
                 <div
                   key={cat.id}
-                  className={cn(
-                    "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0",
-                    sizeClass === "size-xs" ? "text-[8px]" : sizeClass === "size-sm" ? "text-[9px]" : "text-[10px]",
-                  )}
-                  style={{ color: currentOrg?.branding_text_color || undefined }}
+                  className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0"
+                  style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(6px, ${headerFontSize * 0.85}px, 12px)` }}
                 >
                   {(cat.category as any)?.name || "?"}
                 </div>
               ))}
               <div
-                className={cn(
-                  "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
-                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
-                )}
-                style={{ color: currentOrg?.branding_text_color || undefined }}
+                className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center overflow-hidden"
+                style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(7px, ${headerFontSize}px, 14px)` }}
               >
                 Σ
               </div>
