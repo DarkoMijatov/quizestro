@@ -741,7 +741,7 @@ export default function QuizDetailPage() {
 
         {/* Scoring Table */}
         <div
-          className="rounded-xl border-2 border-foreground/20 shadow-md overflow-hidden min-h-0 flex-1 mt-2"
+          className="rounded-xl border-2 border-foreground/20 shadow-md overflow-auto min-h-0 flex-1 mt-2"
           style={{
             backgroundColor: currentOrg?.branding_bg_color || undefined,
             color: currentOrg?.branding_text_color || undefined,
@@ -749,79 +749,93 @@ export default function QuizDetailPage() {
         >
         {scoringView === "categories" ? (
           (() => {
-            const totalCols = categories.length + 2;
             const colTemplate = `minmax(0,2fr) ${categories.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
-            const totalRows = Math.max(rankedTeams.length + 1, 2);
-            const rowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${totalRows})`;
-            const baseFontPx = Math.max(8, Math.min(28, 600 / totalRows));
-            const headerFontSize = Math.max(8, Math.min(14, 400 / (totalCols * 2)));
+            const rowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
 
             return (
-          <div className="h-full w-full flex flex-col">
+          <div className="min-h-full w-full flex flex-col">
             {/* Header row */}
             <div
-              className="grid w-full border-b-2 border-foreground/20 bg-card flex-shrink-0"
+              className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
               style={{
                 gridTemplateColumns: colTemplate,
-                height: rowHeight,
+                minHeight: rowHeight,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
               <div
-                className="p-0.5 font-bold uppercase tracking-wide flex items-center justify-center text-center overflow-hidden"
-                style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(7px, ${headerFontSize}px, 14px)` }}
+                className={cn(
+                  "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
+                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                )}
+                style={{ color: currentOrg?.branding_text_color || undefined }}
               >
                 {t("scoring.team")}
               </div>
               {categories.map((cat) => (
                 <div
                   key={cat.id}
-                  className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0"
-                  style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(6px, ${headerFontSize * 0.85}px, 12px)` }}
+                  className={cn(
+                    "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0",
+                    sizeClass === "size-xs" ? "text-[8px]" : sizeClass === "size-sm" ? "text-[9px]" : "text-[10px]",
+                  )}
+                  style={{ color: currentOrg?.branding_text_color || undefined }}
                 >
                   {(cat.category as any)?.name || "?"}
                 </div>
               ))}
               <div
-                className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center overflow-hidden"
-                style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(7px, ${headerFontSize}px, 14px)` }}
+                className={cn(
+                  "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
+                  sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                )}
+                style={{ color: currentOrg?.branding_text_color || undefined }}
               >
                 Σ
               </div>
             </div>
 
-            <div className="flex flex-col flex-1 w-full overflow-hidden">
+            <div className="flex flex-col flex-1 w-full">
               {rankedTeams.map((team, rowIdx) => {
                 const total = getTeamRankTotal(team.id);
                 const teamName = team.alias || (team.team as any)?.name || "";
-                const btnSize = Math.max(14, Math.min(24, baseFontPx * 0.7));
 
                 return (
                   <div
                     key={team.id}
                     className={cn(
-                      "grid w-full border-b-2 border-foreground/20 last:border-0 overflow-hidden",
+                      "grid w-full border-b-2 border-foreground/20 last:border-0",
                       rowIdx === 0 && "bg-primary/[0.04]",
                     )}
                     style={{
                       gridTemplateColumns: colTemplate,
-                      height: rowHeight,
+                      minHeight: rowHeight,
                     }}
                   >
                     {/* Rank + Team */}
-                    <div className="flex items-center gap-1 p-0.5 overflow-hidden">
+                    <div className={cn("flex items-center gap-1.5", sizeClass === "size-xs" ? "p-0.5" : "p-1")}>
                       <div
-                        className="flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground"
-                        style={{ width: `${Math.max(18, baseFontPx * 0.9)}px`, height: `${Math.max(18, baseFontPx * 0.9)}px`, fontSize: `${Math.max(8, baseFontPx * 0.5)}px` }}
+                        className={cn(
+                          "flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
+                          sizeClass === "size-lg"
+                            ? "w-8 h-8 text-base"
+                            : sizeClass === "size-md"
+                              ? "w-7 h-7 text-sm"
+                              : sizeClass === "size-sm"
+                                ? "w-6 h-6 text-xs"
+                                : "w-5 h-5 text-[10px]",
+                        )}
                       >
                         {rowIdx + 1}
                       </div>
-                      <div className="min-w-0 flex-1 overflow-hidden">
+                      <div className="min-w-0 flex-1">
                         {editingAliasTeamId === team.id ? (
                           <input
                             autoFocus
-                            className="w-full bg-transparent border-b border-primary outline-none font-bold text-foreground"
-                            style={{ fontSize: `${Math.max(8, baseFontPx * 0.55)}px` }}
+                            className={cn(
+                              "w-full bg-transparent border-b border-primary outline-none font-bold text-foreground",
+                              sizeClass === "size-lg" ? "text-sm" : sizeClass === "size-md" ? "text-xs" : "text-[10px]",
+                            )}
                             value={editingAliasValue}
                             onChange={(e) => setEditingAliasValue(e.target.value)}
                             onBlur={saveAlias}
@@ -829,31 +843,31 @@ export default function QuizDetailPage() {
                           />
                         ) : (
                           <div
-                            className="group cursor-pointer overflow-hidden"
+                            className="flex items-center gap-1 group cursor-pointer flex-wrap"
                             onClick={() => canEdit && startEditAlias(team)}
                           >
-                            <div className="flex items-center gap-0.5">
-                              <p
-                                className="font-bold text-foreground leading-tight truncate"
-                                style={{ fontSize: `clamp(8px, ${baseFontPx * 0.6}px, 18px)` }}
-                              >
-                                {teamName}
-                              </p>
-                              {canEdit && (
-                                <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                            <p
+                              className={cn(
+                                "font-bold text-foreground break-words leading-tight text-lg",
+                                sizeClass === "size-lg"
+                                  ? "text-lg"
+                                  : sizeClass === "size-md"
+                                    ? "text-md"
+                                    : "text-[10px]",
                               )}
-                            </div>
-                            {/* Help usage icons below name */}
-                            {(jokerType && hasTeamUsedHelp(team.id, jokerType.id)) || (markerType && hasTeamUsedHelp(team.id, markerType.id)) ? (
-                              <div className="flex items-center gap-0.5 mt-0.5">
-                                {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
-                                  <Zap style={{ width: `${Math.max(10, baseFontPx * 0.4)}px`, height: `${Math.max(10, baseFontPx * 0.4)}px` }} className="text-primary flex-shrink-0" />
-                                )}
-                                {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
-                                  <CopyCheck style={{ width: `${Math.max(10, baseFontPx * 0.4)}px`, height: `${Math.max(10, baseFontPx * 0.4)}px` }} className="text-accent-foreground flex-shrink-0" />
-                                )}
-                              </div>
-                            ) : null}
+                            >
+                              {teamName}
+                            </p>
+                            {/* Help usage icons */}
+                            {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
+                              <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                            )}
+                            {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
+                              <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                            )}
+                            {canEdit && (
+                              <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                            )}
                           </div>
                         )}
                       </div>
@@ -869,8 +883,10 @@ export default function QuizDetailPage() {
                       const catBonusExisting = getCategoryBonus(cat.id);
                       const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
 
+                      // Disable help if team already used it in another category OR if the other mutual-exclusive help is active in this cell
                       const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
-                      const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
+                      const markerDisabledElsewhere =
+                        markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
                       const jokerDisabledByMarker = jokerType && !hasJoker && !!hasMarker;
                       const markerDisabledByJoker = markerType && !hasMarker && !!hasJoker;
                       const jokerDisabled = !!jokerDisabledElsewhere || !!jokerDisabledByMarker;
@@ -880,73 +896,13 @@ export default function QuizDetailPage() {
                         <div
                           key={cat.id}
                           className={cn(
-                            "flex items-center border-l-2 border-foreground/20 overflow-hidden",
+                            "p-1 flex flex-col items-center justify-center gap-0.5 border-l-2 border-foreground/20",
                             hasJoker && "bg-primary/[0.08]",
                             hasBonusPt && !hasJoker && "bg-yellow-500/[0.06]",
                           )}
-                          style={{ padding: `${Math.max(1, baseFontPx * 0.05)}px` }}
                         >
                           {canScore ? (
                             <>
-                              {/* Buttons stacked on left */}
-                              <div className="flex flex-col gap-0.5 flex-shrink-0 mr-0.5">
-                                {jokerType && (
-                                  <button
-                                    onClick={() => toggleHelp(team.id, cat.id, jokerType)}
-                                    disabled={jokerDisabled}
-                                    tabIndex={-1}
-                                    className={cn(
-                                      "rounded font-black border transition-colors flex items-center justify-center",
-                                      hasJoker
-                                        ? "bg-primary text-primary-foreground border-primary"
-                                        : jokerDisabled
-                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
-                                    )}
-                                    style={{ width: `${btnSize}px`, height: `${btnSize}px` }}
-                                  >
-                                    <Zap style={{ width: `${btnSize * 0.6}px`, height: `${btnSize * 0.6}px` }} />
-                                  </button>
-                                )}
-                                {markerType && (
-                                  <button
-                                    onClick={() => toggleHelp(team.id, cat.id, markerType)}
-                                    disabled={markerDisabled}
-                                    tabIndex={-1}
-                                    className={cn(
-                                      "rounded font-black border transition-colors flex items-center justify-center",
-                                      hasMarker
-                                        ? "bg-accent text-accent-foreground border-accent"
-                                        : markerDisabled
-                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
-                                    )}
-                                    style={{ width: `${btnSize}px`, height: `${btnSize}px` }}
-                                  >
-                                    <CopyCheck style={{ width: `${btnSize * 0.6}px`, height: `${btnSize * 0.6}px` }} />
-                                  </button>
-                                )}
-                                {categoryBonusEnabled && (
-                                  <button
-                                    onClick={() => toggleCategoryBonus(team.id, cat.id)}
-                                    disabled={bonusDisabled}
-                                    tabIndex={-1}
-                                    title={t("scoring.categoryBonus")}
-                                    className={cn(
-                                      "rounded font-black border transition-colors flex items-center justify-center",
-                                      hasBonusPt
-                                        ? "bg-yellow-500 text-white border-yellow-500"
-                                        : bonusDisabled
-                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
-                                    )}
-                                    style={{ width: `${btnSize}px`, height: `${btnSize}px` }}
-                                  >
-                                    <Crown style={{ width: `${btnSize * 0.6}px`, height: `${btnSize * 0.6}px` }} />
-                                  </button>
-                                )}
-                              </div>
-                              {/* Score input on right */}
                               {(() => {
                                 const cellKey = `${team.id}-${cat.id}`;
                                 const isFocused = focusedCell === cellKey;
@@ -965,21 +921,91 @@ export default function QuizDetailPage() {
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
                                     className={cn(
-                                      "flex-1 min-w-0 text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors",
+                                      "w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors",
                                       showEffective ? "text-primary border-primary/30" : "text-foreground border-foreground/15",
+                                      sizeClass === "size-lg"
+                                        ? "h-14 text-3xl"
+                                        : sizeClass === "size-md"
+                                          ? "h-10 text-2xl"
+                                          : sizeClass === "size-sm"
+                                            ? "h-8 text-xl"
+                                            : "h-6 text-base",
                                     )}
-                                    style={{ fontSize: `clamp(10px, ${baseFontPx * 0.85}px, 32px)`, height: `clamp(20px, ${baseFontPx * 1.3}px, 56px)` }}
                                   />
                                 );
                               })()}
+
+                              {/* Help initials + category bonus */}
+                              <div className="flex items-center gap-0.5">
+                                {jokerType && (
+                                  <button
+                                    onClick={() => toggleHelp(team.id, cat.id, jokerType)}
+                                    disabled={jokerDisabled}
+                                    tabIndex={-1}
+                                    className={cn(
+                                      "w-6 h-5 rounded text-[9px] font-black border transition-colors",
+                                      hasJoker
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : jokerDisabled
+                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
+                                    )}
+                                  >
+                                    <Zap className="h-3 w-3 mx-auto" />
+                                  </button>
+                                )}
+                                {markerType && (
+                                  <button
+                                    onClick={() => toggleHelp(team.id, cat.id, markerType)}
+                                    disabled={markerDisabled}
+                                    tabIndex={-1}
+                                    className={cn(
+                                      "w-6 h-5 rounded text-[9px] font-black border transition-colors",
+                                      hasMarker
+                                        ? "bg-accent text-accent-foreground border-accent"
+                                        : markerDisabled
+                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
+                                    )}
+                                  >
+                                    <CopyCheck className="h-3 w-3 mx-auto" />
+                                  </button>
+                                )}
+                                {categoryBonusEnabled && (
+                                  <button
+                                    onClick={() => toggleCategoryBonus(team.id, cat.id)}
+                                    disabled={bonusDisabled}
+                                    tabIndex={-1}
+                                    title={t("scoring.categoryBonus")}
+                                    className={cn(
+                                      "w-6 h-5 rounded text-[9px] font-black border transition-colors",
+                                      hasBonusPt
+                                        ? "bg-yellow-500 text-white border-yellow-500"
+                                        : bonusDisabled
+                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
+                                    )}
+                                  >
+                                    <Crown className="h-3 w-3 mx-auto" />
+                                  </button>
+                                )}
+                              </div>
                             </>
                           ) : (
-                            <div className="flex flex-col items-center justify-center w-full">
+                            <div className="flex flex-col items-center gap-0.5">
                               <p
-                                className="font-black text-foreground"
-                                style={{ fontSize: `clamp(10px, ${baseFontPx * 0.85}px, 32px)` }}
+                                className={cn(
+                                  "font-black text-foreground",
+                                  sizeClass === "size-lg"
+                                    ? "text-3xl"
+                                    : sizeClass === "size-md"
+                                      ? "text-2xl"
+                                      : sizeClass === "size-sm"
+                                        ? "text-xl"
+                                        : "text-base",
+                                )}
                               >
-                                {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(2)}
+                                {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
                               </p>
                               <div className="flex items-center gap-0.5">
                                 {hasJoker && <Zap className="h-3 w-3 text-primary" />}
@@ -993,12 +1019,20 @@ export default function QuizDetailPage() {
                     })}
 
                     {/* Total */}
-                    <div className="flex items-center justify-center border-l-2 border-foreground/20 overflow-hidden p-0.5">
+                    <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
                       <span
-                        className="font-black text-primary"
-                        style={{ fontSize: `clamp(10px, ${baseFontPx * 0.85}px, 32px)` }}
+                        className={cn(
+                          "font-black text-primary",
+                          sizeClass === "size-lg"
+                            ? "text-3xl"
+                            : sizeClass === "size-md"
+                              ? "text-2xl"
+                              : sizeClass === "size-sm"
+                                ? "text-xl"
+                                : "text-base",
+                        )}
                       >
-                        {total % 1 === 0 ? total : total.toFixed(2)}
+                        {total % 1 === 0 ? total : total.toFixed(1)}
                       </span>
                     </div>
                   </div>
@@ -1011,27 +1045,26 @@ export default function QuizDetailPage() {
         ) : (
           /* Parts-based scoring view */
           (() => {
-            const partsColCount = quizParts.length + 2;
             const partsColTemplate = `minmax(0,2fr) ${quizParts.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
-            const partsTotalRows = Math.max(rankedTeams.length + 1, 2);
-            const partsRowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${partsTotalRows})`;
-            const partsBaseFontPx = Math.max(8, Math.min(28, 600 / partsTotalRows));
-            const partsHeaderFontSize = Math.max(8, Math.min(14, 400 / (partsColCount * 2)));
+            const partsRowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
 
             return (
-              <div className="h-full w-full flex flex-col">
+              <div className="min-h-full w-full flex flex-col">
                 {/* Header row */}
                 <div
-                  className="grid w-full border-b-2 border-foreground/20 bg-card flex-shrink-0"
+                  className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
                   style={{
                     gridTemplateColumns: partsColTemplate,
-                    height: partsRowHeight,
+                    minHeight: partsRowHeight,
                     backgroundColor: currentOrg?.branding_header_color || undefined,
                   }}
                 >
                   <div
-                    className="p-0.5 font-bold uppercase tracking-wide flex items-center justify-center text-center overflow-hidden"
-                    style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(7px, ${partsHeaderFontSize}px, 14px)` }}
+                    className={cn(
+                      "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
+                      sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                    )}
+                    style={{ color: currentOrg?.branding_text_color || undefined }}
                   >
                     {t("scoring.team")}
                   </div>
@@ -1039,10 +1072,11 @@ export default function QuizDetailPage() {
                     <div
                       key={part.id}
                       className={cn(
-                        "p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors overflow-hidden min-w-0",
+                        "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors overflow-hidden min-w-0",
+                        sizeClass === "size-xs" ? "text-[8px]" : sizeClass === "size-sm" ? "text-[9px]" : "text-[10px]",
                         expandedPart === part.id && "bg-primary/10",
                       )}
-                      style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(6px, ${partsHeaderFontSize * 0.85}px, 12px)` }}
+                      style={{ color: currentOrg?.branding_text_color || undefined }}
                       onClick={() => setExpandedPart(expandedPart === part.id ? null : part.id)}
                     >
                       <span>{part.name}</span>
@@ -1054,14 +1088,17 @@ export default function QuizDetailPage() {
                     </div>
                   ))}
                   <div
-                    className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center overflow-hidden"
-                    style={{ color: currentOrg?.branding_text_color || undefined, fontSize: `clamp(7px, ${partsHeaderFontSize}px, 14px)` }}
+                    className={cn(
+                      "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
+                      sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
+                    )}
+                    style={{ color: currentOrg?.branding_text_color || undefined }}
                   >
                     Σ
                   </div>
                 </div>
 
-                <div className="flex flex-col flex-1 w-full overflow-hidden">
+                <div className="flex flex-col flex-1 w-full">
                   {rankedTeams.map((team, rowIdx) => {
                     const total = getTeamRankTotal(team.id);
                     const teamName = team.alias || (team.team as any)?.name || "";
@@ -1070,39 +1107,49 @@ export default function QuizDetailPage() {
                       <div
                         key={team.id}
                         className={cn(
-                          "grid w-full border-b-2 border-foreground/20 last:border-0 overflow-hidden",
+                          "grid w-full border-b-2 border-foreground/20 last:border-0",
                           rowIdx === 0 && "bg-primary/[0.04]",
                         )}
                         style={{
                           gridTemplateColumns: partsColTemplate,
-                          height: partsRowHeight,
+                          minHeight: partsRowHeight,
                         }}
                       >
                         {/* Rank + Team */}
-                        <div className="flex items-center gap-1 p-0.5 overflow-hidden">
+                        <div className={cn("flex items-center gap-1.5", sizeClass === "size-xs" ? "p-0.5" : "p-1")}>
                           <div
-                            className="flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground"
-                            style={{ width: `${Math.max(18, partsBaseFontPx * 0.9)}px`, height: `${Math.max(18, partsBaseFontPx * 0.9)}px`, fontSize: `${Math.max(8, partsBaseFontPx * 0.5)}px` }}
+                            className={cn(
+                              "flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
+                              sizeClass === "size-lg"
+                                ? "w-8 h-8 text-base"
+                                : sizeClass === "size-md"
+                                  ? "w-7 h-7 text-sm"
+                                  : sizeClass === "size-sm"
+                                    ? "w-6 h-6 text-xs"
+                                    : "w-5 h-5 text-[10px]",
+                            )}
                           >
                             {rowIdx + 1}
                           </div>
-                          <div className="min-w-0 flex-1 overflow-hidden">
+                          <div className="min-w-0 flex-1 flex items-center gap-1 flex-wrap">
                             <p
-                              className="font-bold text-foreground leading-tight truncate"
-                              style={{ fontSize: `clamp(8px, ${partsBaseFontPx * 0.6}px, 18px)` }}
+                              className={cn(
+                                "font-bold text-foreground break-words leading-tight",
+                                sizeClass === "size-lg"
+                                  ? "text-lg"
+                                  : sizeClass === "size-md"
+                                    ? "text-md"
+                                    : "text-[10px]",
+                              )}
                             >
                               {teamName}
                             </p>
-                            {(jokerType && hasTeamUsedHelp(team.id, jokerType.id)) || (markerType && hasTeamUsedHelp(team.id, markerType.id)) ? (
-                              <div className="flex items-center gap-0.5 mt-0.5">
-                                {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
-                                  <Zap style={{ width: `${Math.max(10, partsBaseFontPx * 0.4)}px`, height: `${Math.max(10, partsBaseFontPx * 0.4)}px` }} className="text-primary flex-shrink-0" />
-                                )}
-                                {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
-                                  <CopyCheck style={{ width: `${Math.max(10, partsBaseFontPx * 0.4)}px`, height: `${Math.max(10, partsBaseFontPx * 0.4)}px` }} className="text-accent-foreground flex-shrink-0" />
-                                )}
-                              </div>
-                            ) : null}
+                            {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
+                              <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                            )}
+                            {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
+                              <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                            )}
                           </div>
                         </div>
 
@@ -1115,11 +1162,10 @@ export default function QuizDetailPage() {
                           return (
                             <div
                               key={part.id}
-                              className="flex items-center justify-center border-l-2 border-foreground/20 overflow-hidden"
-                              style={{ padding: `${Math.max(1, partsBaseFontPx * 0.05)}px` }}
+                              className="p-1 flex flex-col items-center justify-center border-l-2 border-foreground/20"
                             >
                               {canScore ? (
-                                <div className="flex flex-col items-center w-full">
+                                <div className="flex flex-col items-center gap-0.5">
                                   <input
                                     type="number"
                                     min={0}
@@ -1127,8 +1173,16 @@ export default function QuizDetailPage() {
                                     value={ps?.points ?? 0}
                                     onChange={(e) => ps && updatePartScore(ps.id, Number(e.target.value) || 0)}
                                     onFocus={(e) => e.target.select()}
-                                    className="w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15"
-                                    style={{ fontSize: `clamp(10px, ${partsBaseFontPx * 0.85}px, 32px)`, height: `clamp(20px, ${partsBaseFontPx * 1.3}px, 56px)` }}
+                                    className={cn(
+                                      "w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15",
+                                      sizeClass === "size-lg"
+                                        ? "h-14 text-3xl"
+                                        : sizeClass === "size-md"
+                                          ? "h-10 text-2xl"
+                                          : sizeClass === "size-sm"
+                                            ? "h-8 text-xl"
+                                            : "h-6 text-base",
+                                    )}
                                   />
                                   {mismatch && (
                                     <span className="text-[8px] text-destructive font-medium">
@@ -1138,10 +1192,18 @@ export default function QuizDetailPage() {
                                 </div>
                               ) : (
                                 <p
-                                  className="font-black text-foreground"
-                                  style={{ fontSize: `clamp(10px, ${partsBaseFontPx * 0.85}px, 32px)` }}
+                                  className={cn(
+                                    "font-black text-foreground",
+                                    sizeClass === "size-lg"
+                                      ? "text-3xl"
+                                      : sizeClass === "size-md"
+                                        ? "text-2xl"
+                                        : sizeClass === "size-sm"
+                                          ? "text-xl"
+                                          : "text-base",
+                                  )}
                                 >
-                                  {(ps?.points ?? 0) % 1 === 0 ? (ps?.points ?? 0) : (ps?.points ?? 0).toFixed(2)}
+                                  {(ps?.points ?? 0) % 1 === 0 ? (ps?.points ?? 0) : (ps?.points ?? 0).toFixed(1)}
                                 </p>
                               )}
                             </div>
@@ -1149,12 +1211,20 @@ export default function QuizDetailPage() {
                         })}
 
                         {/* Total */}
-                        <div className="flex items-center justify-center border-l-2 border-foreground/20 overflow-hidden p-0.5">
+                        <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
                           <span
-                            className="font-black text-primary"
-                            style={{ fontSize: `clamp(10px, ${partsBaseFontPx * 0.85}px, 32px)` }}
+                            className={cn(
+                              "font-black text-primary",
+                              sizeClass === "size-lg"
+                                ? "text-3xl"
+                                : sizeClass === "size-md"
+                                  ? "text-2xl"
+                                  : sizeClass === "size-sm"
+                                    ? "text-xl"
+                                    : "text-base",
+                            )}
                           >
-                            {total % 1 === 0 ? total : total.toFixed(2)}
+                            {total % 1 === 0 ? total : total.toFixed(1)}
                           </span>
                         </div>
                       </div>
