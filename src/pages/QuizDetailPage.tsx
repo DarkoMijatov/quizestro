@@ -193,7 +193,7 @@ export default function QuizDetailPage() {
     if (document.fullscreenElement) {
       await document.exitFullscreen();
     } else {
-      await scoringRef.current?.requestFullscreen();
+      await scoringRef.current?.requestFullScreen();
     }
   };
 
