@@ -754,7 +754,7 @@ export default function QuizDetailPage() {
             const totalRows = Math.max(rankedTeams.length + 1, 2);
             const rowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${totalRows})`;
             const baseFontPx = Math.max(8, Math.min(28, 600 / totalRows));
-            const headerFontSize = Math.max(8, Math.min(14, 400 / (colCount * 2)));
+            const headerFontSize = Math.max(8, Math.min(14, 400 / (totalCols * 2)));
 
             return (
           <div className="h-full w-full flex flex-col">
