@@ -741,7 +741,7 @@ export default function QuizDetailPage() {
 
         {/* Scoring Table */}
         <div
-          className="rounded-xl border-2 border-foreground/20 shadow-md overflow-auto min-h-0 flex-1 mt-2"
+          className="rounded-xl border-2 border-foreground/20 shadow-md overflow-hidden min-h-0 flex-1 mt-2 flex flex-col"
           style={{
             backgroundColor: currentOrg?.branding_bg_color || undefined,
             color: currentOrg?.branding_text_color || undefined,
@@ -750,16 +750,14 @@ export default function QuizDetailPage() {
         {scoringView === "categories" ? (
           (() => {
             const colTemplate = `minmax(0,2fr) ${categories.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
-            const rowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
 
             return (
-          <div className="min-h-full w-full flex flex-col">
+          <div className="min-h-full h-full w-full flex flex-col">
             {/* Header row */}
             <div
-              className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
+              className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card shrink-0"
               style={{
                 gridTemplateColumns: colTemplate,
-                minHeight: rowHeight,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
@@ -795,7 +793,7 @@ export default function QuizDetailPage() {
               </div>
             </div>
 
-            <div className="flex flex-col flex-1 w-full">
+            <div className="flex flex-col flex-1 w-full min-h-0">
               {rankedTeams.map((team, rowIdx) => {
                 const total = getTeamRankTotal(team.id);
                 const teamName = team.alias || (team.team as any)?.name || "";
@@ -804,12 +802,11 @@ export default function QuizDetailPage() {
                   <div
                     key={team.id}
                     className={cn(
-                      "grid w-full border-b-2 border-foreground/20 last:border-0",
+                      "grid w-full border-b-2 border-foreground/20 last:border-0 flex-1",
                       rowIdx === 0 && "bg-primary/[0.04]",
                     )}
                     style={{
                       gridTemplateColumns: colTemplate,
-                      minHeight: rowHeight,
                     }}
                   >
                     {/* Rank + Team */}
@@ -843,31 +840,37 @@ export default function QuizDetailPage() {
                           />
                         ) : (
                           <div
-                            className="flex items-center gap-1 group cursor-pointer flex-wrap"
+                            className="group cursor-pointer"
                             onClick={() => canEdit && startEditAlias(team)}
                           >
-                            <p
-                              className={cn(
-                                "font-bold text-foreground break-words leading-tight text-lg",
-                                sizeClass === "size-lg"
-                                  ? "text-lg"
-                                  : sizeClass === "size-md"
-                                    ? "text-md"
-                                    : "text-[10px]",
+                            <div className="flex items-center gap-1">
+                              <p
+                                className={cn(
+                                  "font-bold text-foreground break-words leading-tight",
+                                  sizeClass === "size-lg"
+                                    ? "text-lg"
+                                    : sizeClass === "size-md"
+                                      ? "text-md"
+                                      : "text-[10px]",
+                                )}
+                              >
+                                {teamName}
+                              </p>
+                              {canEdit && (
+                                <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                               )}
-                            >
-                              {teamName}
-                            </p>
-                            {/* Help usage icons */}
-                            {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
-                              <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
-                            )}
-                            {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
-                              <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
-                            )}
-                            {canEdit && (
-                              <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                            )}
+                            </div>
+                            {/* Help usage icons below team name */}
+                            {(jokerType && hasTeamUsedHelp(team.id, jokerType.id)) || (markerType && hasTeamUsedHelp(team.id, markerType.id)) ? (
+                              <div className="flex items-center gap-0.5 mt-0.5">
+                                {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
+                                  <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                                )}
+                                {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
+                                  <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                                )}
+                              </div>
+                            ) : null}
                           </div>
                         )}
                       </div>
@@ -893,16 +896,72 @@ export default function QuizDetailPage() {
                       const markerDisabled = !!markerDisabledElsewhere || !!markerDisabledByJoker;
 
                       return (
-                        <div
+                          <div
                           key={cat.id}
                           className={cn(
-                            "p-1 flex flex-col items-center justify-center gap-0.5 border-l-2 border-foreground/20",
+                            "p-0.5 flex items-center justify-center border-l-2 border-foreground/20",
                             hasJoker && "bg-primary/[0.08]",
                             hasBonusPt && !hasJoker && "bg-yellow-500/[0.06]",
                           )}
                         >
                           {canScore ? (
-                            <>
+                            <div className="flex items-center gap-0.5 w-full h-full">
+                              {/* Help buttons */}
+                              <div className="flex flex-col gap-0.5 shrink-0">
+                                {jokerType && (
+                                  <button
+                                    onClick={() => toggleHelp(team.id, cat.id, jokerType)}
+                                    disabled={jokerDisabled}
+                                    tabIndex={-1}
+                                    className={cn(
+                                      "w-5 h-5 rounded text-[9px] font-black border transition-colors",
+                                      hasJoker
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : jokerDisabled
+                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
+                                    )}
+                                  >
+                                    <Zap className="h-3 w-3 mx-auto" />
+                                  </button>
+                                )}
+                                {markerType && (
+                                  <button
+                                    onClick={() => toggleHelp(team.id, cat.id, markerType)}
+                                    disabled={markerDisabled}
+                                    tabIndex={-1}
+                                    className={cn(
+                                      "w-5 h-5 rounded text-[9px] font-black border transition-colors",
+                                      hasMarker
+                                        ? "bg-accent text-accent-foreground border-accent"
+                                        : markerDisabled
+                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
+                                    )}
+                                  >
+                                    <CopyCheck className="h-3 w-3 mx-auto" />
+                                  </button>
+                                )}
+                                {categoryBonusEnabled && (
+                                  <button
+                                    onClick={() => toggleCategoryBonus(team.id, cat.id)}
+                                    disabled={bonusDisabled}
+                                    tabIndex={-1}
+                                    title={t("scoring.categoryBonus")}
+                                    className={cn(
+                                      "w-5 h-5 rounded text-[9px] font-black border transition-colors",
+                                      hasBonusPt
+                                        ? "bg-yellow-500 text-white border-yellow-500"
+                                        : bonusDisabled
+                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
+                                    )}
+                                  >
+                                    <Crown className="h-3 w-3 mx-auto" />
+                                  </button>
+                                )}
+                              </div>
+                              {/* Score input */}
                               {(() => {
                                 const cellKey = `${team.id}-${cat.id}`;
                                 const isFocused = focusedCell === cellKey;
@@ -921,76 +980,20 @@ export default function QuizDetailPage() {
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
                                     className={cn(
-                                      "w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors",
+                                      "flex-1 min-w-0 text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors h-full",
                                       showEffective ? "text-primary border-primary/30" : "text-foreground border-foreground/15",
                                       sizeClass === "size-lg"
-                                        ? "h-14 text-3xl"
+                                        ? "text-3xl"
                                         : sizeClass === "size-md"
-                                          ? "h-10 text-2xl"
+                                          ? "text-2xl"
                                           : sizeClass === "size-sm"
-                                            ? "h-8 text-xl"
-                                            : "h-6 text-base",
+                                            ? "text-xl"
+                                            : "text-base",
                                     )}
                                   />
                                 );
                               })()}
-
-                              {/* Help initials + category bonus */}
-                              <div className="flex items-center gap-0.5">
-                                {jokerType && (
-                                  <button
-                                    onClick={() => toggleHelp(team.id, cat.id, jokerType)}
-                                    disabled={jokerDisabled}
-                                    tabIndex={-1}
-                                    className={cn(
-                                      "w-6 h-5 rounded text-[9px] font-black border transition-colors",
-                                      hasJoker
-                                        ? "bg-primary text-primary-foreground border-primary"
-                                        : jokerDisabled
-                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
-                                    )}
-                                  >
-                                    <Zap className="h-3 w-3 mx-auto" />
-                                  </button>
-                                )}
-                                {markerType && (
-                                  <button
-                                    onClick={() => toggleHelp(team.id, cat.id, markerType)}
-                                    disabled={markerDisabled}
-                                    tabIndex={-1}
-                                    className={cn(
-                                      "w-6 h-5 rounded text-[9px] font-black border transition-colors",
-                                      hasMarker
-                                        ? "bg-accent text-accent-foreground border-accent"
-                                        : markerDisabled
-                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
-                                    )}
-                                  >
-                                    <CopyCheck className="h-3 w-3 mx-auto" />
-                                  </button>
-                                )}
-                                {categoryBonusEnabled && (
-                                  <button
-                                    onClick={() => toggleCategoryBonus(team.id, cat.id)}
-                                    disabled={bonusDisabled}
-                                    tabIndex={-1}
-                                    title={t("scoring.categoryBonus")}
-                                    className={cn(
-                                      "w-6 h-5 rounded text-[9px] font-black border transition-colors",
-                                      hasBonusPt
-                                        ? "bg-yellow-500 text-white border-yellow-500"
-                                        : bonusDisabled
-                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
-                                    )}
-                                  >
-                                    <Crown className="h-3 w-3 mx-auto" />
-                                  </button>
-                                )}
-                              </div>
-                            </>
+                            </div>
                           ) : (
                             <div className="flex flex-col items-center gap-0.5">
                               <p
@@ -1046,16 +1049,14 @@ export default function QuizDetailPage() {
           /* Parts-based scoring view */
           (() => {
             const partsColTemplate = `minmax(0,2fr) ${quizParts.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
-            const partsRowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
 
             return (
-              <div className="min-h-full w-full flex flex-col">
+              <div className="min-h-full h-full w-full flex flex-col">
                 {/* Header row */}
                 <div
-                  className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
+                  className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card shrink-0"
                   style={{
                     gridTemplateColumns: partsColTemplate,
-                    minHeight: partsRowHeight,
                     backgroundColor: currentOrg?.branding_header_color || undefined,
                   }}
                 >
@@ -1098,7 +1099,7 @@ export default function QuizDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col flex-1 w-full">
+                <div className="flex flex-col flex-1 w-full min-h-0">
                   {rankedTeams.map((team, rowIdx) => {
                     const total = getTeamRankTotal(team.id);
                     const teamName = team.alias || (team.team as any)?.name || "";
@@ -1107,12 +1108,11 @@ export default function QuizDetailPage() {
                       <div
                         key={team.id}
                         className={cn(
-                          "grid w-full border-b-2 border-foreground/20 last:border-0",
+                          "grid w-full border-b-2 border-foreground/20 last:border-0 flex-1",
                           rowIdx === 0 && "bg-primary/[0.04]",
                         )}
                         style={{
                           gridTemplateColumns: partsColTemplate,
-                          minHeight: partsRowHeight,
                         }}
                       >
                         {/* Rank + Team */}
@@ -1131,7 +1131,7 @@ export default function QuizDetailPage() {
                           >
                             {rowIdx + 1}
                           </div>
-                          <div className="min-w-0 flex-1 flex items-center gap-1 flex-wrap">
+                          <div className="min-w-0 flex-1">
                             <p
                               className={cn(
                                 "font-bold text-foreground break-words leading-tight",
@@ -1144,12 +1144,16 @@ export default function QuizDetailPage() {
                             >
                               {teamName}
                             </p>
-                            {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
-                              <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
-                            )}
-                            {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
-                              <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
-                            )}
+                            {(jokerType && hasTeamUsedHelp(team.id, jokerType.id)) || (markerType && hasTeamUsedHelp(team.id, markerType.id)) ? (
+                              <div className="flex items-center gap-0.5 mt-0.5">
+                                {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
+                                  <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                                )}
+                                {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
+                                  <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                                )}
+                              </div>
+                            ) : null}
                           </div>
                         </div>
 
