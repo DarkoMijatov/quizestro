@@ -750,16 +750,14 @@ export default function QuizDetailPage() {
         {scoringView === "categories" ? (
           (() => {
             const colTemplate = `minmax(0,2fr) ${categories.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
-            const rowHeight = `calc((100dvh - ${isFullscreen ? 110 : 210}px) / ${Math.max(rankedTeams.length + 1, 1)})`;
 
             return (
-          <div className="min-h-full w-full flex flex-col">
+          <div className="min-h-full h-full w-full flex flex-col">
             {/* Header row */}
             <div
-              className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card"
+              className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card shrink-0"
               style={{
                 gridTemplateColumns: colTemplate,
-                minHeight: rowHeight,
                 backgroundColor: currentOrg?.branding_header_color || undefined,
               }}
             >
