@@ -663,9 +663,16 @@ export default function QuizDetailPage() {
   const canReorder = canEdit && isDraft; // reorder only in draft
   const colCount = categories.length;
 
-  // Dynamic sizing: scale fonts/padding based on team count to fit screen
+  // Dynamic sizing based on team count — use clamp for smooth scaling
   const teamCount = rankedTeams.length;
-  const sizeClass = teamCount <= 6 ? "size-lg" : teamCount <= 10 ? "size-md" : teamCount <= 15 ? "size-sm" : "size-xs";
+  const totalCols = colCount + 2; // team col + categories + total
+  // Font size for scores: scale inversely with team count
+  const scoreFontSize = `clamp(0.7rem, ${Math.max(2.5 - teamCount * 0.08, 0.7)}rem, 2.5rem)`;
+  const teamFontSize = `clamp(0.55rem, ${Math.max(1.1 - teamCount * 0.03, 0.55)}rem, 1.1rem)`;
+  const headerFontSize = `clamp(0.45rem, ${Math.max(0.75 - totalCols * 0.015, 0.45)}rem, 0.75rem)`;
+  const rankSize = teamCount <= 8 ? "w-7 h-7 text-sm" : teamCount <= 14 ? "w-5 h-5 text-[10px]" : "w-4 h-4 text-[8px]";
+  const helpBtnSize = teamCount <= 10 ? "w-5 h-4" : "w-4 h-3.5";
+  const helpIconSize = teamCount <= 10 ? "h-3 w-3" : "h-2.5 w-2.5";
 
   return (
     <DashboardLayout>
