@@ -793,7 +793,7 @@ export default function QuizDetailPage() {
               </div>
             </div>
 
-            <div className="flex flex-col flex-1 w-full">
+            <div className="flex flex-col flex-1 w-full min-h-0">
               {rankedTeams.map((team, rowIdx) => {
                 const total = getTeamRankTotal(team.id);
                 const teamName = team.alias || (team.team as any)?.name || "";
@@ -802,12 +802,11 @@ export default function QuizDetailPage() {
                   <div
                     key={team.id}
                     className={cn(
-                      "grid w-full border-b-2 border-foreground/20 last:border-0",
+                      "grid w-full border-b-2 border-foreground/20 last:border-0 flex-1",
                       rowIdx === 0 && "bg-primary/[0.04]",
                     )}
                     style={{
                       gridTemplateColumns: colTemplate,
-                      minHeight: rowHeight,
                     }}
                   >
                     {/* Rank + Team */}
