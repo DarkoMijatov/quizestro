@@ -1006,11 +1006,8 @@ export default function QuizDetailPage() {
                   }}
                 >
                   <div
-                    className={cn(
-                      "p-1.5 font-bold uppercase tracking-wide flex items-center justify-center text-center",
-                      sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
-                    )}
-                    style={{ color: currentOrg?.branding_text_color || undefined }}
+                    className="p-1 font-bold uppercase tracking-wide flex items-center justify-center text-center"
+                    style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
                   >
                     {t("scoring.team")}
                   </div>
@@ -1018,11 +1015,10 @@ export default function QuizDetailPage() {
                     <div
                       key={part.id}
                       className={cn(
-                        "p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors overflow-hidden min-w-0",
-                        sizeClass === "size-xs" ? "text-[8px]" : sizeClass === "size-sm" ? "text-[9px]" : "text-[10px]",
+                        "p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors overflow-hidden min-w-0",
                         expandedPart === part.id && "bg-primary/10",
                       )}
-                      style={{ color: currentOrg?.branding_text_color || undefined }}
+                      style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
                       onClick={() => setExpandedPart(expandedPart === part.id ? null : part.id)}
                     >
                       <span>{part.name}</span>
@@ -1034,11 +1030,8 @@ export default function QuizDetailPage() {
                     </div>
                   ))}
                   <div
-                    className={cn(
-                      "p-1.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center",
-                      sizeClass === "size-xs" ? "text-[10px]" : "text-xs",
-                    )}
-                    style={{ color: currentOrg?.branding_text_color || undefined }}
+                    className="p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center"
+                    style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
                   >
                     Σ
                   </div>
@@ -1056,46 +1049,24 @@ export default function QuizDetailPage() {
                           "grid w-full border-b-2 border-foreground/20 last:border-0 flex-1",
                           rowIdx === 0 && "bg-primary/[0.04]",
                         )}
-                        style={{
-                          gridTemplateColumns: partsColTemplate,
-                        }}
+                        style={{ gridTemplateColumns: partsColTemplate }}
                       >
                         {/* Rank + Team */}
-                        <div className={cn("flex items-center gap-1.5", sizeClass === "size-xs" ? "p-0.5" : "p-1")}>
-                          <div
-                            className={cn(
-                              "flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground",
-                              sizeClass === "size-lg"
-                                ? "w-8 h-8 text-base"
-                                : sizeClass === "size-md"
-                                  ? "w-7 h-7 text-sm"
-                                  : sizeClass === "size-sm"
-                                    ? "w-6 h-6 text-xs"
-                                    : "w-5 h-5 text-[10px]",
-                            )}
-                          >
+                        <div className="flex items-center gap-1 p-0.5">
+                          <div className={cn("flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground", rankSize)}>
                             {rowIdx + 1}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p
-                              className={cn(
-                                "font-bold text-foreground break-words leading-tight",
-                                sizeClass === "size-lg"
-                                  ? "text-lg"
-                                  : sizeClass === "size-md"
-                                    ? "text-md"
-                                    : "text-[10px]",
-                              )}
-                            >
+                            <p className="font-bold text-foreground break-words leading-tight" style={{ fontSize: teamFontSize }}>
                               {teamName}
                             </p>
                             {(jokerType && hasTeamUsedHelp(team.id, jokerType.id)) || (markerType && hasTeamUsedHelp(team.id, markerType.id)) ? (
                               <div className="flex items-center gap-0.5 mt-0.5">
                                 {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
-                                  <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                                  <Zap className={cn("text-primary flex-shrink-0", helpIconSize)} />
                                 )}
                                 {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
-                                  <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                                  <CopyCheck className={cn("text-accent-foreground flex-shrink-0", helpIconSize)} />
                                 )}
                               </div>
                             ) : null}
@@ -1111,10 +1082,10 @@ export default function QuizDetailPage() {
                           return (
                             <div
                               key={part.id}
-                              className="p-1 flex flex-col items-center justify-center border-l-2 border-foreground/20"
+                              className="p-0.5 flex items-center justify-center border-l-2 border-foreground/20"
                             >
                               {canScore ? (
-                                <div className="flex flex-col items-center gap-0.5">
+                                <div className="flex flex-col items-center gap-0.5 w-full h-full">
                                   <input
                                     type="number"
                                     min={0}
@@ -1122,16 +1093,8 @@ export default function QuizDetailPage() {
                                     value={ps?.points ?? 0}
                                     onChange={(e) => ps && updatePartScore(ps.id, Number(e.target.value) || 0)}
                                     onFocus={(e) => e.target.select()}
-                                    className={cn(
-                                      "w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15",
-                                      sizeClass === "size-lg"
-                                        ? "h-14 text-3xl"
-                                        : sizeClass === "size-md"
-                                          ? "h-10 text-2xl"
-                                          : sizeClass === "size-sm"
-                                            ? "h-8 text-xl"
-                                            : "h-6 text-base",
-                                    )}
+                                    className="w-full h-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15"
+                                    style={{ fontSize: scoreFontSize }}
                                   />
                                   {mismatch && (
                                     <span className="text-[8px] text-destructive font-medium">
@@ -1140,18 +1103,7 @@ export default function QuizDetailPage() {
                                   )}
                                 </div>
                               ) : (
-                                <p
-                                  className={cn(
-                                    "font-black text-foreground",
-                                    sizeClass === "size-lg"
-                                      ? "text-3xl"
-                                      : sizeClass === "size-md"
-                                        ? "text-2xl"
-                                        : sizeClass === "size-sm"
-                                          ? "text-xl"
-                                          : "text-base",
-                                  )}
-                                >
+                                <p className="font-black text-foreground" style={{ fontSize: scoreFontSize }}>
                                   {(ps?.points ?? 0) % 1 === 0 ? (ps?.points ?? 0) : (ps?.points ?? 0).toFixed(1)}
                                 </p>
                               )}
@@ -1161,18 +1113,7 @@ export default function QuizDetailPage() {
 
                         {/* Total */}
                         <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
-                          <span
-                            className={cn(
-                              "font-black text-primary",
-                              sizeClass === "size-lg"
-                                ? "text-3xl"
-                                : sizeClass === "size-md"
-                                  ? "text-2xl"
-                                  : sizeClass === "size-sm"
-                                    ? "text-xl"
-                                    : "text-base",
-                            )}
-                          >
+                          <span className="font-black text-primary" style={{ fontSize: scoreFontSize }}>
                             {total % 1 === 0 ? total : total.toFixed(1)}
                           </span>
                         </div>
