@@ -896,16 +896,72 @@ export default function QuizDetailPage() {
                       const markerDisabled = !!markerDisabledElsewhere || !!markerDisabledByJoker;
 
                       return (
-                        <div
+                          <div
                           key={cat.id}
                           className={cn(
-                            "p-1 flex flex-col items-center justify-center gap-0.5 border-l-2 border-foreground/20",
+                            "p-0.5 flex items-center justify-center border-l-2 border-foreground/20",
                             hasJoker && "bg-primary/[0.08]",
                             hasBonusPt && !hasJoker && "bg-yellow-500/[0.06]",
                           )}
                         >
                           {canScore ? (
-                            <>
+                            <div className="flex items-center gap-0.5 w-full h-full">
+                              {/* Help buttons */}
+                              <div className="flex flex-col gap-0.5 shrink-0">
+                                {jokerType && (
+                                  <button
+                                    onClick={() => toggleHelp(team.id, cat.id, jokerType)}
+                                    disabled={jokerDisabled}
+                                    tabIndex={-1}
+                                    className={cn(
+                                      "w-5 h-5 rounded text-[9px] font-black border transition-colors",
+                                      hasJoker
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : jokerDisabled
+                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
+                                    )}
+                                  >
+                                    <Zap className="h-3 w-3 mx-auto" />
+                                  </button>
+                                )}
+                                {markerType && (
+                                  <button
+                                    onClick={() => toggleHelp(team.id, cat.id, markerType)}
+                                    disabled={markerDisabled}
+                                    tabIndex={-1}
+                                    className={cn(
+                                      "w-5 h-5 rounded text-[9px] font-black border transition-colors",
+                                      hasMarker
+                                        ? "bg-accent text-accent-foreground border-accent"
+                                        : markerDisabled
+                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
+                                    )}
+                                  >
+                                    <CopyCheck className="h-3 w-3 mx-auto" />
+                                  </button>
+                                )}
+                                {categoryBonusEnabled && (
+                                  <button
+                                    onClick={() => toggleCategoryBonus(team.id, cat.id)}
+                                    disabled={bonusDisabled}
+                                    tabIndex={-1}
+                                    title={t("scoring.categoryBonus")}
+                                    className={cn(
+                                      "w-5 h-5 rounded text-[9px] font-black border transition-colors",
+                                      hasBonusPt
+                                        ? "bg-yellow-500 text-white border-yellow-500"
+                                        : bonusDisabled
+                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
+                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
+                                    )}
+                                  >
+                                    <Crown className="h-3 w-3 mx-auto" />
+                                  </button>
+                                )}
+                              </div>
+                              {/* Score input */}
                               {(() => {
                                 const cellKey = `${team.id}-${cat.id}`;
                                 const isFocused = focusedCell === cellKey;
@@ -924,76 +980,20 @@ export default function QuizDetailPage() {
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
                                     className={cn(
-                                      "w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors",
+                                      "flex-1 min-w-0 text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors h-full",
                                       showEffective ? "text-primary border-primary/30" : "text-foreground border-foreground/15",
                                       sizeClass === "size-lg"
-                                        ? "h-14 text-3xl"
+                                        ? "text-3xl"
                                         : sizeClass === "size-md"
-                                          ? "h-10 text-2xl"
+                                          ? "text-2xl"
                                           : sizeClass === "size-sm"
-                                            ? "h-8 text-xl"
-                                            : "h-6 text-base",
+                                            ? "text-xl"
+                                            : "text-base",
                                     )}
                                   />
                                 );
                               })()}
-
-                              {/* Help initials + category bonus */}
-                              <div className="flex items-center gap-0.5">
-                                {jokerType && (
-                                  <button
-                                    onClick={() => toggleHelp(team.id, cat.id, jokerType)}
-                                    disabled={jokerDisabled}
-                                    tabIndex={-1}
-                                    className={cn(
-                                      "w-6 h-5 rounded text-[9px] font-black border transition-colors",
-                                      hasJoker
-                                        ? "bg-primary text-primary-foreground border-primary"
-                                        : jokerDisabled
-                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-primary hover:text-primary",
-                                    )}
-                                  >
-                                    <Zap className="h-3 w-3 mx-auto" />
-                                  </button>
-                                )}
-                                {markerType && (
-                                  <button
-                                    onClick={() => toggleHelp(team.id, cat.id, markerType)}
-                                    disabled={markerDisabled}
-                                    tabIndex={-1}
-                                    className={cn(
-                                      "w-6 h-5 rounded text-[9px] font-black border transition-colors",
-                                      hasMarker
-                                        ? "bg-accent text-accent-foreground border-accent"
-                                        : markerDisabled
-                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-accent hover:text-accent-foreground",
-                                    )}
-                                  >
-                                    <CopyCheck className="h-3 w-3 mx-auto" />
-                                  </button>
-                                )}
-                                {categoryBonusEnabled && (
-                                  <button
-                                    onClick={() => toggleCategoryBonus(team.id, cat.id)}
-                                    disabled={bonusDisabled}
-                                    tabIndex={-1}
-                                    title={t("scoring.categoryBonus")}
-                                    className={cn(
-                                      "w-6 h-5 rounded text-[9px] font-black border transition-colors",
-                                      hasBonusPt
-                                        ? "bg-yellow-500 text-white border-yellow-500"
-                                        : bonusDisabled
-                                          ? "bg-muted text-muted-foreground/40 border-border cursor-not-allowed"
-                                          : "bg-background text-foreground/60 border-foreground/20 hover:border-yellow-500 hover:text-yellow-600",
-                                    )}
-                                  >
-                                    <Crown className="h-3 w-3 mx-auto" />
-                                  </button>
-                                )}
-                              </div>
-                            </>
+                            </div>
                           ) : (
                             <div className="flex flex-col items-center gap-0.5">
                               <p
