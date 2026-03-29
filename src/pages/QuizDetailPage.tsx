@@ -683,22 +683,29 @@ export default function QuizDetailPage() {
   // Dynamic sizing based on both viewport and table density
   const teamCount = rankedTeams.length;
   const totalCols = colCount + 2; // team col + categories + total
+  const approxTeamColWidth = Math.max(140, Math.floor((viewportSize.width * 2) / Math.max(totalCols + 1, 3)));
+  const partsTotalCols = quizParts.length + 2;
+  const approxPartTeamColWidth = Math.max(140, Math.floor((viewportSize.width * 2) / Math.max(partsTotalCols + 1, 3)));
   const estimatedChromeHeight = isFullscreen ? 132 : 208;
   const availableTableHeight = Math.max(viewportSize.height - estimatedChromeHeight, 320);
   const headerHeightPx = Math.round(Math.max(32, Math.min(60, availableTableHeight * 0.06)));
   const rowHeightPx = Math.max(26, Math.floor((availableTableHeight - headerHeightPx) / Math.max(teamCount, 1)));
   const approxCategoryColWidth = Math.max(54, Math.floor(viewportSize.width / Math.max(totalCols + 1, 1)));
-  const scoreFontPx = Math.max(11, Math.min(28, Math.floor(Math.min(rowHeightPx * 0.34, approxCategoryColWidth * 0.24))));
-  const teamFontPx = Math.max(9, Math.min(18, Math.floor(Math.min(rowHeightPx * 0.26, viewportSize.width * 0.012))));
+  const scoreFontPx = Math.max(12, Math.min(34, Math.floor(Math.min(rowHeightPx * 0.52, approxCategoryColWidth * 0.34))));
+  const teamFontPx = Math.max(9, Math.min(22, Math.floor(Math.min(rowHeightPx * 0.42, approxTeamColWidth * 0.09))));
+  const partTeamFontPx = Math.max(9, Math.min(22, Math.floor(Math.min(rowHeightPx * 0.42, approxPartTeamColWidth * 0.09))));
   const headerFontPx = Math.max(8, Math.min(13, Math.floor(Math.min(headerHeightPx * 0.34, approxCategoryColWidth * 0.16))));
   const rankCirclePx = Math.max(14, Math.min(28, Math.floor(rowHeightPx * 0.46)));
   const helpButtonPx = Math.max(14, Math.min(24, Math.floor(rowHeightPx * 0.26)));
   const helpIconPx = Math.max(8, Math.min(14, Math.floor(helpButtonPx * 0.58)));
-  const scoreInputHeightPx = Math.max(20, Math.floor(rowHeightPx * 0.68));
+  const scoreInputHeightPx = Math.max(20, Math.floor(rowHeightPx * 0.72));
   const teamCellGapPx = rowHeightPx <= 30 ? 2 : 4;
   const controlGapPx = rowHeightPx <= 30 ? 2 : 3;
   const scoreFontSize = `${scoreFontPx}px`;
+  const displayScoreFontSize = `${Math.max(scoreFontPx + 2, Math.floor(scoreFontPx * 1.12))}px`;
+  const totalFontSize = `${Math.max(scoreFontPx + 3, Math.floor(scoreFontPx * 1.18))}px`;
   const teamFontSize = `${teamFontPx}px`;
+  const partTeamFontSize = `${partTeamFontPx}px`;
   const headerFontSize = `${headerFontPx}px`;
 
   return (
@@ -857,7 +864,7 @@ export default function QuizDetailPage() {
                             onClick={() => canEdit && startEditAlias(team)}
                           >
                             <div className="flex items-center min-w-0" style={{ gap: `${teamCellGapPx}px` }}>
-                              <p className="font-bold text-foreground leading-tight truncate" style={{ fontSize: teamFontSize }}>
+                              <p className="font-bold text-foreground leading-tight truncate" style={{ fontSize: teamFontSize, maxWidth: "100%" }}>
                                 {teamName}
                               </p>
                               {canEdit && (
@@ -994,7 +1001,7 @@ export default function QuizDetailPage() {
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center min-w-0 overflow-hidden" style={{ gap: `${controlGapPx}px` }}>
-                              <p className="font-black text-foreground" style={{ fontSize: scoreFontSize }}>
+                              <p className="font-black text-foreground leading-none" style={{ fontSize: displayScoreFontSize }}>
                                 {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
                               </p>
                               <div className="flex items-center" style={{ gap: `${controlGapPx}px` }}>
@@ -1010,7 +1017,7 @@ export default function QuizDetailPage() {
 
                     {/* Total */}
                     <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
-                      <span className="font-black text-primary" style={{ fontSize: scoreFontSize }}>
+                      <span className="font-black text-primary leading-none" style={{ fontSize: totalFontSize }}>
                         {total % 1 === 0 ? total : total.toFixed(1)}
                       </span>
                     </div>
@@ -1027,7 +1034,7 @@ export default function QuizDetailPage() {
             const partsColTemplate = `minmax(0,2fr) ${quizParts.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
 
             return (
-              <div className="min-h-full h-full w-full flex flex-col">
+              <div className="min-h-full h-full w-full flex flex-col relative">
                 {/* Header row */}
                 <div
                   className="grid w-full border-b-2 border-foreground/20 sticky top-0 z-10 bg-card shrink-0"
@@ -1091,7 +1098,7 @@ export default function QuizDetailPage() {
                             {rowIdx + 1}
                           </div>
                           <div className="min-w-0 flex-1 overflow-hidden">
-                            <p className="font-bold text-foreground leading-tight truncate" style={{ fontSize: teamFontSize }}>
+                            <p className="font-bold text-foreground leading-tight truncate" style={{ fontSize: partTeamFontSize, maxWidth: "100%" }}>
                               {teamName}
                             </p>
                             {(jokerType && hasTeamUsedHelp(team.id, jokerType.id)) || (markerType && hasTeamUsedHelp(team.id, markerType.id)) ? (
@@ -1137,7 +1144,7 @@ export default function QuizDetailPage() {
                                   )}
                                 </div>
                               ) : (
-                                <p className="font-black text-foreground" style={{ fontSize: scoreFontSize }}>
+                                <p className="font-black text-foreground leading-none" style={{ fontSize: displayScoreFontSize }}>
                                   {(ps?.points ?? 0) % 1 === 0 ? (ps?.points ?? 0) : (ps?.points ?? 0).toFixed(1)}
                                 </p>
                               )}
@@ -1147,7 +1154,7 @@ export default function QuizDetailPage() {
 
                         {/* Total */}
                         <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
-                          <span className="font-black text-primary" style={{ fontSize: scoreFontSize }}>
+                          <span className="font-black text-primary leading-none" style={{ fontSize: totalFontSize }}>
                             {total % 1 === 0 ? total : total.toFixed(1)}
                           </span>
                         </div>
@@ -1158,7 +1165,11 @@ export default function QuizDetailPage() {
 
                 {/* Expanded part: show categories within that part */}
                 {expandedPart && (
-                  <div className="border-t-2 border-primary/30 bg-primary/[0.02] p-3">
+                  <div
+                    className="absolute inset-x-0 bottom-0 z-30 border-t-2 border-primary/30 bg-background/95 backdrop-blur-sm shadow-2xl"
+                    style={{ top: `${headerHeightPx}px` }}
+                  >
+                    <div className="h-full overflow-auto p-3">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-sm font-bold text-primary">
                         {quizParts.find((p) => p.id === expandedPart)?.name} — {t("scoring.expandPart")}
@@ -1174,10 +1185,10 @@ export default function QuizDetailPage() {
 
                       return (
                         <div className="overflow-x-auto">
-                          <div style={{ minWidth: `${140 + partCats.length * 90 + 70}px` }}>
+                          <div style={{ minWidth: `${180 + partCats.length * 90 + 70}px` }}>
                             <div
                               className="grid border-b border-foreground/10"
-                              style={{ gridTemplateColumns: `140px ${partCats.map(() => "1fr").join(" ")}` }}
+                              style={{ gridTemplateColumns: `180px ${partCats.map(() => "1fr").join(" ")}` }}
                             >
                               <div className="p-1 text-xs font-semibold text-muted-foreground">{t("scoring.team")}</div>
                               {partCats.map((cat) => (
@@ -1192,9 +1203,11 @@ export default function QuizDetailPage() {
                                 <div
                                   key={team.id}
                                   className="grid border-b border-foreground/10 last:border-0"
-                                  style={{ gridTemplateColumns: `140px ${partCats.map(() => "1fr").join(" ")}` }}
+                                  style={{ gridTemplateColumns: `180px ${partCats.map(() => "1fr").join(" ")}` }}
                                 >
-                                  <div className="p-1 text-xs font-medium truncate">{teamName}</div>
+                                  <div className="p-1 font-medium truncate leading-tight" style={{ fontSize: partTeamFontSize }}>
+                                    {teamName}
+                                  </div>
                                   {partCats.map((cat) => {
                                     const score = getScore(team.id, cat.id);
                                     const hasJoker = jokerType && getHelpUsage(team.id, cat.id, jokerType.id);
@@ -1295,7 +1308,9 @@ export default function QuizDetailPage() {
                                           </>
                                         ) : (
                                           <div className="flex flex-col items-center gap-0.5">
-                                            <p className="text-sm font-bold text-center">{displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}</p>
+                                            <p className="font-black text-center leading-none" style={{ fontSize: displayScoreFontSize }}>
+                                              {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
+                                            </p>
                                             <div className="flex items-center gap-0.5">
                                               {hasJoker && <Zap className="h-2.5 w-2.5 text-primary" />}
                                               {hasMarker && <CopyCheck className="h-2.5 w-2.5 text-accent-foreground" />}
@@ -1313,6 +1328,7 @@ export default function QuizDetailPage() {
                         </div>
                       );
                     })()}
+                    </div>
                   </div>
                 )}
               </div>
