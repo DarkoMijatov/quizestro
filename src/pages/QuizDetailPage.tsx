@@ -989,12 +989,7 @@ export default function QuizDetailPage() {
               })}
             </div>
           </div>
-                );
-              })}
-            </div>
-          </div>
-            );
-          })()
+          )
         ) : (
           /* Parts-based scoring view */
           (() => {
