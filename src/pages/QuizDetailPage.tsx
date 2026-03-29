@@ -1099,7 +1099,7 @@ export default function QuizDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col flex-1 w-full">
+                <div className="flex flex-col flex-1 w-full min-h-0">
                   {rankedTeams.map((team, rowIdx) => {
                     const total = getTeamRankTotal(team.id);
                     const teamName = team.alias || (team.team as any)?.name || "";
@@ -1108,12 +1108,11 @@ export default function QuizDetailPage() {
                       <div
                         key={team.id}
                         className={cn(
-                          "grid w-full border-b-2 border-foreground/20 last:border-0",
+                          "grid w-full border-b-2 border-foreground/20 last:border-0 flex-1",
                           rowIdx === 0 && "bg-primary/[0.04]",
                         )}
                         style={{
                           gridTemplateColumns: partsColTemplate,
-                          minHeight: partsRowHeight,
                         }}
                       >
                         {/* Rank + Team */}
@@ -1132,7 +1131,7 @@ export default function QuizDetailPage() {
                           >
                             {rowIdx + 1}
                           </div>
-                          <div className="min-w-0 flex-1 flex items-center gap-1 flex-wrap">
+                          <div className="min-w-0 flex-1">
                             <p
                               className={cn(
                                 "font-bold text-foreground break-words leading-tight",
@@ -1145,12 +1144,16 @@ export default function QuizDetailPage() {
                             >
                               {teamName}
                             </p>
-                            {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
-                              <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
-                            )}
-                            {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
-                              <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
-                            )}
+                            {(jokerType && hasTeamUsedHelp(team.id, jokerType.id)) || (markerType && hasTeamUsedHelp(team.id, markerType.id)) ? (
+                              <div className="flex items-center gap-0.5 mt-0.5">
+                                {jokerType && hasTeamUsedHelp(team.id, jokerType.id) && (
+                                  <Zap className={cn("text-primary flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                                )}
+                                {markerType && hasTeamUsedHelp(team.id, markerType.id) && (
+                                  <CopyCheck className={cn("text-accent-foreground flex-shrink-0", sizeClass === "size-xs" ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                                )}
+                              </div>
+                            ) : null}
                           </div>
                         </div>
 
