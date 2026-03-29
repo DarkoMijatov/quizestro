@@ -755,8 +755,10 @@ export default function QuizDetailPage() {
           }}
         >
         {scoringView === "categories" ? (
+        {scoringView === "categories" ? (
           (() => {
             const colTemplate = `minmax(0,2fr) ${categories.map(() => "minmax(0,1fr)").join(" ")} minmax(0,1fr)`;
+            return (
 
             return (
           <div className="min-h-full h-full w-full flex flex-col">
