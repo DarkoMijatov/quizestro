@@ -741,7 +741,7 @@ export default function QuizDetailPage() {
 
         {/* Scoring Table */}
         <div
-          className="rounded-xl border-2 border-foreground/20 shadow-md overflow-auto min-h-0 flex-1 mt-2"
+          className="rounded-xl border-2 border-foreground/20 shadow-md overflow-hidden min-h-0 flex-1 mt-2 flex flex-col"
           style={{
             backgroundColor: currentOrg?.branding_bg_color || undefined,
             color: currentOrg?.branding_text_color || undefined,
