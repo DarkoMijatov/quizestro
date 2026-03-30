@@ -32,7 +32,7 @@ import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
 
 interface QuizData {
-  categories_filled: boolean;
+  categories_filled?: boolean;
   id: string;
   name: string;
   date: string;
@@ -128,6 +128,7 @@ export default function QuizDetailPage() {
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
+  const [editingValues, setEditingValues] = useState<Record<string, string>>({});
   const [scoringView, setScoringView] = useState<"categories" | "parts">("categories");
   const [expandedPart, setExpandedPart] = useState<string | null>(null);
   const [viewportSize, setViewportSize] = useState(() => ({
@@ -198,6 +199,41 @@ export default function QuizDetailPage() {
   }, [isImmersive]);
 
   useEffect(() => {
+    if (!isImmersive) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const retryFullscreen = async () => {
+      if (!scoringRef.current || document.fullscreenElement) return;
+      try {
+        await scoringRef.current.requestFullscreen();
+      } catch {
+        // Browsers may reject fullscreen without a fresh user gesture.
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void retryFullscreen();
+      }
+    };
+
+    const handleWindowFocus = () => {
+      void retryFullscreen();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, [isImmersive]);
+
+  useEffect(() => {
     const handleResize = () => {
       setViewportSize({
         width: window.innerWidth,
@@ -264,21 +300,9 @@ export default function QuizDetailPage() {
     return catPoints;
   };
 
-  const markCategoriesFilled = async () => {
-    if (!quizId || !quiz || quiz.scoring_mode !== "per_part" || quiz.categories_filled) return;
-
-    setQuiz((prev) => (prev ? { ...prev, categories_filled: true } : prev));
-    if (!isOnline) return;
-    await supabase.from("quizzes").update({ categories_filled: true }).eq("id", quizId);
-  };
-
   const updateScore = async (scoreId: string, field: "points" | "bonus_points", value: number) => {
     // Optimistic local update
     setScores((prev) => prev.map((s) => (s.id === scoreId ? { ...s, [field]: value } : s)));
-
-    if (quiz?.scoring_mode === "per_part" && value !== 0) {
-      void markCategoriesFilled();
-    }
 
     if (isOnline) {
       const update: any = { [field]: value };
@@ -559,17 +583,41 @@ export default function QuizDetailPage() {
 
   const parseScoreValue = (value: string) => Number(normalizeDecimalValue(value)) || 0;
 
-  const insertDecimalPoint = (input: HTMLInputElement) => {
-    const start = input.selectionStart ?? input.value.length;
-    const end = input.selectionEnd ?? input.value.length;
-    input.setRangeText(".", start, end, "end");
-    input.dispatchEvent(new Event("input", { bubbles: true }));
+  const formatEditableScore = (value: number) => (value % 1 === 0 ? String(value) : String(value).replace(".", ","));
+
+  const setEditingValue = (key: string, value: string) => {
+    if (/^\d*(?:[.,]\d*)?$/.test(value)) {
+      setEditingValues((prev) => ({ ...prev, [key]: value }));
+    }
   };
 
-  const handleDecimalSeparatorKey = (e: KeyboardEvent<HTMLInputElement>) => {
+  const clearEditingValue = (key: string) => {
+    setEditingValues((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const commitScoreDraft = (key: string, callback: (value: number) => void) => {
+    const rawValue = editingValues[key];
+    if (rawValue == null) return;
+    callback(parseScoreValue(rawValue));
+    clearEditingValue(key);
+  };
+
+  const handleDecimalSeparatorKey = (e: KeyboardEvent<HTMLInputElement>, key: string) => {
     if (e.key === "," || e.code === "NumpadDecimal") {
       e.preventDefault();
-      insertDecimalPoint(e.currentTarget);
+      const input = e.currentTarget;
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      const nextValue = `${input.value.slice(0, start)},${input.value.slice(end)}`;
+      setEditingValue(key, nextValue);
+      requestAnimationFrame(() => {
+        const pos = start + 1;
+        input.setSelectionRange(pos, pos);
+      });
       return true;
     }
     return false;
@@ -631,16 +679,8 @@ export default function QuizDetailPage() {
 
   const updateQuizStatus = async (status: "draft" | "live" | "finished") => {
     if (!quizId) return;
-    const shouldMarkCategoriesFilled =
-      quiz?.scoring_mode === "per_part" &&
-      scores.some((s) => Number(s.points || 0) !== 0 || Number(s.bonus_points || 0) !== 0);
-    const quizUpdate: Record<string, unknown> = { status };
-    if (shouldMarkCategoriesFilled) {
-      quizUpdate.categories_filled = true;
-    }
-
-    await supabase.from("quizzes").update(quizUpdate).eq("id", quizId);
-    setQuiz((prev) => (prev ? { ...prev, status, categories_filled: shouldMarkCategoriesFilled || prev.categories_filled } : prev));
+    await supabase.from("quizzes").update({ status }).eq("id", quizId);
+    setQuiz((prev) => (prev ? { ...prev, status } : prev));
 
     if (status === "finished") {
       for (let i = 0; i < rankedTeams.length; i++) {
@@ -659,7 +699,8 @@ export default function QuizDetailPage() {
 
   // Keyboard navigation: arrow keys move between score inputs
   const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>, rowIdx: number, colIdx: number) => {
-    if (handleDecimalSeparatorKey(e)) return;
+    const cellKey = `${rowIdx}-${colIdx}`;
+    if (handleDecimalSeparatorKey(e, cellKey)) return;
 
     let targetRow = rowIdx;
     let targetCol = colIdx;
@@ -698,8 +739,13 @@ export default function QuizDetailPage() {
     }
   };
 
-  const handlePartInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    handleDecimalSeparatorKey(e);
+  const handlePartInputKeyDown = (e: KeyboardEvent<HTMLInputElement>, key: string, callback: (value: number) => void) => {
+    if (handleDecimalSeparatorKey(e, key)) return;
+
+    if (e.key === "Enter") {
+      commitScoreDraft(key, callback);
+      e.currentTarget.blur();
+    }
   };
 
   const setInputRef = (rowIdx: number, colIdx: number, el: HTMLInputElement | null) => {
@@ -782,7 +828,7 @@ export default function QuizDetailPage() {
         ref={scoringRef}
         className={cn(
           "flex flex-col",
-          isImmersive ? "bg-background p-4 h-screen" : "h-[calc(100vh-6rem)]"
+          isImmersive ? "fixed inset-0 z-[80] bg-background p-4 h-screen w-screen" : "h-[calc(100vh-6rem)]"
         )}
       >
         {/* Header */}
@@ -932,7 +978,16 @@ export default function QuizDetailPage() {
                             onClick={() => canEdit && startEditAlias(team)}
                           >
                             <div className="flex items-center min-w-0" style={{ gap: `${teamCellGapPx}px` }}>
-                              <p className="font-bold text-foreground leading-tight truncate" style={{ fontSize: teamFontSize, maxWidth: "100%" }}>
+                              <p
+                                className="font-bold text-foreground leading-tight overflow-hidden"
+                                style={{
+                                  fontSize: teamFontSize,
+                                  maxWidth: "100%",
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical",
+                                }}
+                              >
                                 {teamName}
                               </p>
                               {canEdit && (
@@ -993,17 +1048,23 @@ export default function QuizDetailPage() {
                                 const cellKey = `${team.id}-${cat.id}`;
                                 const isFocused = focusedCell === cellKey;
                                 const showEffective = (hasJoker || hasBonusPt) && !isFocused;
-                                const displayValue = showEffective ? displayPts : (score?.points ?? 0);
+                                const displayValue = editingValues[cellKey] ?? (showEffective ? formatEditableScore(displayPts) : formatEditableScore(score?.points ?? 0));
                                 return (
                                   <input
                                     ref={(el) => setInputRef(rowIdx, colIdx, el)}
-                                    type="number"
-                                    min={0}
-                                    step={0.5}
+                                    type="text"
+                                    inputMode="decimal"
                                     value={displayValue}
-                                    onChange={(e) => score && updateScore(score.id, "points", parseScoreValue(e.target.value))}
-                                    onFocus={(e) => { setFocusedCell(cellKey); e.target.select(); }}
-                                    onBlur={() => setFocusedCell(null)}
+                                    onChange={(e) => setEditingValue(cellKey, e.target.value)}
+                                    onFocus={(e) => {
+                                      setFocusedCell(cellKey);
+                                      setEditingValue(cellKey, formatEditableScore(score?.points ?? 0));
+                                      e.target.select();
+                                    }}
+                                    onBlur={() => {
+                                      if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value));
+                                      setFocusedCell(null);
+                                    }}
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
                                     className={cn(
@@ -1178,7 +1239,16 @@ export default function QuizDetailPage() {
                             {rowIdx + 1}
                           </div>
                           <div className="min-w-0 flex-1 overflow-hidden">
-                            <p className="font-bold text-foreground leading-tight truncate" style={{ fontSize: partTeamFontSize, maxWidth: "100%" }}>
+                            <p
+                              className="font-bold text-foreground leading-tight overflow-hidden"
+                              style={{
+                                fontSize: partTeamFontSize,
+                                maxWidth: "100%",
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                              }}
+                            >
                               {teamName}
                             </p>
                             {(jokerType && hasTeamUsedHelp(team.id, jokerType.id)) || (markerType && hasTeamUsedHelp(team.id, markerType.id)) ? (
@@ -1208,13 +1278,18 @@ export default function QuizDetailPage() {
                               {canScore ? (
                                 <div className="flex flex-col items-center justify-center gap-0.5 w-full h-full min-h-0">
                                   <input
-                                    type="number"
-                                    min={0}
-                                    step={0.5}
-                                    value={ps?.points ?? 0}
-                                    onChange={(e) => ps && updatePartScore(ps.id, parseScoreValue(e.target.value))}
-                                    onFocus={(e) => e.target.select()}
-                                    onKeyDown={handlePartInputKeyDown}
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={editingValues[`part-${team.id}-${part.id}`] ?? formatEditableScore(ps?.points ?? 0)}
+                                    onChange={(e) => setEditingValue(`part-${team.id}-${part.id}`, e.target.value)}
+                                    onFocus={(e) => {
+                                      setEditingValue(`part-${team.id}-${part.id}`, formatEditableScore(ps?.points ?? 0));
+                                      e.target.select();
+                                    }}
+                                    onBlur={() => {
+                                      if (ps) commitScoreDraft(`part-${team.id}-${part.id}`, (value) => updatePartScore(ps.id, value));
+                                    }}
+                                    onKeyDown={(e) => ps && handlePartInputKeyDown(e, `part-${team.id}-${part.id}`, (value) => updatePartScore(ps.id, value))}
                                     className="w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15"
                                     style={{ fontSize: scoreFontSize, height: `${scoreInputHeightPx}px`, lineHeight: 1 }}
                                   />
@@ -1307,7 +1382,7 @@ export default function QuizDetailPage() {
                                     const cellKey = `drill-${team.id}-${cat.id}`;
                                     const isFocused = focusedCell === cellKey;
                                     const showEffective = (hasJoker || hasBonusPt) && !isFocused;
-                                    const displayValue = showEffective ? displayPts : (score?.points ?? 0);
+                                    const displayValue = editingValues[cellKey] ?? (showEffective ? formatEditableScore(displayPts) : formatEditableScore(score?.points ?? 0));
 
                                     return (
                                       <div
@@ -1321,14 +1396,20 @@ export default function QuizDetailPage() {
                                         {canScore ? (
                                           <>
                                             <input
-                                              type="number"
-                                              min={0}
-                                              step={0.5}
+                                              type="text"
+                                              inputMode="decimal"
                                               value={displayValue}
-                                              onChange={(e) => score && updateScore(score.id, "points", parseScoreValue(e.target.value))}
-                                              onFocus={(e) => { setFocusedCell(cellKey); e.target.select(); }}
-                                              onBlur={() => setFocusedCell(null)}
-                                              onKeyDown={handlePartInputKeyDown}
+                                              onChange={(e) => setEditingValue(cellKey, e.target.value)}
+                                              onFocus={(e) => {
+                                                setFocusedCell(cellKey);
+                                                setEditingValue(cellKey, formatEditableScore(score?.points ?? 0));
+                                                e.target.select();
+                                              }}
+                                              onBlur={() => {
+                                                if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value));
+                                                setFocusedCell(null);
+                                              }}
+                                              onKeyDown={(e) => score && handlePartInputKeyDown(e, cellKey, (value) => updateScore(score.id, "points", value))}
                                               className={cn(
                                                 "w-full text-center font-bold text-sm bg-transparent border rounded focus:border-primary focus:outline-none h-7",
                                                 showEffective ? "text-primary border-primary/30" : "text-foreground border-foreground/15",

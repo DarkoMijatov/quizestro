@@ -134,7 +134,7 @@ export default function StatsPage() {
     const loadAll = async () => {
       // Fetch base data in parallel
       const [quizzesRes, qtRes, scoresRes, leaguesRes] = await Promise.all([
-        supabase.from('quizzes').select('id, name, date, status, league_id, scoring_mode, categories_filled').eq('organization_id', currentOrg.id),
+        supabase.from('quizzes').select('id, name, date, status, league_id, scoring_mode').eq('organization_id', currentOrg.id),
         supabase.from('quiz_teams').select('team_id, quiz_id, total_points, rank').eq('organization_id', currentOrg.id),
         supabase.from('scores').select('quiz_category_id, quiz_id, points, bonus_points').eq('organization_id', currentOrg.id),
         supabase.from('leagues').select('id, name, season, is_active').eq('organization_id', currentOrg.id),
@@ -178,13 +178,22 @@ export default function StatsPage() {
       // === Best Categories (async, independent) ===
       (async () => {
         const quizMap = new Map(allQuizzes.map(q => [q.id, q]));
+        const perPartQuizzesWithCategoryScores = new Set(
+          allScores
+            .filter((s: any) => {
+              const quiz = quizMap.get(s.quiz_id);
+              if (!quiz || quiz.scoring_mode !== 'per_part') return false;
+              return Number(s.points || 0) !== 0 || Number(s.bonus_points || 0) !== 0;
+            })
+            .map((s: any) => s.quiz_id)
+        );
 
         const finishedScores = allScores.filter((s: any) => {
           if (!finishedQuizIds.has(s.quiz_id)) return false;
           const quiz = quizMap.get(s.quiz_id);
           if (!quiz) return false;
           if (quiz.scoring_mode !== 'per_part') return true;
-          return !!quiz.categories_filled;
+          return perPartQuizzesWithCategoryScores.has(s.quiz_id);
         });
 
         if (finishedScores.length === 0) { setBestCategories([]); setCatsLoading(false); return; }

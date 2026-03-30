@@ -125,7 +125,7 @@ export default function CategoriesPage() {
     let finishedQuizIds = new Set<string>();
     if (qcQuizIds.length > 0) {
       const { data: quizData } = await supabase
-        .from('quizzes').select('id, scoring_mode, categories_filled').in('id', qcQuizIds).eq('status', 'finished');
+        .from('quizzes').select('id, scoring_mode').in('id', qcQuizIds).eq('status', 'finished');
       finishedQuizIds = new Set((quizData || []).map((q: any) => q.id));
     }
 
@@ -140,9 +140,19 @@ export default function CategoriesPage() {
       const quizMetaMap = new Map<string, any>();
       if (qcQuizIds.length > 0) {
         const { data: quizMeta } = await supabase
-          .from('quizzes').select('id, scoring_mode, status, categories_filled').in('id', qcQuizIds);
+          .from('quizzes').select('id, scoring_mode, status').in('id', qcQuizIds);
         (quizMeta || []).forEach((q: any) => quizMetaMap.set(q.id, q));
       }
+
+      const perPartQuizzesWithCategoryScores = new Set(
+        (scoreData || [])
+          .filter((s: any) => {
+            const quiz = quizMetaMap.get(s.quiz_id);
+            if (!quiz || quiz.scoring_mode !== 'per_part') return false;
+            return Number(s.points || 0) !== 0 || Number(s.bonus_points || 0) !== 0;
+          })
+          .map((s: any) => s.quiz_id)
+      );
 
       const finishedQcIds = new Set(
         qcList
@@ -151,7 +161,7 @@ export default function CategoriesPage() {
             const quiz = quizMetaMap.get(qc.quiz_id);
             if (!quiz) return false;
             if (quiz.scoring_mode !== 'per_part') return true;
-            return !!quiz.categories_filled;
+            return perPartQuizzesWithCategoryScores.has(qc.quiz_id);
           })
           .map((qc: any) => qc.id)
       );

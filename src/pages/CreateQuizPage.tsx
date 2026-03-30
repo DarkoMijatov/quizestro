@@ -488,7 +488,6 @@ export default function CreateQuizPage() {
         created_by: user.id,
         status: "draft",
         scoring_mode: scoringMode,
-        categories_filled: scoringMode === "per_category",
       })
       .select()
       .single();
@@ -624,7 +623,15 @@ export default function CreateQuizPage() {
       <div className="max-w-3xl mx-auto space-y-8">
         {/* Header */}
         <div>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/quizzes")} className="gap-1 mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              clearDraft();
+              navigate("/dashboard/quizzes");
+            }}
+            className="gap-1 mb-2"
+          >
             <ArrowLeft className="h-4 w-4" />
             {t("common.back")}
           </Button>
@@ -1513,7 +1520,15 @@ export default function CreateQuizPage() {
             <div className="flex justify-between">
               <Button
                 variant="outline"
-                onClick={() => (step > 1 ? setStep(step - 1) : (setMode("choose"), setStep(0)))}
+                onClick={() => {
+                  if (step > 1) {
+                    setStep(step - 1);
+                    return;
+                  }
+                  clearDraft();
+                  setMode("choose");
+                  setStep(0);
+                }}
                 className="gap-1"
               >
                 <ArrowLeft className="h-4 w-4" />

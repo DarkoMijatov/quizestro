@@ -45,11 +45,20 @@ export default function CategoryDetailPage() {
 
       if (quizIds.length > 0) {
         const [{ data: quizzes }, { data: scores }] = await Promise.all([
-          supabase.from('quizzes').select('id, name, date, location, status, scoring_mode, categories_filled').in('id', quizIds).order('date', { ascending: false }),
+          supabase.from('quizzes').select('id, name, date, location, status, scoring_mode').in('id', quizIds).order('date', { ascending: false }),
           supabase.from('scores').select('quiz_id, quiz_category_id, points, bonus_points').in('quiz_category_id', quizCatIds),
         ]);
 
         const quizMap = new Map((quizzes || []).map((q: any) => [q.id, q]));
+        const perPartQuizzesWithCategoryScores = new Set(
+          (scores || [])
+            .filter((s: any) => {
+              const quiz = quizMap.get(s.quiz_id);
+              if (!quiz || quiz.scoring_mode !== 'per_part') return false;
+              return Number(s.points || 0) !== 0 || Number(s.bonus_points || 0) !== 0;
+            })
+            .map((s: any) => s.quiz_id)
+        );
         
         // Group scores by quiz_category_id
         const scoresByQC = new Map<string, { total: number; count: number }>();
@@ -65,7 +74,7 @@ export default function CategoryDetailPage() {
             const quiz = quizMap.get(qc.quiz_id);
             if (!quiz) return false;
             if (quiz.scoring_mode !== 'per_part') return true;
-            return !!quiz.categories_filled;
+            return perPartQuizzesWithCategoryScores.has(qc.quiz_id);
           })
           .map((qc: any) => {
             const q = quizMap.get(qc.quiz_id) || {};
