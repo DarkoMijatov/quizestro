@@ -72,6 +72,9 @@ interface Schedule {
   prize_info: string | null;
   team_size_info: string | null;
   notes: string | null;
+  recurrence_pattern: string;
+  valid_from: string | null;
+  valid_until: string | null;
 }
 
 export default function LocationDetailPage() {
