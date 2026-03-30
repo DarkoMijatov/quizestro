@@ -429,6 +429,8 @@ export default function StatsPage() {
                 quizzes: s.quizzes,
                 wins: s.wins,
                 avgPoints: s.quizzes > 0 ? s.totalPoints / s.quizzes : 0,
+                bestQuizPoints: s.bestQuizPoints,
+                bonusPoints: s.bonusPoints,
               }))
               .sort((a, b) => b.avgPoints - a.avgPoints)
           );
