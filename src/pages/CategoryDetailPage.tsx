@@ -44,28 +44,40 @@ export default function CategoryDetailPage() {
   const [category, setCategory] = useState<{ id: string; name: string } | null>(null);
   const [usages, setUsages] = useState<QuizUsage[]>([]);
   const [teamAverages, setTeamAverages] = useState<TeamCategoryAverageRow[]>([]);
+  const [rawAverage, setRawAverage] = useState(0);
+  const [highestQuizAverage, setHighestQuizAverage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [teamPage, setTeamPage] = useState(1);
   const [historyPage, setHistoryPage] = useState(1);
 
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 8;
 
   useEffect(() => {
     if (!id || !currentOrg) return;
     const fetchAll = async () => {
       setLoading(true);
+      try {
+        const [{ data: catData }, { data: qcData }] = await Promise.all([
+          supabase.from('categories').select('id, name').eq('id', id).single(),
+          supabase.from('quiz_categories').select('quiz_id, sort_order, id').eq('category_id', id).eq('organization_id', currentOrg.id),
+        ]);
 
-      const [{ data: catData }, { data: qcData }] = await Promise.all([
-        supabase.from('categories').select('id, name').eq('id', id).single(),
-        supabase.from('quiz_categories').select('quiz_id, sort_order, id').eq('category_id', id).eq('organization_id', currentOrg.id),
-      ]);
+        setCategory(catData as any);
 
-      setCategory(catData as any);
+        const quizIds = [...new Set((qcData || []).map((qc: any) => qc.quiz_id))];
+        if (quizIds.length === 0) {
+          setUsages([]);
+          setTeamAverages([]);
+          setRawAverage(0);
+          setHighestQuizAverage(0);
+          return;
+        }
 
-      const quizIds = (qcData || []).map((qc: any) => qc.quiz_id);
-
-      if (quizIds.length > 0) {
-        const quizzesWithFlag = await supabase.from('quizzes').select('id, name, date, location, status, scoring_mode, categories_filled').in('id', quizIds).order('date', { ascending: false });
+        const quizzesWithFlag = await supabase
+          .from('quizzes')
+          .select('id, name, date, location, status, scoring_mode, categories_filled')
+          .in('id', quizIds)
+          .order('date', { ascending: false });
         const quizzesFallback = quizzesWithFlag.error
           ? await supabase.from('quizzes').select('id, name, date, location, status, scoring_mode').in('id', quizIds).order('date', { ascending: false })
           : null;
@@ -76,18 +88,15 @@ export default function CategoryDetailPage() {
             }))
           : (quizzesWithFlag.data || []);
 
-        const [{ data: allQuizCategories }, { data: quizTeams }, { data: helpTypes }, { data: helpUsages }, { data: categoryBonuses }, { data: partScores }] = await Promise.all([
-          supabase.from('quiz_categories').select('id, quiz_id, quiz_part_id').in('quiz_id', quizIds),
+        const qcIdSet = new Set((qcData || []).map((qc: any) => qc.id));
+        const [{ data: scores }, { data: quizTeams }, { data: helpTypes }, { data: helpUsages }, { data: categoryBonuses }, { data: partScores }] = await Promise.all([
+          supabase.from('scores').select('quiz_id, quiz_team_id, quiz_category_id, points, bonus_points').in('quiz_category_id', Array.from(qcIdSet)),
           supabase.from('quiz_teams').select('id, quiz_id, team_id, teams(name)').in('quiz_id', quizIds),
           supabase.from('help_types').select('id, effect').eq('organization_id', currentOrg.id),
           supabase.from('help_usages').select('quiz_id, quiz_team_id, quiz_category_id, help_type_id').in('quiz_id', quizIds),
           supabase.from('category_bonuses').select('quiz_id, quiz_team_id, quiz_category_id').in('quiz_id', quizIds),
           supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', quizIds),
         ]);
-        const allQuizCategoryIds = (allQuizCategories || []).map((qc: any) => qc.id);
-        const { data: scores } = allQuizCategoryIds.length > 0
-          ? await supabase.from('scores').select('quiz_id, quiz_team_id, quiz_category_id, points, bonus_points').in('quiz_category_id', allQuizCategoryIds)
-          : { data: [] as any[] };
 
         const quizMap = new Map((quizzes || []).map((q: any) => [q.id, q]));
         const jokerHelpTypeIds = (helpTypes || [])
@@ -101,21 +110,24 @@ export default function CategoryDetailPage() {
           categoryBonuses: (categoryBonuses || []) as any[],
           jokerHelpTypeIds,
         });
-        
-        // Group scores by quiz_category_id
+
+        const validQuizIds = new Set(
+          (qcData || [])
+            .filter((qc: any) => completeQuizIds.has(qc.quiz_id))
+            .map((qc: any) => qc.quiz_id)
+        );
+        const rawScoreEntries = (scores || []).filter((score: any) => validQuizIds.has(score.quiz_id) && qcIdSet.has(score.quiz_category_id));
+
         const scoresByQC = new Map<string, { total: number; count: number }>();
-        (scores || []).forEach((s: any) => {
-          if (!completeQuizIds.has(s.quiz_id)) return;
-          const existing = scoresByQC.get(s.quiz_category_id) || { total: 0, count: 0 };
-          existing.total += Number(s.points || 0);
+        rawScoreEntries.forEach((score: any) => {
+          const existing = scoresByQC.get(score.quiz_category_id) || { total: 0, count: 0 };
+          existing.total += Number(score.points || 0);
           existing.count += 1;
-          scoresByQC.set(s.quiz_category_id, existing);
+          scoresByQC.set(score.quiz_category_id, existing);
         });
 
         const merged: QuizUsage[] = (qcData || [])
-          .filter((qc: any) => {
-            return completeQuizIds.has(qc.quiz_id);
-          })
+          .filter((qc: any) => completeQuizIds.has(qc.quiz_id))
           .map((qc: any) => {
             const q = quizMap.get(qc.quiz_id) || {};
             const sc = scoresByQC.get(qc.id) || { total: 0, count: 0 };
@@ -133,26 +145,20 @@ export default function CategoryDetailPage() {
           .sort((a: QuizUsage, b: QuizUsage) => b.quiz_date.localeCompare(a.quiz_date));
 
         setUsages(merged);
+        const rawTotal = rawScoreEntries.reduce((sum: number, score: any) => sum + Number(score.points || 0), 0);
+        setRawAverage(rawScoreEntries.length > 0 ? rawTotal / rawScoreEntries.length : 0);
+        setHighestQuizAverage(merged.length > 0 ? Math.max(...merged.map((usage) => usage.avg_score)) : 0);
 
-        const validQuizIds = new Set(
-          (qcData || [])
-            .filter((qc: any) => completeQuizIds.has(qc.quiz_id))
-            .map((qc: any) => qc.quiz_id)
-        );
-        const targetQuizCategoryIds = new Set((qcData || []).map((qc: any) => qc.id));
         const teamMap = new Map((quizTeams || []).map((qt: any) => [qt.id, { team_id: qt.team_id, team_name: qt.teams?.name || '—' }]));
         const teamStats = new Map<string, { team_id: string; team_name: string; total: number; count: number }>();
-
-        (scores || [])
-          .filter((score: any) => validQuizIds.has(score.quiz_id) && targetQuizCategoryIds.has(score.quiz_category_id))
-          .forEach((score: any) => {
-            const teamInfo = teamMap.get(score.quiz_team_id);
-            if (!teamInfo) return;
-            const existing = teamStats.get(teamInfo.team_id) || { ...teamInfo, total: 0, count: 0 };
-            existing.total += Number(score.points || 0);
-            existing.count += 1;
-            teamStats.set(teamInfo.team_id, existing);
-          });
+        rawScoreEntries.forEach((score: any) => {
+          const teamInfo = teamMap.get(score.quiz_team_id);
+          if (!teamInfo) return;
+          const existing = teamStats.get(teamInfo.team_id) || { ...teamInfo, total: 0, count: 0 };
+          existing.total += Number(score.points || 0);
+          existing.count += 1;
+          teamStats.set(teamInfo.team_id, existing);
+        });
 
         setTeamAverages(
           Array.from(teamStats.values())
@@ -164,24 +170,16 @@ export default function CategoryDetailPage() {
             }))
             .sort((a, b) => b.avg_score - a.avg_score)
         );
-      } else {
-        setUsages([]);
-        setTeamAverages([]);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
     fetchAll();
   }, [id, currentOrg?.id]);
 
   const totalUsed = usages.length;
-  const finishedUsages = usages.filter((u) => u.quiz_status === 'finished');
-  const overallAvg = finishedUsages.length > 0
-    ? formatAverage(finishedUsages.reduce((s, u) => s + u.avg_score, 0) / finishedUsages.length, i18n.language)
-    : formatAverage(0, i18n.language);
-  const highestAvg = finishedUsages.length > 0
-    ? formatAverage(Math.max(...finishedUsages.map((u) => u.avg_score)), i18n.language)
-    : formatAverage(0, i18n.language);
+  const overallAvg = formatAverage(rawAverage, i18n.language);
+  const highestAvg = formatAverage(highestQuizAverage, i18n.language);
   const totalTeamPages = Math.max(1, Math.ceil(teamAverages.length / PAGE_SIZE));
   const safeTeamPage = Math.min(teamPage, totalTeamPages);
   const visibleTeamAverages = teamAverages.slice((safeTeamPage - 1) * PAGE_SIZE, safeTeamPage * PAGE_SIZE);

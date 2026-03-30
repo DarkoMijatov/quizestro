@@ -37,7 +37,7 @@ interface LeagueRow extends League {
   lastDate: string | null;
 }
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 8;
 
 export default function LeaguesPage() {
   const { t, i18n } = useTranslation();

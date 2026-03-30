@@ -68,7 +68,7 @@ export function DataTable<T>({
   columns,
   data,
   loading,
-  pageSize = 15,
+  pageSize = 8,
   defaultSortKey,
   defaultSortDir = 'desc',
   searchPlaceholder,

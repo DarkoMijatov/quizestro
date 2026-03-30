@@ -33,7 +33,7 @@ interface CategoryRow {
   avgPoints: number | null;
 }
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 8;
 
 export default function CategoriesPage() {
   const { t, i18n } = useTranslation();

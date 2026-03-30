@@ -30,7 +30,6 @@ interface TeamRow {
   wins: number;
   avgPoints: number | null;
   bestQuizPoints: number | null;
-  totalPoints: number;
   bonusPoints: number;
 }
 
@@ -41,7 +40,7 @@ interface TeamAlias {
   alias: string;
 }
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 8;
 
 export default function TeamsPage() {
   const { t, i18n } = useTranslation();
@@ -163,7 +162,6 @@ export default function TeamsPage() {
         wins: agg?.wins || 0,
         avgPoints: agg && agg.count > 0 ? agg.totalPts / agg.count : null,
         bestQuizPoints: agg?.bestQuizPoints ?? null,
-        totalPoints: agg?.totalPts || 0,
         bonusPoints: agg?.bonusPoints || 0,
       };
     }).sort((a, b) => {
@@ -179,8 +177,6 @@ export default function TeamsPage() {
             return row.avgPoints ?? -1;
           case 'bestQuizPoints':
             return row.bestQuizPoints ?? -1;
-          case 'totalPoints':
-            return row.totalPoints;
           case 'bonusPoints':
             return row.bonusPoints;
           case 'created_at':
@@ -276,12 +272,6 @@ export default function TeamsPage() {
       sortable: true,
       render: (r) => r.bestQuizPoints != null ? formatPoints(r.bestQuizPoints, i18n.language) : '—',
       getValue: (r) => r.bestQuizPoints,
-    },
-    {
-      key: 'totalPoints', label: t('teamsTable.totalPoints', 'Ukupno poena'),
-      sortable: true,
-      render: (r) => formatPoints(r.totalPoints, i18n.language),
-      getValue: (r) => r.totalPoints,
     },
     {
       key: 'bonusPoints', label: t('teamsTable.bonusPoints', 'Bonus poeni'),

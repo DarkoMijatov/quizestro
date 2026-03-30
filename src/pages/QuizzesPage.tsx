@@ -39,7 +39,7 @@ const statusColors: Record<string, string> = {
   finished: 'bg-accent text-accent-foreground',
 };
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 8;
 
 export default function QuizzesPage() {
   const { t } = useTranslation();

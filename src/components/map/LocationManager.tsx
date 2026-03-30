@@ -72,7 +72,7 @@ interface Schedule {
 }
 
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-const LOCATIONS_PAGE_SIZE = 10;
+const LOCATIONS_PAGE_SIZE = 8;
 
 const emptyLocation: Omit<Location, 'id' | 'organization_id'> = {
   venue_name: '', address_line: '', city: '', postal_code: '', country: 'Serbia',

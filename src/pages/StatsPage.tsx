@@ -32,7 +32,7 @@ type SortDir = 'asc' | 'desc';
 type StatsRangePreset = 'this_month' | 'last_30_days' | 'last_3_months' | 'last_6_months' | 'last_year' | 'this_year' | 'all_time' | 'custom';
 type StatsSectionKey = 'teams' | 'categories' | 'quizzes' | 'leagues';
 
-const SECTION_PAGE_SIZE = 10;
+const SECTION_PAGE_SIZE = 8;
 
 function getRangeFromPreset(preset: StatsRangePreset) {
   const today = new Date();
