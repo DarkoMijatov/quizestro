@@ -194,7 +194,9 @@ export default function TeamDetailPage() {
             }))
             .sort((a, b) => b.avg_score - a.avg_score)
         );
-        setBonusPoints(filteredScores.reduce((sum: number, score: any) => sum + Number(score.bonus_points || 0), 0));
+        setBonusPoints(
+          (categoryBonuses || []).filter((cb: any) => completeFinishedQtIdSet.has(cb.quiz_team_id)).length
+        );
       } finally {
         setLoading(false);
       }
