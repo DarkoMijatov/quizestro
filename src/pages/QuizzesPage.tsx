@@ -20,6 +20,7 @@ import { Plus, Trophy, Eye, Pencil, Trash2, Calendar as CalendarIcon, X } from '
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { srLatn } from 'date-fns/locale';
+import { formatAverage } from '@/lib/number-format';
 
 interface QuizRow {
   id: string;
@@ -149,7 +150,7 @@ export default function QuizzesPage() {
         ...q,
         teamCount: agg?.teamCount || 0,
         winner: agg?.winner || null,
-        avgPoints: agg && agg.teamCount > 0 ? Math.round((agg.totalPoints / agg.teamCount) * 100) / 100 : null,
+        avgPoints: agg && agg.teamCount > 0 ? agg.totalPoints / agg.teamCount : null,
       };
     }));
     setLoading(false);
@@ -211,7 +212,7 @@ export default function QuizzesPage() {
     },
     {
       key: 'avgPoints', label: t('quizzes.avgPoints'),
-      render: (r) => r.avgPoints != null ? r.avgPoints : '—',
+      render: (r) => r.avgPoints != null ? formatAverage(r.avgPoints, i18n.language) : '—',
       getValue: (r) => r.avgPoints,
     },
     {

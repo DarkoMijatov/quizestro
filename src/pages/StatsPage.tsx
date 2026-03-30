@@ -6,6 +6,15 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Trophy, Users, FolderOpen, Award, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { formatAverage } from '@/lib/number-format';
 
 interface TopTeam { name: string; quizzes: number; wins: number; avgPoints: number }
 interface BestCategory { name: string; avgPoints: number }
@@ -14,7 +23,7 @@ interface TopLeague { name: string; season: string; quizCount: number; leaderNam
 
 type SortDir = 'asc' | 'desc';
 
-const TOP_N = 10;
+const SECTION_PAGE_SIZE = 10;
 
 function SortableTable<T>({ data, columns, defaultSortKey, defaultSortDir = 'desc' }: {
   data: T[];
@@ -22,9 +31,10 @@ function SortableTable<T>({ data, columns, defaultSortKey, defaultSortDir = 'des
   defaultSortKey: string;
   defaultSortDir?: SortDir;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [sortKey, setSortKey] = useState(defaultSortKey);
   const [sortDir, setSortDir] = useState<SortDir>(defaultSortDir);
+  const [page, setPage] = useState(1);
 
   const sorted = useMemo(() => {
     const col = columns.find(c => c.key === sortKey);
@@ -38,43 +48,85 @@ function SortableTable<T>({ data, columns, defaultSortKey, defaultSortDir = 'des
   }, [data, sortKey, sortDir, columns]);
 
   const toggleSort = (key: string) => {
+    setPage(1);
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortDir('desc'); }
   };
 
   if (data.length === 0) return <p className="text-sm text-muted-foreground text-center py-8">{t('stats.noData')}</p>;
 
-  const visible = sorted.slice(0, TOP_N);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / SECTION_PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const startIndex = (safePage - 1) * SECTION_PAGE_SIZE;
+  const visible = sorted.slice(startIndex, startIndex + SECTION_PAGE_SIZE);
 
   return (
-    <div className="overflow-auto">
-      <table className="w-full text-sm">
-        <thead className="sticky top-0 bg-card z-10">
-          <tr className="border-b border-border">
-            <th className="text-left py-2 px-3 font-medium text-muted-foreground w-10">#</th>
-            {columns.map(col => (
-              <th key={col.key} className={`py-2 px-3 font-medium text-muted-foreground ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
-                <Button variant="ghost" size="sm" className="h-auto p-0 font-medium hover:text-foreground gap-1" onClick={() => toggleSort(col.key)}>
-                  {col.label}
-                  <ArrowUpDown className="h-3 w-3" />
-                </Button>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {visible.map((row, i) => (
-            <tr key={i} className="border-b border-border/50 last:border-0">
-              <td className="py-2.5 px-3 font-bold text-muted-foreground">{i + 1}</td>
+    <div className="space-y-4">
+      <div className="overflow-auto">
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 bg-card z-10">
+            <tr className="border-b border-border">
+              <th className="text-left py-2 px-3 font-medium text-muted-foreground w-10">#</th>
               {columns.map(col => (
-                <td key={col.key} className={`py-2.5 px-3 ${col.align === 'right' ? 'text-right' : ''} ${col.key === 'name' ? 'font-medium' : ''} ${col.key === 'avgPoints' || col.key === 'totalPoints' ? 'font-semibold text-primary' : ''}`}>
-                  {col.render ? col.render(row) : col.getValue(row)}
-                </td>
+                <th key={col.key} className={`py-2 px-3 font-medium text-muted-foreground ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
+                  <Button variant="ghost" size="sm" className="h-auto p-0 font-medium hover:text-foreground gap-1" onClick={() => toggleSort(col.key)}>
+                    {col.label}
+                    <ArrowUpDown className="h-3 w-3" />
+                  </Button>
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {visible.map((row, i) => (
+              <tr key={i} className="border-b border-border/50 last:border-0">
+                <td className="py-2.5 px-3 font-bold text-muted-foreground">{startIndex + i + 1}</td>
+                {columns.map(col => {
+                  const rawValue = col.getValue(row);
+                  const content = col.render
+                    ? col.render(row)
+                    : typeof rawValue === 'number' && col.key === 'avgPoints'
+                      ? formatAverage(rawValue, i18n.language)
+                      : rawValue;
+
+                  return (
+                    <td key={col.key} className={`py-2.5 px-3 ${col.align === 'right' ? 'text-right' : ''} ${col.key === 'name' ? 'font-medium' : ''} ${col.key === 'avgPoints' || col.key === 'totalPoints' ? 'font-semibold text-primary' : ''}`}>
+                      {content}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            {startIndex + 1}–{Math.min(startIndex + SECTION_PAGE_SIZE, sorted.length)} / {sorted.length}
+          </p>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setPage(Math.max(1, safePage - 1))}
+                  className={safePage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink isActive>{safePage}</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setPage(Math.min(totalPages, safePage + 1))}
+                  className={safePage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }
@@ -167,10 +219,9 @@ export default function StatsPage() {
               name: nameMap.get(id) || '?',
               quizzes: s.quizzes,
               wins: s.wins,
-              avgPoints: s.quizzes > 0 ? Math.round((s.totalPoints / s.quizzes) * 100) / 100 : 0,
+              avgPoints: s.quizzes > 0 ? s.totalPoints / s.quizzes : 0,
             }))
             .sort((a, b) => b.quizzes - a.quizzes)
-            .slice(0, TOP_N)
         );
         setTeamsLoading(false);
       })();
@@ -215,10 +266,9 @@ export default function StatsPage() {
           Object.entries(catStats)
             .map(([id, s]) => ({
               name: cNameMap.get(id) || '?',
-              avgPoints: s.count > 0 ? Math.round((s.total / s.count) * 100) / 100 : 0,
+              avgPoints: s.count > 0 ? s.total / s.count : 0,
             }))
             .sort((a, b) => b.avgPoints - a.avgPoints)
-            .slice(0, TOP_N)
         );
         setCatsLoading(false);
       })();
@@ -242,11 +292,10 @@ export default function StatsPage() {
                 name: quiz?.name || '?',
                 date: quiz?.date || '',
                 teamCount: s.teamCount,
-                avgPoints: s.teamCount > 0 ? Math.round((s.totalPoints / s.teamCount) * 100) / 100 : 0,
+                avgPoints: s.teamCount > 0 ? s.totalPoints / s.teamCount : 0,
               };
             })
             .sort((a, b) => b.avgPoints - a.avgPoints)
-            .slice(0, TOP_N)
         );
         setQuizzesLoading(false);
       })();
@@ -296,7 +345,6 @@ export default function StatsPage() {
             leaderName: leagueLeaders[l.id] ? (leaderNameMap.get(leagueLeaders[l.id]) || '?') : '-',
           }))
           .sort((a, b) => b.quizCount - a.quizCount)
-          .slice(0, TOP_N)
         );
         setLeaguesLoading(false);
       })();

@@ -13,6 +13,14 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import {
@@ -64,6 +72,7 @@ interface Schedule {
 }
 
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const LOCATIONS_PAGE_SIZE = 10;
 
 const emptyLocation: Omit<Location, 'id' | 'organization_id'> = {
   venue_name: '', address_line: '', city: '', postal_code: '', country: 'Serbia',
@@ -86,6 +95,7 @@ export function LocationManager() {
   const [editSchedule, setEditSchedule] = useState<Partial<Schedule> | null>(null);
   const [selectedDays, setSelectedDays] = useState<number[]>([4]);
   const [geocoding, setGeocoding] = useState(false);
+  const [locationsPage, setLocationsPage] = useState(1);
 
   useEffect(() => {
     if (!currentOrg) return;
@@ -102,6 +112,7 @@ export function LocationManager() {
     ]);
     setLocations((locs || []) as Location[]);
     setSchedules((scheds || []) as Schedule[]);
+    setLocationsPage(1);
     setLoading(false);
   };
 
@@ -236,6 +247,13 @@ export function LocationManager() {
 
   if (!currentOrg) return null;
 
+  const totalLocationPages = Math.max(1, Math.ceil(locations.length / LOCATIONS_PAGE_SIZE));
+  const safeLocationsPage = Math.min(locationsPage, totalLocationPages);
+  const visibleLocations = locations.slice(
+    (safeLocationsPage - 1) * LOCATIONS_PAGE_SIZE,
+    safeLocationsPage * LOCATIONS_PAGE_SIZE
+  );
+
   return (
     <div className="space-y-6">
       {/* Visibility toggle */}
@@ -284,7 +302,7 @@ export function LocationManager() {
           </div>
         ) : (
           <div className="space-y-3">
-            {locations.map(loc => {
+            {visibleLocations.map(loc => {
               const locSchedules = schedules.filter(s => s.organization_location_id === loc.id);
               return (
                 <div key={loc.id} className="rounded-lg border border-border p-4 space-y-3">
@@ -379,6 +397,33 @@ export function LocationManager() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {locations.length > LOCATIONS_PAGE_SIZE && (
+          <div className="flex items-center justify-between pt-2">
+            <p className="text-sm text-muted-foreground">
+              {(safeLocationsPage - 1) * LOCATIONS_PAGE_SIZE + 1}–{Math.min(safeLocationsPage * LOCATIONS_PAGE_SIZE, locations.length)} / {locations.length}
+            </p>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setLocationsPage(Math.max(1, safeLocationsPage - 1))}
+                    className={safeLocationsPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink isActive>{safeLocationsPage}</PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setLocationsPage(Math.min(totalLocationPages, safeLocationsPage + 1))}
+                    className={safeLocationsPage === totalLocationPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         )}
       </div>

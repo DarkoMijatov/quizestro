@@ -104,7 +104,7 @@ interface CategoryBonus {
 }
 
 export default function QuizDetailPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id: quizId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentOrg, currentRole } = useOrganizations();
@@ -579,11 +579,18 @@ export default function QuizDetailPage() {
     setTeams((prev) => [...prev].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id)));
   };
 
+  const decimalSeparator = i18n.language === "sr" ? "," : ".";
+
   const normalizeDecimalValue = (value: string) => value.replace(",", ".");
 
   const parseScoreValue = (value: string) => Number(normalizeDecimalValue(value)) || 0;
 
-  const formatEditableScore = (value: number) => (value % 1 === 0 ? String(value) : String(value).replace(".", ","));
+  const formatScoreForLocale = (value: number) => {
+    if (value % 1 === 0) return String(value);
+    return value.toFixed(1).replace(".", decimalSeparator);
+  };
+
+  const formatEditableScore = (value: number) => formatScoreForLocale(value);
 
   const setEditingValue = (key: string, value: string) => {
     if (/^\d*(?:[.,]\d*)?$/.test(value)) {
@@ -612,7 +619,7 @@ export default function QuizDetailPage() {
       const input = e.currentTarget;
       const start = input.selectionStart ?? input.value.length;
       const end = input.selectionEnd ?? input.value.length;
-      const nextValue = `${input.value.slice(0, start)},${input.value.slice(end)}`;
+      const nextValue = `${input.value.slice(0, start)}${decimalSeparator}${input.value.slice(end)}`;
       setEditingValue(key, nextValue);
       requestAnimationFrame(() => {
         const pos = start + 1;
@@ -1143,7 +1150,7 @@ export default function QuizDetailPage() {
                           ) : (
                             <div className="flex flex-col items-center justify-center min-w-0 overflow-hidden" style={{ gap: `${controlGapPx}px` }}>
                               <p className="font-black text-foreground leading-none" style={{ fontSize: displayScoreFontSize }}>
-                                {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
+                                {formatScoreForLocale(displayPts)}
                               </p>
                               <div className="flex items-center" style={{ gap: `${controlGapPx}px` }}>
                                 {hasJoker && <Zap className="text-primary" style={{ width: `${helpIconPx}px`, height: `${helpIconPx}px` }} />}
@@ -1159,7 +1166,7 @@ export default function QuizDetailPage() {
                     {/* Total */}
                     <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
                       <span className="font-black text-primary leading-none" style={{ fontSize: totalFontSize }}>
-                        {total % 1 === 0 ? total : total.toFixed(1)}
+                        {formatScoreForLocale(total)}
                       </span>
                     </div>
                   </div>
@@ -1301,7 +1308,7 @@ export default function QuizDetailPage() {
                                 </div>
                               ) : (
                                 <p className="font-black text-foreground leading-none" style={{ fontSize: displayScoreFontSize }}>
-                                  {(ps?.points ?? 0) % 1 === 0 ? (ps?.points ?? 0) : (ps?.points ?? 0).toFixed(1)}
+                                  {formatScoreForLocale(ps?.points ?? 0)}
                                 </p>
                               )}
                             </div>
@@ -1311,7 +1318,7 @@ export default function QuizDetailPage() {
                         {/* Total */}
                         <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
                           <span className="font-black text-primary leading-none" style={{ fontSize: totalFontSize }}>
-                            {total % 1 === 0 ? total : total.toFixed(1)}
+                            {formatScoreForLocale(total)}
                           </span>
                         </div>
                       </div>
@@ -1472,7 +1479,7 @@ export default function QuizDetailPage() {
                                         ) : (
                                           <div className="flex flex-col items-center gap-0.5">
                                             <p className="font-black text-center leading-none" style={{ fontSize: displayScoreFontSize }}>
-                                              {displayPts % 1 === 0 ? displayPts : displayPts.toFixed(1)}
+                                              {formatScoreForLocale(displayPts)}
                                             </p>
                                             <div className="flex items-center gap-0.5">
                                               {hasJoker && <Zap className="h-2.5 w-2.5 text-primary" />}

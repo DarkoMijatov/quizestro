@@ -57,7 +57,7 @@ export default function LeaguesPage() {
   const [deleteItem, setDeleteItem] = useState<League | null>(null);
 
   const [serverParams, setServerParams] = useState<ServerParams>({
-    page: 1, pageSize: PAGE_SIZE, search: '', sortKey: 'created_at', sortDir: 'desc', filters: {},
+    page: 1, pageSize: PAGE_SIZE, search: '', sortKey: 'lastDate', sortDir: 'desc', filters: {},
   });
 
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
@@ -90,18 +90,6 @@ export default function LeaguesPage() {
       countQuery = countQuery.or(`name.ilike.${pattern},season.ilike.${pattern}`);
       dataQuery = dataQuery.or(`name.ilike.${pattern},season.ilike.${pattern}`);
     }
-
-    // Sort
-    const sortCol = params.sortKey || 'created_at';
-    if (['name', 'created_at', 'is_active', 'season'].includes(sortCol)) {
-      dataQuery = dataQuery.order(sortCol, { ascending: params.sortDir === 'asc' });
-    } else {
-      dataQuery = dataQuery.order('created_at', { ascending: false });
-    }
-
-    // Pagination
-    const from = (params.page - 1) * params.pageSize;
-    dataQuery = dataQuery.range(from, from + params.pageSize - 1);
 
     const [countRes, dataRes] = await Promise.all([countQuery, dataQuery]);
     setTotalCount(countRes.count || 0);
@@ -167,7 +155,7 @@ export default function LeaguesPage() {
       }
     }
 
-    setLeagues(rawLeagues.map(l => {
+    const sortedLeagues = rawLeagues.map(l => {
       const dates = (datesByLeague[l.id] || []).sort();
       return {
         ...l,
@@ -176,11 +164,44 @@ export default function LeaguesPage() {
         firstDate: dates.length > 0 ? dates[0] : null,
         lastDate: dates.length > 0 ? dates[dates.length - 1] : null,
       };
-    }));
-    setLoading(false);
-  }, [currentOrg?.id]);
+    }).sort((a, b) => {
+      const sortKey = params.sortKey || 'lastDate';
+      const sortDir = params.sortDir === 'asc' ? 1 : -1;
+      const getSortableValue = (row: LeagueRow) => {
+        switch (sortKey) {
+          case 'firstDate':
+            return row.firstDate || '';
+          case 'lastDate':
+            return row.lastDate || '';
+          case 'quizCount':
+            return row.quizCount;
+          case 'leaderName':
+            return row.leaderName || '';
+          case 'is_active':
+            return row.is_active ? 1 : 0;
+          case 'season':
+            return row.season || '';
+          case 'name':
+          default:
+            return row.name;
+        }
+      };
 
-  useEffect(() => { fetchLeagues(serverParams); }, [currentOrg?.id]);
+      const aValue = getSortableValue(a);
+      const bValue = getSortableValue(b);
+      const comparison = typeof aValue === 'number' && typeof bValue === 'number'
+        ? aValue - bValue
+        : String(aValue).localeCompare(String(bValue), i18n.language);
+
+      return comparison * sortDir;
+    });
+
+    const from = (params.page - 1) * params.pageSize;
+    setLeagues(sortedLeagues.slice(from, from + params.pageSize));
+    setLoading(false);
+  }, [currentOrg?.id, i18n.language]);
+
+  useEffect(() => { fetchLeagues(serverParams); }, [fetchLeagues]);
 
   const handleServerChange = useCallback((params: ServerParams) => {
     setServerParams(params);
@@ -229,10 +250,10 @@ export default function LeaguesPage() {
         {r.season && <span className="text-xs text-muted-foreground">({r.season})</span>}
       </div>
     )},
-    { key: 'firstDate', label: t('leagues.startDate', 'Početak'), render: (r) => (
+    { key: 'firstDate', label: t('leagues.startDate', 'Početak'), sortable: true, render: (r) => (
       <span className="text-sm text-muted-foreground">{formatDate(r.firstDate)}</span>
     ), getValue: (r) => r.firstDate || '' },
-    { key: 'lastDate', label: t('leagues.endDate', 'Kraj'), render: (r) => (
+    { key: 'lastDate', label: t('leagues.endDate', 'Kraj'), sortable: true, render: (r) => (
       <span className="text-sm text-muted-foreground">{formatDate(r.lastDate)}</span>
     ), getValue: (r) => r.lastDate || '' },
     { key: 'is_active', label: t('filters.status'), sortable: true, render: (r) => (
@@ -240,8 +261,8 @@ export default function LeaguesPage() {
         {r.is_active ? t('leagues.active') : t('leagues.inactive')}
       </Badge>
     ), getValue: (r) => r.is_active ? 1 : 0 },
-    { key: 'quizCount', label: t('leagueDetail.quizCount'), getValue: (r) => r.quizCount },
-    { key: 'leaderName', label: t('leagueDetail.leaderOrWinner'), render: (r) => (
+    { key: 'quizCount', label: t('leagueDetail.quizCount'), sortable: true, getValue: (r) => r.quizCount },
+    { key: 'leaderName', label: t('leagueDetail.leaderOrWinner'), sortable: true, render: (r) => (
       <span className="text-sm">{r.leaderName || '-'}</span>
     ), getValue: (r) => r.leaderName || '' },
     ...(canEdit ? [{
@@ -275,7 +296,7 @@ export default function LeaguesPage() {
         data={leagues}
         loading={loading}
         pageSize={PAGE_SIZE}
-        defaultSortKey="created_at"
+        defaultSortKey="lastDate"
         defaultSortDir="desc"
         filters={filterConfigs}
         emptyIcon={<Award className="h-12 w-12 text-muted-foreground/30 mx-auto" />}

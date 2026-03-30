@@ -177,6 +177,10 @@ export default function MembersPage() {
   };
 
   const canEditName = (member: MemberRow) => isOwner || member.user_id === user?.id;
+  const getMemberRoleNameSortValue = (member: MemberRow) => {
+    const roleRank = member.role === 'owner' ? 3 : member.role === 'admin' ? 2 : 1;
+    return `${roleRank}-${member.profile?.full_name || ''}`;
+  };
 
   const columns: Column<MemberRow>[] = [
     {
@@ -203,7 +207,7 @@ export default function MembersPage() {
             {r.role}
           </Badge>
         );
-      }, getValue: (r) => r.role,
+      }, getValue: (r) => getMemberRoleNameSortValue(r),
     },
     {
       key: 'actions', label: '', render: (r) => (
@@ -266,8 +270,9 @@ export default function MembersPage() {
           columns={columns}
           data={members}
           loading={loading}
+          pageSize={15}
           defaultSortKey="role"
-          defaultSortDir="asc"
+          defaultSortDir="desc"
           searchFn={(r, q) => (r.profile?.full_name || '').toLowerCase().includes(q)}
           emptyIcon={<Users className="h-12 w-12 text-muted-foreground/30 mx-auto" />}
           emptyMessage={t('members.noMembers')}

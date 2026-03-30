@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, Eye, Pencil, Trash2, Users, Loader2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatAverage } from '@/lib/number-format';
 
 interface TeamRow {
   id: string;
@@ -40,7 +41,7 @@ interface TeamAlias {
 const PAGE_SIZE = 15;
 
 export default function TeamsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { currentOrg, currentRole } = useOrganizations();
   const { toast } = useToast();
@@ -58,7 +59,7 @@ export default function TeamsPage() {
   const [aliases, setAliases] = useState<Record<string, TeamAlias[]>>({});
 
   const [serverParams, setServerParams] = useState<ServerParams>({
-    page: 1, pageSize: PAGE_SIZE, search: '', sortKey: 'name', sortDir: 'asc', filters: {},
+    page: 1, pageSize: PAGE_SIZE, search: '', sortKey: 'avgPoints', sortDir: 'desc', filters: {},
   });
 
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
@@ -88,18 +89,6 @@ export default function TeamsPage() {
       dataQuery = dataQuery.ilike('name', pattern);
     }
 
-    // Sort
-    const sortCol = params.sortKey || 'name';
-     if (['name', 'created_at'].includes(sortCol)) {
-      dataQuery = dataQuery.order(sortCol, { ascending: params.sortDir === 'asc' });
-    } else {
-      dataQuery = dataQuery.order('name', { ascending: true });
-    }
-
-    // Pagination
-    const from = (params.page - 1) * params.pageSize;
-    dataQuery = dataQuery.range(from, from + params.pageSize - 1);
-
     const [countRes, dataRes] = await Promise.all([countQuery, dataQuery]);
     setTotalCount(countRes.count || 0);
 
@@ -113,7 +102,7 @@ export default function TeamsPage() {
 
     const teamIds = loadedTeams.map((t) => t.id);
 
-    // Fetch aliases + aggregates for current page only
+    // Fetch aliases + aggregates for filtered teams
     const [aliasRes, qtRes] = await Promise.all([
       supabase.from('team_aliases').select('*').in('team_id', teamIds),
       supabase.from('quiz_teams').select('team_id, total_points, rank, quiz_id').in('team_id', teamIds),
@@ -146,19 +135,48 @@ export default function TeamsPage() {
       aggMap.set(qt.team_id, agg);
     });
 
-    setTeams(loadedTeams.map((t) => {
+    const sortedTeams = loadedTeams.map((t) => {
       const agg = aggMap.get(t.id);
       return {
         ...t,
         participations: agg?.count || 0,
         wins: agg?.wins || 0,
-        avgPoints: agg && agg.count > 0 ? Math.round((agg.totalPts / agg.count) * 100) / 100 : null,
+        avgPoints: agg && agg.count > 0 ? agg.totalPts / agg.count : null,
       };
-    }));
-    setLoading(false);
-  }, [currentOrg?.id]);
+    }).sort((a, b) => {
+      const sortKey = params.sortKey || 'avgPoints';
+      const sortDir = params.sortDir === 'asc' ? 1 : -1;
+      const getSortableValue = (row: TeamRow) => {
+        switch (sortKey) {
+          case 'participations':
+            return row.participations;
+          case 'wins':
+            return row.wins;
+          case 'avgPoints':
+            return row.avgPoints ?? -1;
+          case 'created_at':
+            return row.created_at;
+          case 'name':
+          default:
+            return row.name;
+        }
+      };
 
-  useEffect(() => { fetchTeams(serverParams); }, [currentOrg?.id]);
+      const aValue = getSortableValue(a);
+      const bValue = getSortableValue(b);
+      const comparison = typeof aValue === 'number' && typeof bValue === 'number'
+        ? aValue - bValue
+        : String(aValue).localeCompare(String(bValue), i18n.language);
+
+      return comparison * sortDir;
+    });
+
+    const from = (params.page - 1) * params.pageSize;
+    setTeams(sortedTeams.slice(from, from + params.pageSize));
+    setLoading(false);
+  }, [currentOrg?.id, i18n.language]);
+
+  useEffect(() => { fetchTeams(serverParams); }, [fetchTeams]);
 
   const handleServerChange = useCallback((params: ServerParams) => {
     setServerParams(params);
@@ -211,16 +229,17 @@ export default function TeamsPage() {
       getValue: (r) => r.name,
     },
     {
-      key: 'participations', label: t('teamsTable.participations'),
+      key: 'participations', label: t('teamsTable.participations'), sortable: true,
       getValue: (r) => r.participations,
     },
     {
-      key: 'wins', label: t('teamsTable.wins'),
+      key: 'wins', label: t('teamsTable.wins'), sortable: true,
       getValue: (r) => r.wins,
     },
     {
       key: 'avgPoints', label: t('teamsTable.avgPoints'),
-      render: (r) => r.avgPoints != null ? r.avgPoints : '—',
+      sortable: true,
+      render: (r) => r.avgPoints != null ? formatAverage(r.avgPoints, i18n.language) : '—',
       getValue: (r) => r.avgPoints,
     },
     {
@@ -258,7 +277,7 @@ export default function TeamsPage() {
         </div>
       ),
     },
-  ], [t, canEdit, navigate, aliases]);
+  ], [t, canEdit, navigate, aliases, i18n.language]);
 
   return (
     <DashboardLayout>
@@ -267,8 +286,8 @@ export default function TeamsPage() {
         data={teams}
         loading={loading}
         pageSize={PAGE_SIZE}
-        defaultSortKey="name"
-        defaultSortDir="asc"
+        defaultSortKey="avgPoints"
+        defaultSortDir="desc"
         title={t('teams.title')}
         emptyIcon={<Users className="h-12 w-12 text-muted-foreground/30 mx-auto" />}
         emptyMessage={t('teams.noTeams')}

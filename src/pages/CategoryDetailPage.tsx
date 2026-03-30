@@ -6,6 +6,7 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FolderOpen, Calendar, MapPin, Loader2, Hash, TrendingUp, BarChart3 } from 'lucide-react';
+import { formatAverage } from '@/lib/number-format';
 
 interface QuizUsage {
   quiz_id: string;
@@ -21,7 +22,7 @@ interface QuizUsage {
 export default function CategoryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { currentOrg } = useOrganizations();
 
   const [category, setCategory] = useState<{ id: string; name: string } | null>(null);
@@ -105,11 +106,11 @@ export default function CategoryDetailPage() {
   const totalUsed = usages.length;
   const finishedUsages = usages.filter((u) => u.quiz_status === 'finished');
   const overallAvg = finishedUsages.length > 0
-    ? (finishedUsages.reduce((s, u) => s + u.avg_score, 0) / finishedUsages.length).toFixed(1)
-    : '0';
+    ? formatAverage(finishedUsages.reduce((s, u) => s + u.avg_score, 0) / finishedUsages.length, i18n.language)
+    : formatAverage(0, i18n.language);
   const highestAvg = finishedUsages.length > 0
-    ? Math.max(...finishedUsages.map((u) => u.avg_score)).toFixed(1)
-    : '0';
+    ? formatAverage(Math.max(...finishedUsages.map((u) => u.avg_score)), i18n.language)
+    : formatAverage(0, i18n.language);
 
   if (loading) {
     return (
@@ -189,7 +190,7 @@ export default function CategoryDetailPage() {
                   </div>
                   <div className="flex items-center gap-4 shrink-0 ml-4 text-sm">
                     <div className="text-center">
-                      <p className="text-lg font-bold">{u.avg_score.toFixed(1)}</p>
+                      <p className="text-lg font-bold">{formatAverage(u.avg_score, i18n.language)}</p>
                       <p className="text-xs text-muted-foreground">{t('categoryDetail.avgScore')}</p>
                     </div>
                     <div className="text-center">

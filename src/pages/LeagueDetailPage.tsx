@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Award, Trophy, Users, Loader2, ArrowUpDown, Calendar, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { srLatn } from 'date-fns/locale';
+import { formatAverage } from '@/lib/number-format';
 
 interface LeagueData {
   id: string;
@@ -137,8 +138,8 @@ export default function LeagueDetailPage() {
             teamId: tid,
             teamName: teamNameMap.get(tid) || '?',
             quizzes: s.quizzes,
-            totalPoints: Math.round(s.totalPoints * 100) / 100,
-            avgPoints: s.quizzes > 0 ? Math.round((s.totalPoints / s.quizzes) * 100) / 100 : 0,
+            totalPoints: s.totalPoints,
+            avgPoints: s.quizzes > 0 ? s.totalPoints / s.quizzes : 0,
             wins: s.wins,
           }))
           .sort((a, b) => b.totalPoints - a.totalPoints)
@@ -271,7 +272,7 @@ export default function LeagueDetailPage() {
                           <td className="py-2.5 px-3 font-medium">{row.teamName}</td>
                           <td className="py-2.5 px-3 text-right">{row.quizzes}</td>
                           <td className="py-2.5 px-3 text-right font-semibold text-primary">{row.totalPoints}</td>
-                          <td className="py-2.5 px-3 text-right">{row.avgPoints}</td>
+                          <td className="py-2.5 px-3 text-right">{formatAverage(row.avgPoints, i18n.language)}</td>
                           <td className="py-2.5 px-3 text-right">{row.wins}</td>
                         </tr>
                       ))}

@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Tag, Trophy, Calendar, MapPin, Loader2, TrendingUp, Hash } from 'lucide-react';
+import { formatAverage } from '@/lib/number-format';
 
 interface TeamAlias {
   id: string;
@@ -27,7 +28,7 @@ interface QuizParticipation {
 export default function TeamDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { currentOrg } = useOrganizations();
 
   const [team, setTeam] = useState<{ id: string; name: string } | null>(null);
@@ -86,8 +87,8 @@ export default function TeamDetailPage() {
   const finishedParticipations = participations.filter((p) => p.quiz_status === 'finished');
   const totalQuizzes = participations.length;
   const avgPoints = finishedParticipations.length > 0
-    ? (finishedParticipations.reduce((s, p) => s + (p.total_points || 0), 0) / finishedParticipations.length).toFixed(1)
-    : '0';
+    ? formatAverage(finishedParticipations.reduce((s, p) => s + (p.total_points || 0), 0) / finishedParticipations.length, i18n.language)
+    : formatAverage(0, i18n.language);
   const bestRank = finishedParticipations.reduce((best, p) => (p.rank && (best === 0 || p.rank < best) ? p.rank : best), 0);
   const wins = finishedParticipations.filter((p) => p.rank === 1).length;
 
