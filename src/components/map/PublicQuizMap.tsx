@@ -78,7 +78,6 @@ interface Schedule {
   recurrence_pattern: string;
   valid_from: string | null;
   valid_until: string | null;
-  _nextOccurrence?: Date | null;
 }
 
 const DAY_NAMES_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -91,87 +90,17 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function startOfDayLocal(date: Date) {
-  const copy = new Date(date);
-  copy.setHours(0, 0, 0, 0);
-  return copy;
-}
-
-function combineDateAndTime(date: Date, time: string) {
-  const [hours = '0', minutes = '0'] = time.split(':');
-  const copy = new Date(date);
-  copy.setHours(Number(hours), Number(minutes), 0, 0);
-  return copy;
-}
-
-function getRecurrenceStepDays(schedule: Schedule) {
-  if (schedule.recurrence_pattern === 'biweekly') return 14;
-  if (schedule.recurrence_pattern === 'monthly') return 28;
-  return 7;
-}
-
-function diffInWholeDays(later: Date, earlier: Date) {
-  return Math.floor((later.getTime() - earlier.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function firstMatchingDateOnOrAfter(baseDate: Date, dayOfWeek: number, time: string) {
-  const candidate = startOfDayLocal(baseDate);
-  const dayDiff = (dayOfWeek - candidate.getDay() + 7) % 7;
-  candidate.setDate(candidate.getDate() + dayDiff);
-  let withTime = combineDateAndTime(candidate, time);
-  if (withTime < baseDate) {
-    candidate.setDate(candidate.getDate() + 7);
-    withTime = combineDateAndTime(candidate, time);
-  }
-  return withTime;
-}
-
-function getScheduleNextOccurrence(schedule: Schedule, rangeFrom: Date, rangeTo?: Date) {
+function getNextOccurrence(schedule: Schedule, t: (key: string) => string): string {
   if (schedule.schedule_type === 'one_time' && schedule.event_date) {
-    const eventDate = combineDateAndTime(new Date(schedule.event_date), schedule.start_time);
-    if (eventDate < rangeFrom) return null;
-    if (rangeTo && eventDate > rangeTo) return null;
-    return eventDate;
+    return `${schedule.event_date} ${t('map.at')} ${schedule.start_time.slice(0, 5)}`;
   }
-
-  if (schedule.schedule_type !== 'recurring' || schedule.day_of_week === null) {
-    return null;
+  if (schedule.day_of_week !== null) {
+    const patternSuffix = schedule.recurrence_pattern && schedule.recurrence_pattern !== 'weekly'
+      ? ` (${t(`mapSettings.${schedule.recurrence_pattern}`)})`
+      : '';
+    return `${t(`map.${DAY_NAMES_KEYS[schedule.day_of_week]}`)} ${t('map.at')} ${schedule.start_time.slice(0, 5)}${patternSuffix}`;
   }
-
-  const validFromDate = schedule.valid_from
-    ? combineDateAndTime(new Date(schedule.valid_from), schedule.start_time)
-    : null;
-  const anchor = firstMatchingDateOnOrAfter(validFromDate || rangeFrom, schedule.day_of_week, schedule.start_time);
-  const searchStart = validFromDate && validFromDate > rangeFrom ? validFromDate : rangeFrom;
-  let candidate = firstMatchingDateOnOrAfter(searchStart, schedule.day_of_week, schedule.start_time);
-
-  if (candidate < anchor) {
-    candidate = anchor;
-  }
-
-  const stepDays = getRecurrenceStepDays(schedule);
-  const elapsedDays = Math.max(0, diffInWholeDays(candidate, anchor));
-  const remainder = elapsedDays % stepDays;
-  if (remainder !== 0) {
-    candidate = new Date(candidate.getTime() + (stepDays - remainder) * 24 * 60 * 60 * 1000);
-  }
-
-  const validUntilDate = schedule.valid_until
-    ? combineDateAndTime(new Date(schedule.valid_until), schedule.start_time)
-    : null;
-  if (validUntilDate && candidate > validUntilDate) return null;
-  if (rangeTo && candidate > rangeTo) return null;
-
-  return candidate;
-}
-
-function getNextOccurrenceLabel(schedule: Schedule, t: (key: string) => string): string {
-  if (!schedule._nextOccurrence) return '';
-  const baseLabel = `${format(schedule._nextOccurrence, 'dd.MM.yyyy')} ${t('map.at')} ${format(schedule._nextOccurrence, 'HH:mm')}`;
-  if (schedule.schedule_type !== 'recurring') {
-    return baseLabel;
-  }
-  return `${baseLabel} | ${t(`mapSettings.${schedule.recurrence_pattern || 'weekly'}`)}`;
+  return '';
 }
 
 // Marker cluster layer component
@@ -205,7 +134,7 @@ function MarkerClusterGroup({ locations, onSelectLocation }: { locations: OrgLoc
       const marker = L.marker([loc.latitude, loc.longitude], { icon: goldMarkerIcon });
       
       const scheduleHtml = loc.schedules?.[0]
-        ? `<p style="font-size:11px;margin-top:4px;font-weight:500;color:hsl(36,90%,50%)">${getNextOccurrenceLabel(loc.schedules[0], t)}</p>`
+        ? `<p style="font-size:11px;margin-top:4px;font-weight:500;color:hsl(36,90%,50%)">${getNextOccurrence(loc.schedules[0], t)}</p>`
         : '';
       const logoHtml = loc.org_logo_url
         ? `<img src="${loc.org_logo_url}" alt="" style="width:28px;height:28px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.15)" />`
@@ -293,57 +222,52 @@ export function PublicQuizMap() {
 
   const loadLocations = async () => {
     setLoading(true);
-    try {
-      const { data: locs } = await supabase
-        .from('org_locations')
-        .select('*')
-        .eq('is_active', true);
+    const { data: locs } = await supabase
+      .from('org_locations')
+      .select('*')
+      .eq('is_active', true);
 
-      if (!locs || locs.length === 0) {
-        setLocations([]);
-        return;
-      }
-
-      const orgIds = [...new Set(locs.map(l => l.organization_id))];
-      const { data: orgs } = await supabase
-        .from('organizations')
-        .select('id, name, logo_url')
-        .in('id', orgIds)
-        .eq('public_map_enabled', true)
-        .eq('is_deleted', false);
-
-      const orgMap = new Map((orgs || []).map(o => [o.id, o]));
-
-      const locIds = locs.map(l => l.id);
-      const { data: schedules } = await supabase
-        .from('location_schedules')
-        .select('*')
-        .in('organization_location_id', locIds)
-        .eq('is_active', true);
-
-      const scheduleMap = new Map<string, Schedule[]>();
-      (schedules || []).forEach(s => {
-        const existing = scheduleMap.get(s.organization_location_id) || [];
-        existing.push(s as Schedule);
-        scheduleMap.set(s.organization_location_id, existing);
-      });
-
-      const enriched: OrgLocation[] = locs
-        .filter(l => orgMap.has(l.organization_id))
-        .map(l => ({
-          ...l,
-          org_name: orgMap.get(l.organization_id)?.name,
-          org_logo_url: orgMap.get(l.organization_id)?.logo_url || null,
-          schedules: scheduleMap.get(l.id) || [],
-        }));
-
-      setLocations(enriched);
-    } catch (error) {
-      console.error('Failed to load public quiz map', error);
+    if (!locs || locs.length === 0) {
       setLocations([]);
-    } finally {
       setLoading(false);
+      return;
     }
+
+    const orgIds = [...new Set(locs.map(l => l.organization_id))];
+    const { data: orgs } = await supabase
+      .from('organizations')
+      .select('id, name, logo_url')
+      .in('id', orgIds)
+      .eq('public_map_enabled', true)
+      .eq('is_deleted', false);
+
+    const orgMap = new Map((orgs || []).map(o => [o.id, o]));
+
+    const locIds = locs.map(l => l.id);
+    const { data: schedules } = await supabase
+      .from('location_schedules')
+      .select('*')
+      .in('organization_location_id', locIds)
+      .eq('is_active', true);
+
+    const scheduleMap = new Map<string, Schedule[]>();
+    (schedules || []).forEach(s => {
+      const existing = scheduleMap.get(s.organization_location_id) || [];
+      existing.push(s as Schedule);
+      scheduleMap.set(s.organization_location_id, existing);
+    });
+
+    const enriched: OrgLocation[] = locs
+      .filter(l => orgMap.has(l.organization_id))
+      .map(l => ({
+        ...l,
+        org_name: orgMap.get(l.organization_id)?.name,
+        org_logo_url: orgMap.get(l.organization_id)?.logo_url || null,
+        schedules: scheduleMap.get(l.id) || [],
+      }));
+
+    setLocations(enriched);
+    setLoading(false);
   };
 
   const handleGeolocate = useCallback(() => {
@@ -412,18 +336,25 @@ export function PublicQuizMap() {
       result = result.filter(l => l.schedules?.some(s => s.category === categoryFilter));
     }
 
-    // Date range filter — compute the concrete next occurrence for each visible schedule
-    const rangeFrom = dateFrom ? combineDateAndTime(dateFrom, '00:00') : new Date();
-    const rangeTo = dateTo ? combineDateAndTime(dateTo, '23:59') : undefined;
+    // Date range filter — filter individual schedules, remove locations with none left
+    const rangeFrom = dateFrom || new Date();
+    const rangeTo = dateTo;
     result = result.map(l => {
       if (!l.schedules || l.schedules.length === 0) return { ...l, schedules: [] };
-      const validSchedules = l.schedules
-        .map((schedule) => ({
-          ...schedule,
-          _nextOccurrence: getScheduleNextOccurrence(schedule, rangeFrom, rangeTo),
-        }))
-        .filter((schedule) => !!schedule._nextOccurrence)
-        .sort((a, b) => a._nextOccurrence!.getTime() - b._nextOccurrence!.getTime());
+      const validSchedules = l.schedules.filter(s => {
+        if (s.schedule_type === 'one_time' && s.event_date) {
+          const eventDate = new Date(s.event_date);
+          if (eventDate < rangeFrom) return false;
+          if (rangeTo && eventDate > rangeTo) return false;
+          return true;
+        }
+        if (s.schedule_type === 'recurring') {
+          if (s.valid_until && new Date(s.valid_until) < rangeFrom) return false;
+          if (rangeTo && s.valid_from && new Date(s.valid_from) > rangeTo) return false;
+          return true;
+        }
+        return false;
+      });
       return { ...l, schedules: validSchedules };
     }).filter(l => l.schedules!.length > 0);
 
@@ -644,7 +575,7 @@ export function PublicQuizMap() {
                             ) : (
                               <CalendarIcon className="h-3 w-3 text-primary" />
                             )}
-                            <span>{getNextOccurrenceLabel(s, t)}</span>
+                            <span>{getNextOccurrence(s, t)}</span>
                             {s.title && <Badge variant="secondary" className="text-[10px] px-1.5">{s.title}</Badge>}
                           </div>
                         ))}
