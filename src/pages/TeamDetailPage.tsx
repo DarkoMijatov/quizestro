@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/pagination';
 import { ArrowLeft, Tag, Trophy, Calendar, MapPin, Loader2, TrendingUp, Hash } from 'lucide-react';
 import { formatAverage, formatPoints } from '@/lib/number-format';
+import { getCompleteCategoryStatsQuizIds } from '@/lib/category-stats';
 
 interface TeamAlias {
   id: string;
@@ -113,26 +114,39 @@ export default function TeamDetailPage() {
         setParticipations(merged);
 
         const finishedQtIds = merged
-          .filter((p) => {
-            const quiz = quizMap.get(p.quiz_id);
-            if (!quiz || p.quiz_status !== 'finished') return false;
-            if (quiz.scoring_mode !== 'per_part') return true;
-            return Boolean((quiz as any).categories_filled);
-          })
+          .filter((p) => p.quiz_status === 'finished')
           .map((p) => p.quiz_team_id);
         if (finishedQtIds.length > 0) {
-          const { data: scores } = await supabase
-            .from('scores')
-            .select('quiz_team_id, quiz_category_id, points, bonus_points')
-            .in('quiz_team_id', finishedQtIds);
+          const [{ data: scores }, { data: quizCategories }, { data: helpTypes }, { data: helpUsages }, { data: categoryBonuses }, { data: partScores }] = await Promise.all([
+            supabase
+              .from('scores')
+              .select('quiz_id, quiz_team_id, quiz_category_id, points, bonus_points')
+              .in('quiz_team_id', finishedQtIds),
+            supabase.from('quiz_categories').select('id, category_id, quiz_id, quiz_part_id').in('quiz_id', quizIds),
+            supabase.from('help_types').select('id, effect').eq('organization_id', currentOrg.id),
+            supabase.from('help_usages').select('quiz_id, quiz_team_id, quiz_category_id, help_type_id').in('quiz_id', quizIds),
+            supabase.from('category_bonuses').select('quiz_id, quiz_team_id, quiz_category_id').in('quiz_id', quizIds),
+            supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', quizIds),
+          ]);
 
-          const quizCategoryIds = [...new Set((scores || []).map((s: any) => s.quiz_category_id))];
+          const jokerHelpTypeIds = (helpTypes || [])
+            .filter((helpType: any) => helpType.effect === 'double')
+            .map((helpType: any) => helpType.id);
+          const completeQuizIds = getCompleteCategoryStatsQuizIds({
+            quizzes: (quizzes || []) as any[],
+            scores: (scores || []) as any[],
+            partScores: (partScores || []) as any[],
+            helpUsages: (helpUsages || []) as any[],
+            categoryBonuses: (categoryBonuses || []) as any[],
+            jokerHelpTypeIds,
+          });
+          const completeFinishedQtIds = merged
+            .filter((p) => completeQuizIds.has(p.quiz_id))
+            .map((p) => p.quiz_team_id);
+
+          const filteredScores = (scores || []).filter((score: any) => completeFinishedQtIds.includes(score.quiz_team_id));
+          const quizCategoryIds = [...new Set(filteredScores.map((s: any) => s.quiz_category_id))];
           if (quizCategoryIds.length > 0) {
-            const { data: quizCategories } = await supabase
-              .from('quiz_categories')
-              .select('id, category_id')
-              .in('id', quizCategoryIds);
-
             const categoryIds = [...new Set((quizCategories || []).map((qc: any) => qc.category_id))];
             const { data: categories } = categoryIds.length > 0
               ? await supabase.from('categories').select('id, name').in('id', categoryIds)
@@ -141,12 +155,27 @@ export default function TeamDetailPage() {
             const qcToCategory = new Map((quizCategories || []).map((qc: any) => [qc.id, qc.category_id]));
             const categoryNames = new Map((categories || []).map((c: any) => [c.id, c.name]));
             const categoryStats = new Map<string, { total: number; count: number }>();
+            const jokerUsageSet = new Set(
+              (helpUsages || [])
+                .filter((usage: any) => jokerHelpTypeIds.includes(usage.help_type_id))
+                .map((usage: any) => `${usage.quiz_team_id}:${usage.quiz_category_id}`)
+            );
+            const categoryBonusSet = new Set(
+              (categoryBonuses || []).map((bonus: any) => `${bonus.quiz_team_id}:${bonus.quiz_category_id}`)
+            );
 
-            (scores || []).forEach((score: any) => {
+            filteredScores.forEach((score: any) => {
               const categoryId = qcToCategory.get(score.quiz_category_id);
               if (!categoryId) return;
               const stat = categoryStats.get(categoryId) || { total: 0, count: 0 };
-              stat.total += Number(score.points || 0) + Number(score.bonus_points || 0);
+              let displayPoints = Number(score.points || 0) + Number(score.bonus_points || 0);
+              if (jokerUsageSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
+                displayPoints *= 2;
+              }
+              if (categoryBonusSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
+                displayPoints += 1;
+              }
+              stat.total += displayPoints;
               stat.count += 1;
               categoryStats.set(categoryId, stat);
             });
@@ -161,7 +190,7 @@ export default function TeamDetailPage() {
                 }))
                 .sort((a, b) => b.avg_score - a.avg_score)
             );
-            setBonusPoints((scores || []).reduce((sum: number, score: any) => sum + Number(score.bonus_points || 0), 0));
+            setBonusPoints(filteredScores.reduce((sum: number, score: any) => sum + Number(score.bonus_points || 0), 0));
           } else {
             setCategoryAverages([]);
             setBonusPoints(0);

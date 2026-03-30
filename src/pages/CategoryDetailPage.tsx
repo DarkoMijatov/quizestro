@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/pagination';
 import { ArrowLeft, FolderOpen, Calendar, MapPin, Loader2, Hash, TrendingUp, BarChart3 } from 'lucide-react';
 import { formatAverage } from '@/lib/number-format';
+import { getCompleteCategoryStatsQuizIds } from '@/lib/category-stats';
 
 interface QuizUsage {
   quiz_id: string;
@@ -75,9 +76,13 @@ export default function CategoryDetailPage() {
             }))
           : (quizzesWithFlag.data || []);
 
-        const [{ data: allQuizCategories }, { data: quizTeams }] = await Promise.all([
-          supabase.from('quiz_categories').select('id, quiz_id').in('quiz_id', quizIds),
+        const [{ data: allQuizCategories }, { data: quizTeams }, { data: helpTypes }, { data: helpUsages }, { data: categoryBonuses }, { data: partScores }] = await Promise.all([
+          supabase.from('quiz_categories').select('id, quiz_id, quiz_part_id').in('quiz_id', quizIds),
           supabase.from('quiz_teams').select('id, quiz_id, team_id, teams(name)').in('quiz_id', quizIds),
+          supabase.from('help_types').select('id, effect').eq('organization_id', currentOrg.id),
+          supabase.from('help_usages').select('quiz_id, quiz_team_id, quiz_category_id, help_type_id').in('quiz_id', quizIds),
+          supabase.from('category_bonuses').select('quiz_id, quiz_team_id, quiz_category_id').in('quiz_id', quizIds),
+          supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', quizIds),
         ]);
         const allQuizCategoryIds = (allQuizCategories || []).map((qc: any) => qc.id);
         const { data: scores } = allQuizCategoryIds.length > 0
@@ -85,27 +90,46 @@ export default function CategoryDetailPage() {
           : { data: [] as any[] };
 
         const quizMap = new Map((quizzes || []).map((q: any) => [q.id, q]));
-        const completePerPartQuizIds = new Set(
-          (quizzes || [])
-            .filter((quiz: any) => quiz.scoring_mode === 'per_part' && Boolean(quiz.categories_filled))
-            .map((quiz: any) => quiz.id)
-        );
+        const jokerHelpTypeIds = (helpTypes || [])
+          .filter((helpType: any) => helpType.effect === 'double')
+          .map((helpType: any) => helpType.id);
+        const completeQuizIds = getCompleteCategoryStatsQuizIds({
+          quizzes: (quizzes || []) as any[],
+          scores: (scores || []) as any[],
+          partScores: (partScores || []) as any[],
+          helpUsages: (helpUsages || []) as any[],
+          categoryBonuses: (categoryBonuses || []) as any[],
+          jokerHelpTypeIds,
+        });
         
         // Group scores by quiz_category_id
+        const jokerUsageSet = new Set(
+          (helpUsages || [])
+            .filter((usage: any) => jokerHelpTypeIds.includes(usage.help_type_id))
+            .map((usage: any) => `${usage.quiz_team_id}:${usage.quiz_category_id}`)
+        );
+        const categoryBonusSet = new Set(
+          (categoryBonuses || []).map((bonus: any) => `${bonus.quiz_team_id}:${bonus.quiz_category_id}`)
+        );
         const scoresByQC = new Map<string, { total: number; count: number }>();
         (scores || []).forEach((s: any) => {
+          if (!completeQuizIds.has(s.quiz_id)) return;
           const existing = scoresByQC.get(s.quiz_category_id) || { total: 0, count: 0 };
-          existing.total += (s.points || 0) + (s.bonus_points || 0);
+          let displayPoints = Number(s.points || 0) + Number(s.bonus_points || 0);
+          if (jokerUsageSet.has(`${s.quiz_team_id}:${s.quiz_category_id}`)) {
+            displayPoints *= 2;
+          }
+          if (categoryBonusSet.has(`${s.quiz_team_id}:${s.quiz_category_id}`)) {
+            displayPoints += 1;
+          }
+          existing.total += displayPoints;
           existing.count += 1;
           scoresByQC.set(s.quiz_category_id, existing);
         });
 
         const merged: QuizUsage[] = (qcData || [])
           .filter((qc: any) => {
-            const quiz = quizMap.get(qc.quiz_id);
-            if (!quiz) return false;
-            if (quiz.scoring_mode !== 'per_part') return true;
-            return completePerPartQuizIds.has(qc.quiz_id);
+            return completeQuizIds.has(qc.quiz_id);
           })
           .map((qc: any) => {
             const q = quizMap.get(qc.quiz_id) || {};
@@ -127,12 +151,7 @@ export default function CategoryDetailPage() {
 
         const validQuizIds = new Set(
           (qcData || [])
-            .filter((qc: any) => {
-              const quiz = quizMap.get(qc.quiz_id);
-              if (!quiz) return false;
-              if (quiz.scoring_mode !== 'per_part') return true;
-              return completePerPartQuizIds.has(qc.quiz_id);
-            })
+            .filter((qc: any) => completeQuizIds.has(qc.quiz_id))
             .map((qc: any) => qc.quiz_id)
         );
         const targetQuizCategoryIds = new Set((qcData || []).map((qc: any) => qc.id));
@@ -145,7 +164,14 @@ export default function CategoryDetailPage() {
             const teamInfo = teamMap.get(score.quiz_team_id);
             if (!teamInfo) return;
             const existing = teamStats.get(teamInfo.team_id) || { ...teamInfo, total: 0, count: 0 };
-            existing.total += Number(score.points || 0) + Number(score.bonus_points || 0);
+            let displayPoints = Number(score.points || 0) + Number(score.bonus_points || 0);
+            if (jokerUsageSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
+              displayPoints *= 2;
+            }
+            if (categoryBonusSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
+              displayPoints += 1;
+            }
+            existing.total += displayPoints;
             existing.count += 1;
             teamStats.set(teamInfo.team_id, existing);
           });

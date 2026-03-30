@@ -21,6 +21,7 @@ import {
 import { Plus, Eye, Pencil, Trash2, FolderOpen, Loader2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatAverage } from '@/lib/number-format';
+import { getCompleteCategoryStatsQuizIds } from '@/lib/category-stats';
 
 interface CategoryRow {
   id: string;
@@ -129,31 +130,77 @@ export default function CategoriesPage() {
       const quizMeta = await fetchQuizzesWithCategoryStatus([...new Set(qcList.map((qc: any) => qc.quiz_id))]);
       const quizMetaMap = new Map(quizMeta.map((q: any) => [q.id, q]));
 
-      const validQcIds = qcList
-        .filter((qc: any) => {
-          const quiz = quizMetaMap.get(qc.quiz_id);
-          if (!quiz || quiz.status !== 'finished') return false;
-          if (quiz.scoring_mode !== 'per_part') return true;
-          return Boolean(quiz.categories_filled);
-        })
-        .map((qc: any) => qc.id);
+      const validQuizIds = [...new Set(qcList.map((qc: any) => qc.quiz_id).filter((quizId: string) => {
+        const quiz = quizMetaMap.get(quizId);
+        return quiz?.status === 'finished';
+      }))];
 
-      const { data: scoreData } = validQcIds.length > 0
-        ? await supabase
-            .from('scores')
-            .select('quiz_category_id, points, bonus_points')
-            .in('quiz_category_id', validQcIds)
-        : { data: [] as any[] };
+      const [allScoresRes, partScoresRes, helpTypesRes, helpUsagesRes, categoryBonusesRes] = await Promise.all([
+        validQuizIds.length > 0
+          ? supabase.from('scores').select('quiz_id, quiz_team_id, quiz_category_id, points, bonus_points').in('quiz_id', validQuizIds)
+          : Promise.resolve({ data: [] as any[] }),
+        validQuizIds.length > 0
+          ? supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', validQuizIds)
+          : Promise.resolve({ data: [] as any[] }),
+        supabase.from('help_types').select('id, effect').eq('organization_id', currentOrg.id),
+        validQuizIds.length > 0
+          ? supabase.from('help_usages').select('quiz_id, quiz_team_id, quiz_category_id, help_type_id').in('quiz_id', validQuizIds)
+          : Promise.resolve({ data: [] as any[] }),
+        validQuizIds.length > 0
+          ? supabase.from('category_bonuses').select('quiz_id, quiz_team_id, quiz_category_id').in('quiz_id', validQuizIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const jokerHelpTypeIds = (helpTypesRes.data || [])
+        .filter((helpType: any) => helpType.effect === 'double')
+        .map((helpType: any) => helpType.id);
+      const completeQuizIds = getCompleteCategoryStatsQuizIds({
+        quizzes: quizMeta,
+        scores: allScoresRes.data || [],
+        partScores: partScoresRes.data || [],
+        helpUsages: helpUsagesRes.data || [],
+        categoryBonuses: categoryBonusesRes.data || [],
+        jokerHelpTypeIds,
+      });
+
+      const scoreSourceQuizIds = qcList
+        .filter((qc: any) => completeQuizIds.has(qc.quiz_id))
+        .map((qc: any) => qc.quiz_id);
+      const scoreSourceQuizIdSet = new Set(scoreSourceQuizIds);
+
+      const validQcIds = qcList
+        .filter((qc: any) => scoreSourceQuizIdSet.has(qc.quiz_id))
+        .map((qc: any) => qc.id);
+      const validQcIdSet = new Set(validQcIds);
+
+      const qcById = new Map(qcList.map((qc: any) => [qc.id, qc]));
+      const jokerUsageSet = new Set(
+        (helpUsagesRes.data || [])
+          .filter((usage: any) => jokerHelpTypeIds.includes(usage.help_type_id))
+          .map((usage: any) => `${usage.quiz_team_id}:${usage.quiz_category_id}`)
+      );
+      const categoryBonusSet = new Set(
+        (categoryBonusesRes.data || []).map((bonus: any) => `${bonus.quiz_team_id}:${bonus.quiz_category_id}`)
+      );
 
       const qcToCat = new Map<string, string>();
       qcList.forEach((qc: any) => qcToCat.set(qc.id, qc.category_id));
 
       const scoreMap = new Map<string, { total: number; count: number }>();
-      (scoreData || []).forEach((score: any) => {
+      (allScoresRes.data || []).forEach((score: any) => {
+        const qc = qcById.get(score.quiz_category_id);
+        if (!qc || !validQcIdSet.has(qc.id)) return;
         const categoryId = qcToCat.get(score.quiz_category_id);
         if (!categoryId) return;
         const stat = scoreMap.get(categoryId) || { total: 0, count: 0 };
-        stat.total += Number(score.points || 0) + Number(score.bonus_points || 0);
+        let displayPoints = Number(score.points || 0) + Number(score.bonus_points || 0);
+        if (jokerUsageSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
+          displayPoints *= 2;
+        }
+        if (categoryBonusSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
+          displayPoints += 1;
+        }
+        stat.total += displayPoints;
         stat.count += 1;
         scoreMap.set(categoryId, stat);
       });
