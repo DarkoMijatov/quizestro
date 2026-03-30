@@ -430,7 +430,17 @@
     "bestCategories": "Najbolje kategorije",
     "bestQuizzes": "Najbolji kvizovi",
     "noData": "Nema dovoljno podataka za prikaz.",
-    "topLeagues": "Lige"
+    "topLeagues": "Lige",
+    "thisMonth": "Ovog meseca",
+    "last30Days": "Proteklih mesec dana",
+    "last3Months": "Protekla 3 meseca",
+    "last6Months": "Proteklih 6 meseci",
+    "lastYear": "Proteklih godinu dana",
+    "thisYear": "Ove godine",
+    "allTime": "Svih vremena",
+    "customRange": "Prilagođeni opseg",
+    "invalidCustomRange": "Datum od ne može biti posle datuma do.",
+    "loadError": "Greška pri učitavanju statistike."
   },
   "leagueDetail": {
     "quizCount": "Broj kvizova",

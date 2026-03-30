@@ -421,7 +421,17 @@
     "bestCategories": "Best Categories",
     "bestQuizzes": "Best Quizzes",
     "noData": "Not enough data to display.",
-    "topLeagues": "Leagues"
+    "topLeagues": "Leagues",
+    "thisMonth": "This month",
+    "last30Days": "Last 30 days",
+    "last3Months": "Last 3 months",
+    "last6Months": "Last 6 months",
+    "lastYear": "Last year",
+    "thisYear": "This year",
+    "allTime": "All time",
+    "customRange": "Custom range",
+    "invalidCustomRange": "Date from cannot be later than date to.",
+    "loadError": "Failed to load analytics."
   },
   "leagueDetail": {
     "quizCount": "Quizzes",

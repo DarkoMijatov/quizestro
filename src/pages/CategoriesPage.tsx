@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { DataTable, Column, FilterConfig, ServerParams } from '@/components/DataTable';
+import { DataTable, Column, ServerParams } from '@/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -57,174 +57,149 @@ export default function CategoriesPage() {
 
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
 
+  const fetchQuizzesWithCategoryStatus = useCallback(async (quizIds: string[]) => {
+    if (quizIds.length === 0) return [];
+
+    const withFlag = await supabase
+      .from('quizzes')
+      .select('id, scoring_mode, status, categories_filled')
+      .in('id', quizIds);
+
+    if (!withFlag.error) {
+      return (withFlag.data || []) as any[];
+    }
+
+    const fallback = await supabase
+      .from('quizzes')
+      .select('id, scoring_mode, status')
+      .in('id', quizIds);
+
+    return (fallback.data || []).map((quiz: any) => ({
+      ...quiz,
+      categories_filled: quiz.scoring_mode !== 'per_part',
+    })) as any[];
+  }, []);
+
   const fetchCategories = useCallback(async (params: ServerParams) => {
     if (!currentOrg) return;
     setLoading(true);
 
-    // Count query
-    let countQuery = supabase
-      .from('categories')
-      .select('id', { count: 'exact', head: true })
-      .eq('organization_id', currentOrg.id)
-      .eq('is_deleted', false);
+    try {
+      let countQuery = supabase
+        .from('categories')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', currentOrg.id)
+        .eq('is_deleted', false);
 
-    // Data query
-    let dataQuery = supabase
-      .from('categories')
-      .select('*')
-      .eq('organization_id', currentOrg.id)
-      .eq('is_deleted', false);
+      let dataQuery = supabase
+        .from('categories')
+        .select('*')
+        .eq('organization_id', currentOrg.id)
+        .eq('is_deleted', false);
 
-    // Filter: is_default
-    const defaultFilter = params.filters.is_default;
-    if (defaultFilter && defaultFilter !== 'all') {
-      const isDefaultVal = defaultFilter === 'true';
-      countQuery = countQuery.eq('is_default', isDefaultVal);
-      dataQuery = dataQuery.eq('is_default', isDefaultVal);
-    }
+      const defaultFilter = params.filters.is_default;
+      if (defaultFilter && defaultFilter !== 'all') {
+        const isDefaultVal = defaultFilter === 'true';
+        countQuery = countQuery.eq('is_default', isDefaultVal);
+        dataQuery = dataQuery.eq('is_default', isDefaultVal);
+      }
 
-    // Search
-    if (params.search) {
-      const pattern = `%${params.search}%`;
-      countQuery = countQuery.ilike('name', pattern);
-      dataQuery = dataQuery.ilike('name', pattern);
-    }
+      if (params.search) {
+        const pattern = `%${params.search}%`;
+        countQuery = countQuery.ilike('name', pattern);
+        dataQuery = dataQuery.ilike('name', pattern);
+      }
 
-    const [countRes, dataRes] = await Promise.all([countQuery, dataQuery]);
-    setTotalCount(countRes.count || 0);
+      const [countRes, dataRes] = await Promise.all([countQuery, dataQuery]);
+      setTotalCount(countRes.count || 0);
 
-    const cats = (dataRes.data || []) as any[];
-    if (cats.length === 0) {
-      setCategories([]);
-      setLoading(false);
-      return;
-    }
+      const cats = (dataRes.data || []) as CategoryRow[];
+      if (cats.length === 0) {
+        setCategories([]);
+        return;
+      }
 
-    // Aggregates for current page
-    const catIds = cats.map((c) => c.id);
-    const { data: qcData } = await supabase
-      .from('quiz_categories')
-      .select('id, category_id, quiz_id')
-      .in('category_id', catIds);
+      const catIds = cats.map((c) => c.id);
+      const { data: qcData } = await supabase
+        .from('quiz_categories')
+        .select('id, category_id, quiz_id')
+        .in('category_id', catIds);
 
-    const qcList = qcData || [];
-    const qcQuizIds = [...new Set(qcList.map((qc: any) => qc.quiz_id))];
+      const qcList = (qcData || []) as any[];
+      const quizMeta = await fetchQuizzesWithCategoryStatus([...new Set(qcList.map((qc: any) => qc.quiz_id))]);
+      const quizMetaMap = new Map(quizMeta.map((q: any) => [q.id, q]));
 
-    let finishedQuizIds = new Set<string>();
-    if (qcQuizIds.length > 0) {
-      const { data: quizData } = await supabase
-        .from('quizzes').select('id, scoring_mode').in('id', qcQuizIds).eq('status', 'finished');
-      finishedQuizIds = new Set((quizData || []).map((q: any) => q.id));
-    }
+      const validQcIds = qcList
+        .filter((qc: any) => {
+          const quiz = quizMetaMap.get(qc.quiz_id);
+          if (!quiz || quiz.status !== 'finished') return false;
+          if (quiz.scoring_mode !== 'per_part') return true;
+          return Boolean(quiz.categories_filled);
+        })
+        .map((qc: any) => qc.id);
 
-    let scoreMap = new Map<string, { total: number; count: number }>();
-    if (qcIds.length > 0) {
-      const [{ data: allQuizCategories }, { data: quizTeams }] = await Promise.all([
-        supabase
-          .from('quiz_categories')
-          .select('id, quiz_id')
-          .in('quiz_id', qcQuizIds),
-        supabase
-          .from('quiz_teams').select('quiz_id').in('quiz_id', qcQuizIds),
-      ]);
-      const allQuizCategoryIds = (allQuizCategories || []).map((qc: any) => qc.id);
-      const { data: scoreData } = allQuizCategoryIds.length > 0
+      const { data: scoreData } = validQcIds.length > 0
         ? await supabase
-            .from('scores').select('quiz_id, quiz_category_id, points, bonus_points').in('quiz_category_id', allQuizCategoryIds)
+            .from('scores')
+            .select('quiz_category_id, points, bonus_points')
+            .in('quiz_category_id', validQcIds)
         : { data: [] as any[] };
 
       const qcToCat = new Map<string, string>();
       qcList.forEach((qc: any) => qcToCat.set(qc.id, qc.category_id));
 
-      const quizMetaMap = new Map<string, any>();
-      if (qcQuizIds.length > 0) {
-        const { data: quizMeta } = await supabase
-          .from('quizzes').select('id, scoring_mode, status').in('id', qcQuizIds);
-        (quizMeta || []).forEach((q: any) => quizMetaMap.set(q.id, q));
-      }
+      const scoreMap = new Map<string, { total: number; count: number }>();
+      (scoreData || []).forEach((score: any) => {
+        const categoryId = qcToCat.get(score.quiz_category_id);
+        if (!categoryId) return;
+        const stat = scoreMap.get(categoryId) || { total: 0, count: 0 };
+        stat.total += Number(score.points || 0) + Number(score.bonus_points || 0);
+        stat.count += 1;
+        scoreMap.set(categoryId, stat);
+      });
 
-      const teamCountByQuiz = new Map<string, number>();
-      (quizTeams || []).forEach((qt: any) => {
-        teamCountByQuiz.set(qt.quiz_id, (teamCountByQuiz.get(qt.quiz_id) || 0) + 1);
-      });
-      const categoryCountByQuiz = new Map<string, number>();
-      (allQuizCategories || []).forEach((qc: any) => {
-        categoryCountByQuiz.set(qc.quiz_id, (categoryCountByQuiz.get(qc.quiz_id) || 0) + 1);
-      });
-      const scoreCountByQuiz = new Map<string, number>();
-      (scoreData || []).forEach((s: any) => {
-        scoreCountByQuiz.set(s.quiz_id, (scoreCountByQuiz.get(s.quiz_id) || 0) + 1);
-      });
-      const completePerPartQuizIds = new Set(
-        (quizMeta || [])
-          .filter((quiz: any) => quiz.scoring_mode === 'per_part')
-          .filter((quiz: any) => {
-            const expectedScoreCount = (teamCountByQuiz.get(quiz.id) || 0) * (categoryCountByQuiz.get(quiz.id) || 0);
-            const actualScoreCount = scoreCountByQuiz.get(quiz.id) || 0;
-            return expectedScoreCount > 0 && actualScoreCount === expectedScoreCount;
-          })
-          .map((quiz: any) => quiz.id)
-      );
+      const sortedCategories = cats.map((category) => {
+        const stat = scoreMap.get(category.id);
+        return {
+          ...category,
+          avgPoints: stat && stat.count > 0 ? stat.total / stat.count : null,
+        };
+      }).sort((a, b) => {
+        const sortKey = params.sortKey || 'avgPoints';
+        const sortDir = params.sortDir === 'asc' ? 1 : -1;
+        const getSortableValue = (row: CategoryRow) => {
+          switch (sortKey) {
+            case 'avgPoints':
+              return row.avgPoints ?? -1;
+            case 'is_default':
+              return row.is_default ? 1 : 0;
+            case 'created_at':
+              return row.created_at;
+            case 'name':
+            default:
+              return row.name;
+          }
+        };
 
-      const finishedQcIds = new Set(
-        qcList
-          .filter((qc: any) => {
-            if (!finishedQuizIds.has(qc.quiz_id)) return false;
-            const quiz = quizMetaMap.get(qc.quiz_id);
-            if (!quiz) return false;
-            if (quiz.scoring_mode !== 'per_part') return true;
-            return completePerPartQuizIds.has(qc.quiz_id);
-          })
-          .map((qc: any) => qc.id)
-      );
+        const aValue = getSortableValue(a);
+        const bValue = getSortableValue(b);
+        const comparison = typeof aValue === 'number' && typeof bValue === 'number'
+          ? aValue - bValue
+          : String(aValue).localeCompare(String(bValue), i18n.language);
 
-      (scoreData || []).forEach((s: any) => {
-        if (!finishedQcIds.has(s.quiz_category_id)) return;
-        const catId = qcToCat.get(s.quiz_category_id);
-        if (!catId) return;
-        const agg = scoreMap.get(catId) || { total: 0, count: 0 };
-        agg.total += Number(s.points || 0);
-        agg.count++;
-        scoreMap.set(catId, agg);
+        return comparison * sortDir;
       });
+
+      const from = (params.page - 1) * params.pageSize;
+      setCategories(sortedCategories.slice(from, from + params.pageSize));
+    } catch (error) {
+      console.error('Failed to load categories page', error);
+      setCategories([]);
+      setTotalCount(0);
+    } finally {
+      setLoading(false);
     }
-
-    const sortedCategories = cats.map((c) => {
-      const agg = scoreMap.get(c.id);
-      return {
-        ...c,
-        avgPoints: agg && agg.count > 0 ? agg.total / agg.count : null,
-      };
-    }).sort((a, b) => {
-      const sortKey = params.sortKey || 'avgPoints';
-      const sortDir = params.sortDir === 'asc' ? 1 : -1;
-      const getSortableValue = (row: CategoryRow) => {
-        switch (sortKey) {
-          case 'avgPoints':
-            return row.avgPoints ?? -1;
-          case 'is_default':
-            return row.is_default ? 1 : 0;
-          case 'created_at':
-            return row.created_at;
-          case 'name':
-          default:
-            return row.name;
-        }
-      };
-
-      const aValue = getSortableValue(a);
-      const bValue = getSortableValue(b);
-      const comparison = typeof aValue === 'number' && typeof bValue === 'number'
-        ? aValue - bValue
-        : String(aValue).localeCompare(String(bValue), i18n.language);
-
-      return comparison * sortDir;
-    });
-
-    const from = (params.page - 1) * params.pageSize;
-    setCategories(sortedCategories.slice(from, from + params.pageSize));
-    setLoading(false);
-  }, [currentOrg?.id, i18n.language]);
+  }, [currentOrg?.id, fetchQuizzesWithCategoryStatus, i18n.language]);
 
   useEffect(() => { fetchCategories(serverParams); }, [fetchCategories]);
 
@@ -246,14 +221,17 @@ export default function CategoriesPage() {
       await supabase.from('categories').insert({ name: catName.trim(), organization_id: currentOrg.id, is_default: isDefault });
       toast({ title: '✓', description: t('categories.created') });
     }
-    setSaving(false); setDialogOpen(false); fetchCategories(serverParams);
+    setSaving(false);
+    setDialogOpen(false);
+    fetchCategories(serverParams);
   };
 
   const handleDelete = async () => {
     if (!deleteItem) return;
     await supabase.from('categories').update({ is_deleted: true }).eq('id', deleteItem.id);
     toast({ title: '✓', description: t('categories.deleted') });
-    setDeleteItem(null); fetchCategories(serverParams);
+    setDeleteItem(null);
+    fetchCategories(serverParams);
   };
 
   const columns: Column<CategoryRow>[] = useMemo(() => [

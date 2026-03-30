@@ -6,6 +6,14 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { ArrowLeft, Tag, Trophy, Calendar, MapPin, Loader2, TrendingUp, Hash } from 'lucide-react';
 import { formatAverage, formatPoints } from '@/lib/number-format';
 
@@ -45,6 +53,10 @@ export default function TeamDetailPage() {
   const [categoryAverages, setCategoryAverages] = useState<TeamCategoryAverage[]>([]);
   const [bonusPoints, setBonusPoints] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [categoryPage, setCategoryPage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
+
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     if (!id || !currentOrg) return;
@@ -63,11 +75,24 @@ export default function TeamDetailPage() {
       // Fetch quiz details for participations
       const quizIds = (qtData || []).map((qt: any) => qt.quiz_id);
       if (quizIds.length > 0) {
-        const { data: quizzes } = await supabase
+        const quizzesWithFlag = await supabase
           .from('quizzes')
-          .select('id, name, date, location, status')
+          .select('id, name, date, location, status, scoring_mode, categories_filled')
           .in('id', quizIds)
           .order('date', { ascending: false });
+        const quizzesFallback = quizzesWithFlag.error
+          ? await supabase
+              .from('quizzes')
+              .select('id, name, date, location, status, scoring_mode')
+              .in('id', quizIds)
+              .order('date', { ascending: false })
+          : null;
+        const quizzes = quizzesWithFlag.error
+          ? (quizzesFallback?.data || []).map((quiz: any) => ({
+              ...quiz,
+              categories_filled: quiz.scoring_mode !== 'per_part',
+            }))
+          : (quizzesWithFlag.data || []);
 
         const quizMap = new Map((quizzes || []).map((q: any) => [q.id, q]));
         const merged: QuizParticipation[] = (qtData || []).map((qt: any) => {
@@ -87,7 +112,14 @@ export default function TeamDetailPage() {
 
         setParticipations(merged);
 
-        const finishedQtIds = merged.filter((p) => p.quiz_status === 'finished').map((p) => p.quiz_team_id);
+        const finishedQtIds = merged
+          .filter((p) => {
+            const quiz = quizMap.get(p.quiz_id);
+            if (!quiz || p.quiz_status !== 'finished') return false;
+            if (quiz.scoring_mode !== 'per_part') return true;
+            return Boolean((quiz as any).categories_filled);
+          })
+          .map((p) => p.quiz_team_id);
         if (finishedQtIds.length > 0) {
           const { data: scores } = await supabase
             .from('scores')
@@ -160,6 +192,12 @@ export default function TeamDetailPage() {
   const bestQuizPoints = finishedParticipations.length > 0
     ? Math.max(...finishedParticipations.map((p) => Number(p.total_points || 0)))
     : 0;
+  const totalCategoryPages = Math.max(1, Math.ceil(categoryAverages.length / PAGE_SIZE));
+  const safeCategoryPage = Math.min(categoryPage, totalCategoryPages);
+  const visibleCategoryAverages = categoryAverages.slice((safeCategoryPage - 1) * PAGE_SIZE, safeCategoryPage * PAGE_SIZE);
+  const totalHistoryPages = Math.max(1, Math.ceil(participations.length / PAGE_SIZE));
+  const safeHistoryPage = Math.min(historyPage, totalHistoryPages);
+  const visibleParticipations = participations.slice((safeHistoryPage - 1) * PAGE_SIZE, safeHistoryPage * PAGE_SIZE);
 
   if (loading) {
     return (
@@ -251,7 +289,7 @@ export default function TeamDetailPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {categoryAverages.map((item) => (
+              {visibleCategoryAverages.map((item) => (
                 <div key={item.category_id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
                   <div className="min-w-0">
                     <p className="font-medium">{item.category_name}</p>
@@ -265,6 +303,32 @@ export default function TeamDetailPage() {
               ))}
             </div>
           )}
+          {categoryAverages.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-muted-foreground">
+                {(safeCategoryPage - 1) * PAGE_SIZE + 1}–{Math.min(safeCategoryPage * PAGE_SIZE, categoryAverages.length)} / {categoryAverages.length}
+              </p>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCategoryPage(Math.max(1, safeCategoryPage - 1))}
+                      className={safeCategoryPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationLink isActive>{safeCategoryPage}</PaginationLink>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setCategoryPage(Math.min(totalCategoryPages, safeCategoryPage + 1))}
+                      className={safeCategoryPage === totalCategoryPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
 
         {/* Quiz history */}
@@ -276,7 +340,7 @@ export default function TeamDetailPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {participations.map((p) => (
+              {visibleParticipations.map((p) => (
                 <div
                   key={p.quiz_id}
                   className="flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors cursor-pointer"
@@ -300,6 +364,32 @@ export default function TeamDetailPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          {participations.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-muted-foreground">
+                {(safeHistoryPage - 1) * PAGE_SIZE + 1}–{Math.min(safeHistoryPage * PAGE_SIZE, participations.length)} / {participations.length}
+              </p>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setHistoryPage(Math.max(1, safeHistoryPage - 1))}
+                      className={safeHistoryPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationLink isActive>{safeHistoryPage}</PaginationLink>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setHistoryPage(Math.min(totalHistoryPages, safeHistoryPage + 1))}
+                      className={safeHistoryPage === totalHistoryPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           )}
         </div>

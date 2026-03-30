@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Users, FolderOpen, Award, ArrowUpDown } from 'lucide-react';
+import { Trophy, Users, FolderOpen, Award, ArrowUpDown, Maximize2, X, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Pagination,
@@ -15,6 +15,12 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { formatAverage } from '@/lib/number-format';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, startOfMonth, startOfYear, subMonths, subYears } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface TopTeam { name: string; quizzes: number; wins: number; avgPoints: number }
 interface BestCategory { name: string; avgPoints: number }
@@ -22,8 +28,31 @@ interface BestQuiz { name: string; date: string; teamCount: number; avgPoints: n
 interface TopLeague { name: string; season: string; quizCount: number; leaderName: string; is_active: boolean }
 
 type SortDir = 'asc' | 'desc';
+type StatsRangePreset = 'this_month' | 'last_30_days' | 'last_3_months' | 'last_6_months' | 'last_year' | 'this_year' | 'all_time' | 'custom';
+type StatsSectionKey = 'teams' | 'categories' | 'quizzes' | 'leagues';
 
 const SECTION_PAGE_SIZE = 10;
+
+function getRangeFromPreset(preset: StatsRangePreset) {
+  const today = new Date();
+  switch (preset) {
+    case 'this_month':
+      return { from: startOfMonth(today), to: today };
+    case 'last_30_days':
+      return { from: subMonths(today, 1), to: today };
+    case 'last_3_months':
+      return { from: subMonths(today, 3), to: today };
+    case 'last_6_months':
+      return { from: subMonths(today, 6), to: today };
+    case 'last_year':
+      return { from: subYears(today, 1), to: today };
+    case 'this_year':
+      return { from: startOfYear(today), to: today };
+    case 'all_time':
+    default:
+      return { from: undefined, to: undefined };
+  }
+}
 
 function SortableTable<T>({ data, columns, defaultSortKey, defaultSortDir = 'desc' }: {
   data: T[];
@@ -131,6 +160,41 @@ function SortableTable<T>({ data, columns, defaultSortKey, defaultSortDir = 'des
   );
 }
 
+function StatsSection({
+  title,
+  sectionKey,
+  expandedSection,
+  onExpand,
+  children,
+}: {
+  title: string;
+  sectionKey: StatsSectionKey;
+  expandedSection: StatsSectionKey | null;
+  onExpand: (section: StatsSectionKey | null) => void;
+  children: ReactNode;
+}) {
+  const isExpanded = expandedSection === sectionKey;
+  const card = (
+    <div className="rounded-xl border border-border bg-card p-6">
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <h3 className="font-display font-semibold">{title}</h3>
+        <Button variant="ghost" size="icon" onClick={() => onExpand(isExpanded ? null : sectionKey)}>
+          {isExpanded ? <X className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </Button>
+      </div>
+      {children}
+    </div>
+  );
+
+  if (!isExpanded) return card;
+
+  return (
+    <div className="fixed inset-0 z-[120] bg-background/80 backdrop-blur-sm p-4 md:p-8 overflow-auto">
+      <div className="max-w-7xl mx-auto">{card}</div>
+    </div>
+  );
+}
+
 function SectionSkeleton() {
   return (
     <div className="space-y-3">
@@ -159,213 +223,307 @@ export default function StatsPage() {
 
   const [leaguesLoading, setLeaguesLoading] = useState(true);
   const [topLeagues, setTopLeagues] = useState<TopLeague[]>([]);
+  const [rangePreset, setRangePreset] = useState<StatsRangePreset>('all_time');
+  const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>(undefined);
+  const [customDateTo, setCustomDateTo] = useState<Date | undefined>(undefined);
+  const [expandedSection, setExpandedSection] = useState<StatsSectionKey | null>(null);
+
+  const activeRange = useMemo(() => {
+    if (rangePreset === 'custom') {
+      return { from: customDateFrom, to: customDateTo };
+    }
+    return getRangeFromPreset(rangePreset);
+  }, [rangePreset, customDateFrom, customDateTo]);
+
+  const customRangeInvalid = useMemo(() => {
+    if (rangePreset !== 'custom' || !customDateFrom || !customDateTo) return false;
+    return customDateFrom > customDateTo;
+  }, [rangePreset, customDateFrom, customDateTo]);
+
+  const fetchQuizzesWithCategoryStatus = async (dateFrom?: Date, dateTo?: Date) => {
+    let withFlag = supabase
+      .from('quizzes')
+      .select('id, name, date, status, league_id, scoring_mode, categories_filled')
+      .eq('organization_id', currentOrg!.id);
+    if (dateFrom) withFlag = withFlag.gte('date', format(dateFrom, 'yyyy-MM-dd'));
+    if (dateTo) withFlag = withFlag.lte('date', format(dateTo, 'yyyy-MM-dd'));
+    const withFlagRes = await withFlag;
+
+    if (!withFlagRes.error) {
+      return (withFlagRes.data || []) as any[];
+    }
+
+    let fallback = supabase
+      .from('quizzes')
+      .select('id, name, date, status, league_id, scoring_mode')
+      .eq('organization_id', currentOrg!.id);
+    if (dateFrom) fallback = fallback.gte('date', format(dateFrom, 'yyyy-MM-dd'));
+    if (dateTo) fallback = fallback.lte('date', format(dateTo, 'yyyy-MM-dd'));
+    const fallbackRes = await fallback;
+
+    return (fallbackRes.data || []).map((quiz: any) => ({
+      ...quiz,
+      categories_filled: quiz.scoring_mode !== 'per_part',
+    })) as any[];
+  };
 
   // Load counts immediately
   useEffect(() => {
     if (!currentOrg) return;
-    setCountsLoading(true);
-    Promise.all([
-      supabase.from('quizzes').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id),
-      supabase.from('teams').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id).eq('is_deleted', false),
-      supabase.from('categories').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id).eq('is_deleted', false),
-      supabase.from('leagues').select('id', { count: 'exact', head: true }).eq('organization_id', currentOrg.id),
-    ]).then(([q, tm, c, l]) => {
-      setCounts({ quizzes: q.count || 0, teams: tm.count || 0, categories: c.count || 0, leagues: l.count || 0 });
+    if (customRangeInvalid) {
+      setCounts({ quizzes: 0, teams: 0, categories: 0, leagues: 0 });
       setCountsLoading(false);
-    });
-  }, [currentOrg?.id]);
+      return;
+    }
+    setCountsLoading(true);
+    const loadCounts = async () => {
+      try {
+        const quizzes = await fetchQuizzesWithCategoryStatus(activeRange.from, activeRange.to);
+        const filteredQuizIds = quizzes.map((q: any) => q.id);
+        const filteredLeagueIds = new Set(quizzes.map((q: any) => q.league_id).filter(Boolean));
+
+        if (filteredQuizIds.length === 0) {
+          setCounts({ quizzes: 0, teams: 0, categories: 0, leagues: 0 });
+          return;
+        }
+
+        const [qtRes, qcRes] = await Promise.all([
+          supabase.from('quiz_teams').select('team_id, quiz_id').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
+          supabase.from('quiz_categories').select('category_id, quiz_id').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
+        ]);
+
+        setCounts({
+          quizzes: filteredQuizIds.length,
+          teams: new Set((qtRes.data || []).map((qt: any) => qt.team_id)).size,
+          categories: new Set((qcRes.data || []).map((qc: any) => qc.category_id)).size,
+          leagues: filteredLeagueIds.size,
+        });
+      } catch (error) {
+        console.error('Failed to load stats counts', error);
+        setCounts({ quizzes: 0, teams: 0, categories: 0, leagues: 0 });
+      } finally {
+        setCountsLoading(false);
+      }
+    };
+
+    loadCounts();
+  }, [currentOrg?.id, activeRange.from, activeRange.to, customRangeInvalid]);
 
   // Load base data then compute sections independently
   useEffect(() => {
     if (!currentOrg) return;
+    if (customRangeInvalid) {
+      setTopTeams([]);
+      setBestCategories([]);
+      setBestQuizzes([]);
+      setTopLeagues([]);
+      setTeamsLoading(false);
+      setCatsLoading(false);
+      setQuizzesLoading(false);
+      setLeaguesLoading(false);
+      return;
+    }
     setTeamsLoading(true);
     setCatsLoading(true);
     setQuizzesLoading(true);
     setLeaguesLoading(true);
 
     const loadAll = async () => {
-      // Fetch base data in parallel
-      const [quizzesRes, qtRes, scoresRes, leaguesRes, qcRes] = await Promise.all([
-        supabase.from('quizzes').select('id, name, date, status, league_id, scoring_mode').eq('organization_id', currentOrg.id),
-        supabase.from('quiz_teams').select('team_id, quiz_id, total_points, rank').eq('organization_id', currentOrg.id),
-        supabase.from('scores').select('quiz_category_id, quiz_id, points, bonus_points').eq('organization_id', currentOrg.id),
-        supabase.from('leagues').select('id, name, season, is_active').eq('organization_id', currentOrg.id),
-        supabase.from('quiz_categories').select('id, quiz_id, category_id').eq('organization_id', currentOrg.id),
-      ]);
+      try {
+        const allQuizzes = await fetchQuizzesWithCategoryStatus(activeRange.from, activeRange.to);
+        const filteredQuizIds = allQuizzes.map((q: any) => q.id);
 
-      const allQuizzes = quizzesRes.data || [];
-      const allQt = qtRes.data || [];
-      const allScores = scoresRes.data || [];
-      const allLeagues = leaguesRes.data || [];
-      const allQuizCategories = qcRes.data || [];
-      const finishedQuizIds = new Set(allQuizzes.filter(q => q.status === 'finished').map(q => q.id));
-      const qtFinished = allQt.filter(qt => finishedQuizIds.has(qt.quiz_id));
-
-      // === Top Teams (async, independent) ===
-      (async () => {
-        if (qtFinished.length === 0) { setTopTeams([]); setTeamsLoading(false); return; }
-        const teamStats: Record<string, { quizzes: number; wins: number; totalPoints: number }> = {};
-        for (const qt of qtFinished) {
-          const tid = qt.team_id;
-          if (!teamStats[tid]) teamStats[tid] = { quizzes: 0, wins: 0, totalPoints: 0 };
-          teamStats[tid].quizzes++;
-          teamStats[tid].totalPoints += Number(qt.total_points) || 0;
-          if (qt.rank === 1) teamStats[tid].wins++;
+        if (filteredQuizIds.length === 0) {
+          setTopTeams([]);
+          setBestCategories([]);
+          setBestQuizzes([]);
+          setTopLeagues([]);
+          return;
         }
-        const teamIds = Object.keys(teamStats);
-        const { data: teamNames } = await supabase.from('teams').select('id, name').in('id', teamIds);
-        const nameMap = new Map((teamNames || []).map(t => [t.id, t.name]));
-        setTopTeams(
-          Object.entries(teamStats)
-            .map(([id, s]) => ({
-              name: nameMap.get(id) || '?',
-              quizzes: s.quizzes,
-              wins: s.wins,
-              avgPoints: s.quizzes > 0 ? s.totalPoints / s.quizzes : 0,
-            }))
-            .sort((a, b) => b.quizzes - a.quizzes)
-        );
-        setTeamsLoading(false);
-      })();
 
-      // === Best Categories (async, independent) ===
-      (async () => {
+        const filteredLeagueIds = [...new Set(allQuizzes.map((quiz: any) => quiz.league_id).filter(Boolean))];
+        const [qtRes, scoresRes, qcRes, leaguesRes] = await Promise.all([
+          supabase.from('quiz_teams').select('team_id, quiz_id, total_points, rank').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
+          supabase.from('scores').select('quiz_category_id, quiz_id, points, bonus_points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
+          supabase.from('quiz_categories').select('id, quiz_id, category_id').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
+          filteredLeagueIds.length > 0
+            ? supabase.from('leagues').select('id, name, season, is_active').in('id', filteredLeagueIds).eq('organization_id', currentOrg.id)
+            : Promise.resolve({ data: [], error: null } as any),
+        ]);
+
+        const qtForRange = qtRes.data || [];
+        const scoresForRange = scoresRes.data || [];
+        const qcForRange = qcRes.data || [];
+        const leaguesForRange = leaguesRes.data || [];
+        const finishedQuizIds = new Set(allQuizzes.filter(q => q.status === 'finished').map(q => q.id));
+        const qtFinished = qtForRange.filter(qt => finishedQuizIds.has(qt.quiz_id));
         const quizMap = new Map(allQuizzes.map(q => [q.id, q]));
-        const teamCountByQuiz = new Map<string, number>();
-        allQt.forEach((qt: any) => {
-          teamCountByQuiz.set(qt.quiz_id, (teamCountByQuiz.get(qt.quiz_id) || 0) + 1);
-        });
-        const categoryCountByQuiz = new Map<string, number>();
-        allQuizCategories.forEach((qc: any) => {
-          categoryCountByQuiz.set(qc.quiz_id, (categoryCountByQuiz.get(qc.quiz_id) || 0) + 1);
-        });
-        const scoreCountByQuiz = new Map<string, number>();
-        allScores.forEach((s: any) => {
-          scoreCountByQuiz.set(s.quiz_id, (scoreCountByQuiz.get(s.quiz_id) || 0) + 1);
-        });
-        const completePerPartQuizIds = new Set(
+
+        if (qtFinished.length === 0) {
+          setTopTeams([]);
+          setBestQuizzes([]);
+        } else {
+          const teamStats: Record<string, { quizzes: number; wins: number; totalPoints: number }> = {};
+          const quizStats: Record<string, { totalPoints: number; teamCount: number }> = {};
+
+          for (const qt of qtFinished) {
+            const tid = qt.team_id;
+            const qid = qt.quiz_id;
+            if (!teamStats[tid]) teamStats[tid] = { quizzes: 0, wins: 0, totalPoints: 0 };
+            if (!quizStats[qid]) quizStats[qid] = { totalPoints: 0, teamCount: 0 };
+
+            teamStats[tid].quizzes++;
+            teamStats[tid].totalPoints += Number(qt.total_points) || 0;
+            if (qt.rank === 1) teamStats[tid].wins++;
+
+            quizStats[qid].totalPoints += Number(qt.total_points) || 0;
+            quizStats[qid].teamCount++;
+          }
+
+          const [teamNamesRes] = await Promise.all([
+            supabase.from('teams').select('id, name').in('id', Object.keys(teamStats)),
+          ]);
+          const teamNameMap = new Map((teamNamesRes.data || []).map(t => [t.id, t.name]));
+
+          setTopTeams(
+            Object.entries(teamStats)
+              .map(([id, s]) => ({
+                name: teamNameMap.get(id) || '?',
+                quizzes: s.quizzes,
+                wins: s.wins,
+                avgPoints: s.quizzes > 0 ? s.totalPoints / s.quizzes : 0,
+              }))
+              .sort((a, b) => b.avgPoints - a.avgPoints)
+          );
+
+          setBestQuizzes(
+            Object.entries(quizStats)
+              .map(([id, s]) => {
+                const quiz = quizMap.get(id);
+                return {
+                  name: quiz?.name || '?',
+                  date: quiz?.date || '',
+                  teamCount: s.teamCount,
+                  avgPoints: s.teamCount > 0 ? s.totalPoints / s.teamCount : 0,
+                };
+              })
+              .sort((a, b) => b.avgPoints - a.avgPoints)
+          );
+        }
+
+        const validCategoryQuizIds = new Set(
           allQuizzes
-            .filter((quiz: any) => quiz.scoring_mode === 'per_part')
-            .filter((quiz: any) => {
-              const expectedScoreCount = (teamCountByQuiz.get(quiz.id) || 0) * (categoryCountByQuiz.get(quiz.id) || 0);
-              const actualScoreCount = scoreCountByQuiz.get(quiz.id) || 0;
-              return expectedScoreCount > 0 && actualScoreCount === expectedScoreCount;
-            })
+            .filter((quiz: any) => quiz.status === 'finished' && (quiz.scoring_mode !== 'per_part' || quiz.categories_filled))
             .map((quiz: any) => quiz.id)
         );
 
-        const finishedScores = allScores.filter((s: any) => {
-          if (!finishedQuizIds.has(s.quiz_id)) return false;
-          const quiz = quizMap.get(s.quiz_id);
-          if (!quiz) return false;
-          if (quiz.scoring_mode !== 'per_part') return true;
-          return completePerPartQuizIds.has(s.quiz_id);
-        });
+        const finishedScores = scoresForRange.filter((score: any) => validCategoryQuizIds.has(score.quiz_id));
+        if (finishedScores.length === 0) {
+          setBestCategories([]);
+        } else {
+          const qcMap = new Map(qcForRange.map((qc: any) => [qc.id, qc.category_id]));
+          const catStats: Record<string, { total: number; count: number }> = {};
 
-        if (finishedScores.length === 0) { setBestCategories([]); setCatsLoading(false); return; }
-        const qcMap = new Map(allQuizCategories.map((qc: any) => [qc.id, qc.category_id]));
-        const catStats: Record<string, { total: number; count: number }> = {};
-        for (const s of finishedScores) {
-          const catId = qcMap.get(s.quiz_category_id);
-          if (!catId) continue;
-          if (!catStats[catId]) catStats[catId] = { total: 0, count: 0 };
-          catStats[catId].total += Number(s.points) + Number(s.bonus_points);
-          catStats[catId].count++;
-        }
-        const catIds = Object.keys(catStats);
-        if (catIds.length === 0) { setBestCategories([]); setCatsLoading(false); return; }
-        const { data: catNames } = await supabase.from('categories').select('id, name').in('id', catIds);
-        const cNameMap = new Map((catNames || []).map(c => [c.id, c.name]));
-        setBestCategories(
-          Object.entries(catStats)
-            .map(([id, s]) => ({
-              name: cNameMap.get(id) || '?',
-              avgPoints: s.count > 0 ? s.total / s.count : 0,
-            }))
-            .sort((a, b) => b.avgPoints - a.avgPoints)
-        );
-        setCatsLoading(false);
-      })();
+          for (const score of finishedScores) {
+            const catId = qcMap.get(score.quiz_category_id);
+            if (!catId) continue;
+            if (!catStats[catId]) catStats[catId] = { total: 0, count: 0 };
+            catStats[catId].total += Number(score.points) + Number(score.bonus_points);
+            catStats[catId].count++;
+          }
 
-      // === Best Quizzes (sync, fast) ===
-      (() => {
-        if (qtFinished.length === 0) { setBestQuizzes([]); setQuizzesLoading(false); return; }
-        const quizStats: Record<string, { totalPoints: number; teamCount: number }> = {};
-        for (const qt of qtFinished) {
-          const qid = qt.quiz_id;
-          if (!quizStats[qid]) quizStats[qid] = { totalPoints: 0, teamCount: 0 };
-          quizStats[qid].totalPoints += Number(qt.total_points) || 0;
-          quizStats[qid].teamCount++;
-        }
-        const quizMap = new Map(allQuizzes.map(q => [q.id, q]));
-        setBestQuizzes(
-          Object.entries(quizStats)
-            .map(([id, s]) => {
-              const quiz = quizMap.get(id);
-              return {
-                name: quiz?.name || '?',
-                date: quiz?.date || '',
-                teamCount: s.teamCount,
-                avgPoints: s.teamCount > 0 ? s.totalPoints / s.teamCount : 0,
-              };
-            })
-            .sort((a, b) => b.avgPoints - a.avgPoints)
-        );
-        setQuizzesLoading(false);
-      })();
-
-      // === Top Leagues (async, independent) ===
-      (async () => {
-        if (allLeagues.length === 0) { setTopLeagues([]); setLeaguesLoading(false); return; }
-        const leagueQuizMap: Record<string, { count: number; finishedIds: string[] }> = {};
-        for (const quiz of allQuizzes) {
-          const lid = quiz.league_id;
-          if (!lid) continue;
-          if (!leagueQuizMap[lid]) leagueQuizMap[lid] = { count: 0, finishedIds: [] };
-          leagueQuizMap[lid].count++;
-          if (quiz.status === 'finished') leagueQuizMap[lid].finishedIds.push(quiz.id);
+          const catIds = Object.keys(catStats);
+          if (catIds.length === 0) {
+            setBestCategories([]);
+          } else {
+            const { data: catNames } = await supabase.from('categories').select('id, name').in('id', catIds);
+            const catNameMap = new Map((catNames || []).map(c => [c.id, c.name]));
+            setBestCategories(
+              Object.entries(catStats)
+                .map(([id, s]) => ({
+                  name: catNameMap.get(id) || '?',
+                  avgPoints: s.count > 0 ? s.total / s.count : 0,
+                }))
+                .sort((a, b) => b.avgPoints - a.avgPoints)
+            );
+          }
         }
 
-        const leagueLeaders: Record<string, string> = {};
-        for (const [lid, info] of Object.entries(leagueQuizMap)) {
-          if (info.finishedIds.length === 0) continue;
-          const finishedSet = new Set(info.finishedIds);
-          const teamPts: Record<string, number> = {};
-          for (const qt of qtFinished) {
-            if (finishedSet.has(qt.quiz_id)) {
-              teamPts[qt.team_id] = (teamPts[qt.team_id] || 0) + (Number(qt.total_points) || 0);
+        if (leaguesForRange.length === 0) {
+          setTopLeagues([]);
+        } else {
+          const leagueQuizMap: Record<string, { count: number; finishedIds: string[] }> = {};
+          for (const quiz of allQuizzes) {
+            const leagueId = quiz.league_id;
+            if (!leagueId) continue;
+            if (!leagueQuizMap[leagueId]) leagueQuizMap[leagueId] = { count: 0, finishedIds: [] };
+            leagueQuizMap[leagueId].count++;
+            if (quiz.status === 'finished') {
+              leagueQuizMap[leagueId].finishedIds.push(quiz.id);
             }
           }
-          let maxTid = ''; let maxPts = -1;
-          for (const [tid, pts] of Object.entries(teamPts)) {
-            if (pts > maxPts) { maxPts = pts; maxTid = tid; }
+
+          const leagueLeaders: Record<string, string> = {};
+          for (const [leagueId, info] of Object.entries(leagueQuizMap)) {
+            if (info.finishedIds.length === 0) continue;
+            const finishedSet = new Set(info.finishedIds);
+            const teamPoints: Record<string, number> = {};
+
+            for (const qt of qtFinished) {
+              if (finishedSet.has(qt.quiz_id)) {
+                teamPoints[qt.team_id] = (teamPoints[qt.team_id] || 0) + (Number(qt.total_points) || 0);
+              }
+            }
+
+            let maxTeamId = '';
+            let maxPoints = -1;
+            for (const [teamId, points] of Object.entries(teamPoints)) {
+              if (points > maxPoints) {
+                maxPoints = points;
+                maxTeamId = teamId;
+              }
+            }
+
+            if (maxTeamId) {
+              leagueLeaders[leagueId] = maxTeamId;
+            }
           }
-          if (maxTid) leagueLeaders[lid] = maxTid;
-        }
 
-        const allLeaderTids = new Set(Object.values(leagueLeaders));
-        let leaderNameMap = new Map<string, string>();
-        if (allLeaderTids.size > 0) {
-          const { data: tn } = await supabase.from('teams').select('id, name').in('id', Array.from(allLeaderTids));
-          leaderNameMap = new Map((tn || []).map(t => [t.id, t.name]));
-        }
+          const leaderIds = Object.values(leagueLeaders);
+          const leaderNamesRes = leaderIds.length > 0
+            ? await supabase.from('teams').select('id, name').in('id', leaderIds)
+            : { data: [] as any[] };
+          const leaderNameMap = new Map((leaderNamesRes.data || []).map(t => [t.id, t.name]));
 
-        setTopLeagues(
-          allLeagues.map(l => ({
-            name: l.name,
-            season: l.season || '',
-            is_active: l.is_active,
-            quizCount: leagueQuizMap[l.id]?.count || 0,
-            leaderName: leagueLeaders[l.id] ? (leaderNameMap.get(leagueLeaders[l.id]) || '?') : '-',
-          }))
-          .sort((a, b) => b.quizCount - a.quizCount)
-        );
+          setTopLeagues(
+            leaguesForRange
+              .map((league: any) => ({
+                name: league.name,
+                season: league.season || '',
+                is_active: league.is_active,
+                quizCount: leagueQuizMap[league.id]?.count || 0,
+                leaderName: leagueLeaders[league.id] ? (leaderNameMap.get(leagueLeaders[league.id]) || '?') : '-',
+              }))
+              .sort((a, b) => b.quizCount - a.quizCount)
+          );
+        }
+      } catch (error) {
+        console.error('Failed to load stats', error);
+        toast.error(t('stats.loadError', 'Greška pri učitavanju statistike.'));
+        setTopTeams([]);
+        setBestCategories([]);
+        setBestQuizzes([]);
+        setTopLeagues([]);
+      } finally {
+        setTeamsLoading(false);
+        setCatsLoading(false);
+        setQuizzesLoading(false);
         setLeaguesLoading(false);
-      })();
+      }
     };
 
     loadAll();
-  }, [currentOrg?.id]);
+  }, [currentOrg?.id, activeRange.from, activeRange.to, customRangeInvalid, t]);
 
   const cards = [
     { label: t('dashboard.quizzes'), value: counts.quizzes, icon: Trophy, color: 'text-primary' },
@@ -401,10 +559,70 @@ export default function StatsPage() {
     )},
   ];
 
+  const statsFilterUI = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Select value={rangePreset} onValueChange={(value) => setRangePreset(value as StatsRangePreset)}>
+        <SelectTrigger className="w-[220px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="this_month">{t('stats.thisMonth', 'Ovog meseca')}</SelectItem>
+          <SelectItem value="last_30_days">{t('stats.last30Days', 'Proteklih mesec dana')}</SelectItem>
+          <SelectItem value="last_3_months">{t('stats.last3Months', 'Protekla 3 meseca')}</SelectItem>
+          <SelectItem value="last_6_months">{t('stats.last6Months', 'Proteklih 6 meseci')}</SelectItem>
+          <SelectItem value="last_year">{t('stats.lastYear', 'Proteklih godinu dana')}</SelectItem>
+          <SelectItem value="this_year">{t('stats.thisYear', 'Ove godine')}</SelectItem>
+          <SelectItem value="all_time">{t('stats.allTime', 'Svih vremena')}</SelectItem>
+          <SelectItem value="custom">{t('stats.customRange', 'Custom')}</SelectItem>
+        </SelectContent>
+      </Select>
+      {rangePreset === 'custom' && (
+        <>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("gap-2 w-[140px] justify-start text-left font-normal", !customDateFrom && "text-muted-foreground")}>
+                <CalendarIcon className="h-4 w-4" />
+                {customDateFrom ? format(customDateFrom, 'dd.MM.yyyy') : t('filters.dateFrom')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={customDateFrom} onSelect={setCustomDateFrom} initialFocus className="p-3 pointer-events-auto" />
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("gap-2 w-[140px] justify-start text-left font-normal", !customDateTo && "text-muted-foreground")}>
+                <CalendarIcon className="h-4 w-4" />
+                {customDateTo ? format(customDateTo, 'dd.MM.yyyy') : t('filters.dateTo')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={customDateTo} onSelect={setCustomDateTo} initialFocus className="p-3 pointer-events-auto" />
+            </PopoverContent>
+          </Popover>
+          {(customDateFrom || customDateTo) && (
+            <Button variant="ghost" size="sm" onClick={() => { setCustomDateFrom(undefined); setCustomDateTo(undefined); }}>
+              {t('filters.clearDates')}
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  );
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <h1 className="font-display text-2xl font-bold">{t('stats.title')}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-display text-2xl font-bold">{t('stats.title')}</h1>
+          {statsFilterUI}
+        </div>
+
+        {customRangeInvalid && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            {t('stats.invalidCustomRange', 'Datum od ne može biti posle datuma do.')}
+          </div>
+        )}
 
         {/* Counts - show skeleton or values */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -424,30 +642,23 @@ export default function StatsPage() {
         </div>
 
         {/* Top Teams */}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <h3 className="font-display font-semibold mb-4">{t('stats.topTeams')}</h3>
+        <StatsSection title={t('stats.topTeams')} sectionKey="teams" expandedSection={expandedSection} onExpand={setExpandedSection}>
           {teamsLoading ? <SectionSkeleton /> : <SortableTable data={topTeams} columns={teamColumns} defaultSortKey="quizzes" />}
-        </div>
+        </StatsSection>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Best Categories */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-display font-semibold mb-4">{t('stats.bestCategories')}</h3>
+          <StatsSection title={t('stats.bestCategories')} sectionKey="categories" expandedSection={expandedSection} onExpand={setExpandedSection}>
             {catsLoading ? <SectionSkeleton /> : <SortableTable data={bestCategories} columns={catColumns} defaultSortKey="avgPoints" />}
-          </div>
+          </StatsSection>
 
-          {/* Best Quizzes */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-display font-semibold mb-4">{t('stats.bestQuizzes')}</h3>
+          <StatsSection title={t('stats.bestQuizzes')} sectionKey="quizzes" expandedSection={expandedSection} onExpand={setExpandedSection}>
             {quizzesLoading ? <SectionSkeleton /> : <SortableTable data={bestQuizzes} columns={quizColumns} defaultSortKey="avgPoints" />}
-          </div>
+          </StatsSection>
         </div>
 
-        {/* Top Leagues */}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <h3 className="font-display font-semibold mb-4">{t('stats.topLeagues')}</h3>
+        <StatsSection title={t('stats.topLeagues')} sectionKey="leagues" expandedSection={expandedSection} onExpand={setExpandedSection}>
           {leaguesLoading ? <SectionSkeleton /> : <SortableTable data={topLeagues} columns={leagueColumns} defaultSortKey="quizCount" />}
-        </div>
+        </StatsSection>
       </div>
     </DashboardLayout>
   );

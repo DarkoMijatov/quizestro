@@ -55,6 +55,7 @@ interface OrgLocation {
   facebook_url: string | null;
   is_active: boolean;
   org_name?: string;
+  org_logo_url?: string | null;
   schedules?: Schedule[];
   _distance?: number;
 }
@@ -135,11 +136,19 @@ function MarkerClusterGroup({ locations, onSelectLocation }: { locations: OrgLoc
       const scheduleHtml = loc.schedules?.[0] 
         ? `<p style="font-size:11px;margin-top:4px;font-weight:500;color:hsl(36,90%,50%)">${getNextOccurrence(loc.schedules[0], t)}</p>` 
         : '';
+      const logoHtml = loc.org_logo_url
+        ? `<img src="${loc.org_logo_url}" alt="" style="width:28px;height:28px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.15)" />`
+        : `<div style="width:28px;height:28px;border-radius:8px;background:hsl(220,18%,18%);display:flex;align-items:center;justify-content:center;color:hsl(36,90%,50%);font-size:12px;font-weight:700">${(loc.org_name || '?').slice(0, 1).toUpperCase()}</div>`;
 
       marker.bindPopup(`
         <div style="min-width:180px;font-family:'Inter',sans-serif">
-          <p style="font-weight:700;font-size:13px;margin:0;color:hsl(40,20%,92%)">${loc.venue_name}</p>
-          <p style="font-size:11px;margin:2px 0 0;color:hsl(220,10%,55%)">${loc.org_name || ''}</p>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            ${logoHtml}
+            <div>
+              <p style="font-weight:700;font-size:13px;margin:0;color:hsl(40,20%,92%)">${loc.venue_name}</p>
+              <p style="font-size:11px;margin:2px 0 0;color:hsl(220,10%,55%)">${loc.org_name || ''}</p>
+            </div>
+          </div>
           <p style="font-size:11px;margin:2px 0;color:hsl(220,10%,55%)">${loc.city}, ${loc.country}</p>
           ${scheduleHtml}
         </div>
@@ -227,12 +236,12 @@ export function PublicQuizMap() {
     const orgIds = [...new Set(locs.map(l => l.organization_id))];
     const { data: orgs } = await supabase
       .from('organizations')
-      .select('id, name')
+      .select('id, name, logo_url')
       .in('id', orgIds)
       .eq('public_map_enabled', true)
       .eq('is_deleted', false);
 
-    const orgMap = new Map((orgs || []).map(o => [o.id, o.name]));
+    const orgMap = new Map((orgs || []).map(o => [o.id, o]));
 
     const locIds = locs.map(l => l.id);
     const { data: schedules } = await supabase
@@ -252,7 +261,8 @@ export function PublicQuizMap() {
       .filter(l => orgMap.has(l.organization_id))
       .map(l => ({
         ...l,
-        org_name: orgMap.get(l.organization_id),
+        org_name: orgMap.get(l.organization_id)?.name,
+        org_logo_url: orgMap.get(l.organization_id)?.logo_url || null,
         schedules: scheduleMap.get(l.id) || [],
       }));
 
@@ -534,9 +544,18 @@ export function PublicQuizMap() {
                 <Link key={loc.id} to={`/quiz-map/${loc.id}`}>
                   <div className="rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors cursor-pointer">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm truncate">{loc.venue_name}</p>
-                        <p className="text-xs text-muted-foreground">{loc.org_name}</p>
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        {loc.org_logo_url ? (
+                          <img src={loc.org_logo_url} alt="" className="h-10 w-10 rounded-lg object-cover border border-border shrink-0" />
+                        ) : (
+                          <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                            {(loc.org_name || '?').slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-sm truncate">{loc.venue_name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{loc.org_name}</p>
+                        </div>
                       </div>
                       {loc._distance !== undefined && (
                         <Badge variant="outline" className="text-xs shrink-0">
