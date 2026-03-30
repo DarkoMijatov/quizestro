@@ -23,7 +23,7 @@ import { format, startOfMonth, startOfYear, subMonths, subYears } from 'date-fns
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-interface TopTeam { name: string; quizzes: number; wins: number; avgPoints: number }
+interface TopTeam { name: string; quizzes: number; wins: number; avgPoints: number; bestQuizPoints: number; bonusPoints: number }
 interface BestCategory { name: string; avgPoints: number }
 interface BestQuiz { name: string; date: string; teamCount: number; avgPoints: number }
 interface TopLeague { name: string; season: string; quizCount: number; leaderName: string; is_active: boolean }
