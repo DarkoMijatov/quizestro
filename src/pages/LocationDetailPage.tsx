@@ -27,8 +27,7 @@ import {
   Trophy,
   DollarSign,
 } from "lucide-react";
-import { computeNextDate } from "@/lib/schedule-utils";
-import { format } from "date-fns";
+import { formatNextOccurrence } from "@/lib/schedule-utils";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -132,18 +131,7 @@ export default function LocationDetailPage() {
   }, [id]);
 
   const getScheduleText = (s: Schedule) => {
-    if (s.schedule_type === "one_time" && s.event_date) {
-      return `${s.event_date} ${t("map.at")} ${s.start_time.slice(0, 5)}`;
-    }
-    if (s.day_of_week !== null) {
-      const patternSuffix = s.recurrence_pattern && s.recurrence_pattern !== 'weekly'
-        ? ` (${t(`mapSettings.${s.recurrence_pattern}`)})`
-        : '';
-      const nextDate = computeNextDate(s as any);
-      const nextDateStr = nextDate ? ` — ${t('map.nextDate', 'Sledeći')}: ${format(nextDate, 'dd.MM.yyyy')}` : '';
-      return `${t("map.every")} ${t(`map.${DAY_NAMES_KEYS[s.day_of_week]}`)} ${t("map.at")} ${s.start_time.slice(0, 5)}${patternSuffix}${nextDateStr}`;
-    }
-    return s.start_time.slice(0, 5);
+    return formatNextOccurrence(s, t, DAY_NAMES_KEYS) || s.start_time.slice(0, 5);
   };
 
   const pageTitle = location ? `${location.venue_name} - ${orgName}` : t("map.locationDetails");

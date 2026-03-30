@@ -96,9 +96,12 @@ export function formatNextOccurrence(
   locale?: string
 ): string {
   const nextDate = computeNextDate(schedule);
+  const nextDateLabel = t('map.nextDate') || 'Sledeći';
 
-  if (schedule.schedule_type === 'one_time' && schedule.event_date) {
-    return `${schedule.event_date} ${t('map.at')} ${schedule.start_time.slice(0, 5)}`;
+  if (schedule.schedule_type === 'one_time') {
+    if (!nextDate) return '';
+    const dateStr = format(nextDate, 'dd.MM.yyyy');
+    return `${t('map.at')} ${schedule.start_time.slice(0, 5)} — ${nextDateLabel}: ${dateStr}`;
   }
 
   if (schedule.day_of_week === null) return '';
@@ -112,7 +115,7 @@ export function formatNextOccurrence(
 
   if (nextDate) {
     const dateStr = format(nextDate, 'dd.MM.yyyy');
-    return `${dayLabel} ${t('map.at')} ${timeStr}${patternSuffix} — ${t('map.nextDate') || 'Sledeći'}: ${dateStr}`;
+    return `${dayLabel} ${t('map.at')} ${timeStr}${patternSuffix} — ${nextDateLabel}: ${dateStr}`;
   }
 
   return `${dayLabel} ${t('map.at')} ${timeStr}${patternSuffix}`;
