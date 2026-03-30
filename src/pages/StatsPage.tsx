@@ -579,6 +579,8 @@ export default function StatsPage() {
     { key: 'quizzes', label: t('stats.quizzesPlayed'), getValue: (r: TopTeam) => r.quizzes, align: 'right' as const },
     { key: 'wins', label: t('stats.wins'), getValue: (r: TopTeam) => r.wins, align: 'right' as const },
     { key: 'avgPoints', label: t('stats.avgPoints'), getValue: (r: TopTeam) => r.avgPoints, align: 'right' as const },
+    { key: 'bestQuizPoints', label: t('teamsTable.bestQuizPoints', 'Najviše poena'), getValue: (r: TopTeam) => r.bestQuizPoints, align: 'right' as const },
+    { key: 'bonusPoints', label: t('teamsTable.bonusPoints', 'Bonus'), getValue: (r: TopTeam) => r.bonusPoints, align: 'right' as const },
   ];
 
   const catColumns = [

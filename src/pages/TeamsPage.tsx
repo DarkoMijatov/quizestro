@@ -150,7 +150,7 @@ export default function TeamsPage() {
       agg.totalPts += totalPoints;
       if (qt.rank === 1) agg.wins++;
       agg.bestQuizPoints = agg.bestQuizPoints == null ? totalPoints : Math.max(agg.bestQuizPoints, totalPoints);
-      agg.bonusPoints += bonusPointsByQuizTeam.get(qt.id) || 0;
+      agg.bonusPoints += bonusCountByQuizTeam.get(qt.id) || 0;
       aggMap.set(qt.team_id, agg);
     });
 
