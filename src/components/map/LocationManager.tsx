@@ -349,6 +349,8 @@ export function LocationManager() {
                         const patternLabel = s.schedule_type === 'recurring' && (s as any).recurrence_pattern && (s as any).recurrence_pattern !== 'weekly'
                           ? ` (${t(`mapSettings.${(s as any).recurrence_pattern}`)})`
                           : '';
+                        const nextDate = s.schedule_type === 'recurring' ? computeNextDate(s as any) : null;
+                        const nextDateStr = nextDate ? format(nextDate, 'dd.MM.yyyy') : null;
                         return (
                         <div key={s.id} className="flex items-center justify-between text-xs rounded bg-muted/50 px-3 py-1.5">
                           <div className="flex items-center gap-2">
@@ -358,6 +360,11 @@ export function LocationManager() {
                                 ? `${t(`map.${DAY_KEYS[s.day_of_week || 0]}`)} ${t('map.at')} ${s.start_time?.slice(0, 5)}${patternLabel}`
                                 : `${s.event_date} ${t('map.at')} ${s.start_time?.slice(0, 5)}`}
                             </span>
+                            {nextDateStr && (
+                              <Badge variant="outline" className="text-[10px] text-primary">
+                                {t('map.nextDate', 'Sledeći')}: {nextDateStr}
+                              </Badge>
+                            )}
                             {s.title && <Badge variant="secondary" className="text-[10px]">{s.title}</Badge>}
                           </div>
                           {canEdit && (
