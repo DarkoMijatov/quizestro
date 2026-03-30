@@ -28,6 +28,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { MapPin, Plus, Trash2, Clock, Calendar, Loader2, Globe, Eye, EyeOff, Navigation } from 'lucide-react';
+import { computeNextDate } from '@/lib/schedule-utils';
+import { format } from 'date-fns';
 
 interface Location {
   id: string;
