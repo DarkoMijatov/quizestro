@@ -155,27 +155,11 @@ export default function TeamDetailPage() {
             const qcToCategory = new Map((quizCategories || []).map((qc: any) => [qc.id, qc.category_id]));
             const categoryNames = new Map((categories || []).map((c: any) => [c.id, c.name]));
             const categoryStats = new Map<string, { total: number; count: number }>();
-            const jokerUsageSet = new Set(
-              (helpUsages || [])
-                .filter((usage: any) => jokerHelpTypeIds.includes(usage.help_type_id))
-                .map((usage: any) => `${usage.quiz_team_id}:${usage.quiz_category_id}`)
-            );
-            const categoryBonusSet = new Set(
-              (categoryBonuses || []).map((bonus: any) => `${bonus.quiz_team_id}:${bonus.quiz_category_id}`)
-            );
-
             filteredScores.forEach((score: any) => {
               const categoryId = qcToCategory.get(score.quiz_category_id);
               if (!categoryId) return;
               const stat = categoryStats.get(categoryId) || { total: 0, count: 0 };
-              let displayPoints = Number(score.points || 0) + Number(score.bonus_points || 0);
-              if (jokerUsageSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
-                displayPoints *= 2;
-              }
-              if (categoryBonusSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
-                displayPoints += 1;
-              }
-              stat.total += displayPoints;
+              stat.total += Number(score.points || 0);
               stat.count += 1;
               categoryStats.set(categoryId, stat);
             });

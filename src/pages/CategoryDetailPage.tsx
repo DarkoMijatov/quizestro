@@ -103,26 +103,11 @@ export default function CategoryDetailPage() {
         });
         
         // Group scores by quiz_category_id
-        const jokerUsageSet = new Set(
-          (helpUsages || [])
-            .filter((usage: any) => jokerHelpTypeIds.includes(usage.help_type_id))
-            .map((usage: any) => `${usage.quiz_team_id}:${usage.quiz_category_id}`)
-        );
-        const categoryBonusSet = new Set(
-          (categoryBonuses || []).map((bonus: any) => `${bonus.quiz_team_id}:${bonus.quiz_category_id}`)
-        );
         const scoresByQC = new Map<string, { total: number; count: number }>();
         (scores || []).forEach((s: any) => {
           if (!completeQuizIds.has(s.quiz_id)) return;
           const existing = scoresByQC.get(s.quiz_category_id) || { total: 0, count: 0 };
-          let displayPoints = Number(s.points || 0) + Number(s.bonus_points || 0);
-          if (jokerUsageSet.has(`${s.quiz_team_id}:${s.quiz_category_id}`)) {
-            displayPoints *= 2;
-          }
-          if (categoryBonusSet.has(`${s.quiz_team_id}:${s.quiz_category_id}`)) {
-            displayPoints += 1;
-          }
-          existing.total += displayPoints;
+          existing.total += Number(s.points || 0);
           existing.count += 1;
           scoresByQC.set(s.quiz_category_id, existing);
         });
@@ -164,14 +149,7 @@ export default function CategoryDetailPage() {
             const teamInfo = teamMap.get(score.quiz_team_id);
             if (!teamInfo) return;
             const existing = teamStats.get(teamInfo.team_id) || { ...teamInfo, total: 0, count: 0 };
-            let displayPoints = Number(score.points || 0) + Number(score.bonus_points || 0);
-            if (jokerUsageSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
-              displayPoints *= 2;
-            }
-            if (categoryBonusSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
-              displayPoints += 1;
-            }
-            existing.total += displayPoints;
+            existing.total += Number(score.points || 0);
             existing.count += 1;
             teamStats.set(teamInfo.team_id, existing);
           });

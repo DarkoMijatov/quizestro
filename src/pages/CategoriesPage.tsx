@@ -174,15 +174,6 @@ export default function CategoriesPage() {
       const validQcIdSet = new Set(validQcIds);
 
       const qcById = new Map(qcList.map((qc: any) => [qc.id, qc]));
-      const jokerUsageSet = new Set(
-        (helpUsagesRes.data || [])
-          .filter((usage: any) => jokerHelpTypeIds.includes(usage.help_type_id))
-          .map((usage: any) => `${usage.quiz_team_id}:${usage.quiz_category_id}`)
-      );
-      const categoryBonusSet = new Set(
-        (categoryBonusesRes.data || []).map((bonus: any) => `${bonus.quiz_team_id}:${bonus.quiz_category_id}`)
-      );
-
       const qcToCat = new Map<string, string>();
       qcList.forEach((qc: any) => qcToCat.set(qc.id, qc.category_id));
 
@@ -193,14 +184,7 @@ export default function CategoriesPage() {
         const categoryId = qcToCat.get(score.quiz_category_id);
         if (!categoryId) return;
         const stat = scoreMap.get(categoryId) || { total: 0, count: 0 };
-        let displayPoints = Number(score.points || 0) + Number(score.bonus_points || 0);
-        if (jokerUsageSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
-          displayPoints *= 2;
-        }
-        if (categoryBonusSet.has(`${score.quiz_team_id}:${score.quiz_category_id}`)) {
-          displayPoints += 1;
-        }
-        stat.total += displayPoints;
+        stat.total += Number(score.points || 0);
         stat.count += 1;
         scoreMap.set(categoryId, stat);
       });

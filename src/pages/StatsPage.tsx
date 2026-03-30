@@ -442,7 +442,7 @@ export default function StatsPage() {
             const catId = qcMap.get(score.quiz_category_id);
             if (!catId) continue;
             if (!catStats[catId]) catStats[catId] = { total: 0, count: 0 };
-            catStats[catId].total += Number(score.points) + Number(score.bonus_points);
+            catStats[catId].total += Number(score.points || 0);
             catStats[catId].count++;
           }
 
