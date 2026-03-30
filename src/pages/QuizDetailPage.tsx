@@ -103,64 +103,6 @@ interface CategoryBonus {
   organization_id: string;
 }
 
-type BrowserFullscreenDocument = Document & {
-  webkitFullscreenElement?: Element | null;
-  mozFullScreenElement?: Element | null;
-  msFullscreenElement?: Element | null;
-  webkitExitFullscreen?: () => Promise<void> | void;
-  mozCancelFullScreen?: () => Promise<void> | void;
-  msExitFullscreen?: () => Promise<void> | void;
-};
-
-type BrowserFullscreenElement = HTMLElement & {
-  webkitRequestFullscreen?: () => Promise<void> | void;
-  mozRequestFullScreen?: () => Promise<void> | void;
-  msRequestFullscreen?: () => Promise<void> | void;
-};
-
-const getBrowserFullscreenElement = (doc: BrowserFullscreenDocument) =>
-  doc.fullscreenElement ??
-  doc.webkitFullscreenElement ??
-  doc.mozFullScreenElement ??
-  doc.msFullscreenElement ??
-  null;
-
-const requestBrowserFullscreen = async (element: BrowserFullscreenElement) => {
-  if (element.requestFullscreen) {
-    await element.requestFullscreen();
-    return;
-  }
-  if (element.webkitRequestFullscreen) {
-    await element.webkitRequestFullscreen();
-    return;
-  }
-  if (element.mozRequestFullScreen) {
-    await element.mozRequestFullScreen();
-    return;
-  }
-  if (element.msRequestFullscreen) {
-    await element.msRequestFullscreen();
-  }
-};
-
-const exitBrowserFullscreen = async (doc: BrowserFullscreenDocument) => {
-  if (doc.exitFullscreen) {
-    await doc.exitFullscreen();
-    return;
-  }
-  if (doc.webkitExitFullscreen) {
-    await doc.webkitExitFullscreen();
-    return;
-  }
-  if (doc.mozCancelFullScreen) {
-    await doc.mozCancelFullScreen();
-    return;
-  }
-  if (doc.msExitFullscreen) {
-    await doc.msExitFullscreen();
-  }
-};
-
 export default function QuizDetailPage() {
   const { t, i18n } = useTranslation();
   const { id: quizId } = useParams<{ id: string }>();
@@ -245,29 +187,11 @@ export default function QuizDetailPage() {
     fetchAll();
   }, [fetchAll]);
 
-  // Sync state with browser fullscreen across engines.
+  // Fullscreen API: sync state with browser fullscreen
   useEffect(() => {
-    const doc = document as BrowserFullscreenDocument;
-    const handler = () => {
-      const active = !!getBrowserFullscreenElement(doc);
-      setIsFullscreen(active);
-      if (!active) {
-        setIsImmersive(false);
-      }
-    };
-
-    handler();
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handler);
-    document.addEventListener('webkitfullscreenchange', handler as EventListener);
-    document.addEventListener('mozfullscreenchange', handler as EventListener);
-    document.addEventListener('MSFullscreenChange', handler as EventListener);
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handler);
-      document.removeEventListener('webkitfullscreenchange', handler as EventListener);
-      document.removeEventListener('mozfullscreenchange', handler as EventListener);
-      document.removeEventListener('MSFullscreenChange', handler as EventListener);
-    };
+    return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
   useEffect(() => {
@@ -279,12 +203,11 @@ export default function QuizDetailPage() {
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const doc = document as BrowserFullscreenDocument;
 
     const retryFullscreen = async () => {
-      if (getBrowserFullscreenElement(doc)) return;
+      if (!scoringRef.current || document.fullscreenElement) return;
       try {
-        await requestBrowserFullscreen(document.documentElement as BrowserFullscreenElement);
+        await scoringRef.current.requestFullscreen();
       } catch {
         // Browsers may reject fullscreen without a fresh user gesture.
       }
@@ -311,19 +234,6 @@ export default function QuizDetailPage() {
   }, [isImmersive]);
 
   useEffect(() => {
-    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      const doc = document as BrowserFullscreenDocument;
-      if (!getBrowserFullscreenElement(doc) && isImmersive) {
-        setIsImmersive(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isImmersive]);
-
-  useEffect(() => {
     const handleResize = () => {
       setViewportSize({
         width: window.innerWidth,
@@ -337,13 +247,10 @@ export default function QuizDetailPage() {
   }, []);
 
   const toggleFullscreen = async () => {
-    const doc = document as BrowserFullscreenDocument;
-    const hasBrowserFullscreen = !!getBrowserFullscreenElement(doc);
-
-    if (isImmersive || hasBrowserFullscreen) {
+    if (isImmersive) {
       setIsImmersive(false);
-      if (hasBrowserFullscreen) {
-        await exitBrowserFullscreen(doc);
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
       }
       return;
     }
@@ -351,8 +258,8 @@ export default function QuizDetailPage() {
     setIsImmersive(true);
 
     try {
-      if (!getBrowserFullscreenElement(doc)) {
-        await requestBrowserFullscreen(document.documentElement as BrowserFullscreenElement);
+      if (!document.fullscreenElement) {
+        await scoringRef.current?.requestFullscreen();
       }
     } catch {
       // Keep immersive layout even if browser fullscreen is denied or cleared.
