@@ -374,21 +374,47 @@ export default function StatsPage() {
           setTopTeams([]);
           setBestQuizzes([]);
         } else {
-          const teamStats: Record<string, { quizzes: number; wins: number; totalPoints: number }> = {};
+          // Count category_bonuses per team
+          const bonusCountByTeam: Record<string, number> = {};
+          const finishedQtIdToTeam = new Map<string, string>();
+          // We need quiz_team ids for finished quizzes - fetch them
+          const { data: finishedQtFull } = await supabase
+            .from('quiz_teams')
+            .select('id, team_id, quiz_id')
+            .in('quiz_id', [...finishedQuizIds])
+            .eq('organization_id', currentOrg.id);
+          (finishedQtFull || []).forEach((qt: any) => finishedQtIdToTeam.set(qt.id, qt.team_id));
+          const finishedQtIdSet = new Set((finishedQtFull || []).map((qt: any) => qt.id));
+          const { data: cbData } = finishedQtIdSet.size > 0
+            ? await supabase.from('category_bonuses').select('quiz_team_id').in('quiz_team_id', [...finishedQtIdSet])
+            : { data: [] as any[] };
+          (cbData || []).forEach((cb: any) => {
+            const teamId = finishedQtIdToTeam.get(cb.quiz_team_id);
+            if (teamId) bonusCountByTeam[teamId] = (bonusCountByTeam[teamId] || 0) + 1;
+          });
+
+          const teamStats: Record<string, { quizzes: number; wins: number; totalPoints: number; bestQuizPoints: number; bonusPoints: number }> = {};
           const quizStats: Record<string, { totalPoints: number; teamCount: number }> = {};
 
           for (const qt of qtFinished) {
             const tid = qt.team_id;
             const qid = qt.quiz_id;
-            if (!teamStats[tid]) teamStats[tid] = { quizzes: 0, wins: 0, totalPoints: 0 };
+            if (!teamStats[tid]) teamStats[tid] = { quizzes: 0, wins: 0, totalPoints: 0, bestQuizPoints: 0, bonusPoints: 0 };
             if (!quizStats[qid]) quizStats[qid] = { totalPoints: 0, teamCount: 0 };
 
+            const pts = Number(qt.total_points) || 0;
             teamStats[tid].quizzes++;
-            teamStats[tid].totalPoints += Number(qt.total_points) || 0;
+            teamStats[tid].totalPoints += pts;
+            teamStats[tid].bestQuizPoints = Math.max(teamStats[tid].bestQuizPoints, pts);
             if (qt.rank === 1) teamStats[tid].wins++;
 
-            quizStats[qid].totalPoints += Number(qt.total_points) || 0;
+            quizStats[qid].totalPoints += pts;
             quizStats[qid].teamCount++;
+          }
+
+          // Assign bonus counts
+          for (const [teamId, count] of Object.entries(bonusCountByTeam)) {
+            if (teamStats[teamId]) teamStats[teamId].bonusPoints = count;
           }
 
           const [teamNamesRes] = await Promise.all([
