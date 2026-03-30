@@ -16,6 +16,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Search, MapPin, Navigation, Clock, Calendar as CalendarIcon, Loader2, LocateFixed, ArrowRight, X } from 'lucide-react';
+import { formatNextOccurrence } from '@/lib/schedule-utils';
 import { Link } from 'react-router-dom';
 
 // Fix Leaflet default icon issue
@@ -91,16 +92,7 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 function getNextOccurrence(schedule: Schedule, t: (key: string) => string): string {
-  if (schedule.schedule_type === 'one_time' && schedule.event_date) {
-    return `${schedule.event_date} ${t('map.at')} ${schedule.start_time.slice(0, 5)}`;
-  }
-  if (schedule.day_of_week !== null) {
-    const patternSuffix = schedule.recurrence_pattern && schedule.recurrence_pattern !== 'weekly'
-      ? ` (${t(`mapSettings.${schedule.recurrence_pattern}`)})`
-      : '';
-    return `${t(`map.${DAY_NAMES_KEYS[schedule.day_of_week]}`)} ${t('map.at')} ${schedule.start_time.slice(0, 5)}${patternSuffix}`;
-  }
-  return '';
+  return formatNextOccurrence(schedule, t, DAY_NAMES_KEYS);
 }
 
 // Marker cluster layer component

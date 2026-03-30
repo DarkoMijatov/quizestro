@@ -27,6 +27,8 @@ import {
   Trophy,
   DollarSign,
 } from "lucide-react";
+import { computeNextDate } from "@/lib/schedule-utils";
+import { format } from "date-fns";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -70,6 +72,9 @@ interface Schedule {
   prize_info: string | null;
   team_size_info: string | null;
   notes: string | null;
+  recurrence_pattern: string;
+  valid_from: string | null;
+  valid_until: string | null;
 }
 
 export default function LocationDetailPage() {
@@ -131,7 +136,12 @@ export default function LocationDetailPage() {
       return `${s.event_date} ${t("map.at")} ${s.start_time.slice(0, 5)}`;
     }
     if (s.day_of_week !== null) {
-      return `${t("map.every")} ${t(`map.${DAY_NAMES_KEYS[s.day_of_week]}`)} ${t("map.at")} ${s.start_time.slice(0, 5)}`;
+      const patternSuffix = s.recurrence_pattern && s.recurrence_pattern !== 'weekly'
+        ? ` (${t(`mapSettings.${s.recurrence_pattern}`)})`
+        : '';
+      const nextDate = computeNextDate(s as any);
+      const nextDateStr = nextDate ? ` — ${t('map.nextDate', 'Sledeći')}: ${format(nextDate, 'dd.MM.yyyy')}` : '';
+      return `${t("map.every")} ${t(`map.${DAY_NAMES_KEYS[s.day_of_week]}`)} ${t("map.at")} ${s.start_time.slice(0, 5)}${patternSuffix}${nextDateStr}`;
     }
     return s.start_time.slice(0, 5);
   };
