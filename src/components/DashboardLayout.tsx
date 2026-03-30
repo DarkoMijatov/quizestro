@@ -37,7 +37,13 @@ function hexToHsl(hex: string): string {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+export function DashboardLayout({
+  children,
+  immersive = false,
+}: {
+  children: React.ReactNode;
+  immersive?: boolean;
+}) {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -183,7 +189,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
-      <aside className={cn(
+      {!immersive && <aside className={cn(
         "hidden md:flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}>
@@ -269,10 +275,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <TooltipContent side="right">{collapsed ? t('common.expand', 'Expand') : t('common.collapse', 'Collapse')}</TooltipContent>
           </Tooltip>
         </div>
-      </aside>
+      </aside>}
 
       {/* Mobile sidebar overlay */}
-      {mobileOpen && (
+      {!immersive && mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <aside className="relative w-64 flex flex-col border-r border-sidebar-border bg-sidebar z-10">
@@ -301,9 +307,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Main */}
-      <main className="flex-1 overflow-y-auto">
+      <main className={cn("flex-1", immersive ? "overflow-hidden" : "overflow-y-auto")}>
         {/* Mobile header */}
-        <div className="md:hidden flex items-center justify-between border-b border-border px-4 py-3">
+        {!immersive && <div className="md:hidden flex items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
             <button onClick={() => setMobileOpen(true)}>
               <Menu className="h-5 w-5 text-foreground" />
@@ -314,8 +320,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <span className="font-display font-bold text-sm">{currentOrg?.name}</span>
           </div>
           <LanguageSwitcher variant="ghost" />
-        </div>
-        <div className="p-6 md:p-8">
+        </div>}
+        <div className={cn(immersive ? "h-full p-0" : "p-6 md:p-8")}>
           {children}
         </div>
       </main>

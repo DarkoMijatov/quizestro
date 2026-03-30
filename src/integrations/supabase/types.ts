@@ -1260,6 +1260,7 @@ export type Database = {
       }
       quizzes: {
         Row: {
+          categories_filled: boolean
           code: string | null
           created_at: string
           created_by: string | null
@@ -1278,6 +1279,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          categories_filled?: boolean
           code?: string | null
           created_at?: string
           created_by?: string | null
@@ -1296,6 +1298,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          categories_filled?: boolean
           code?: string | null
           created_at?: string
           created_by?: string | null

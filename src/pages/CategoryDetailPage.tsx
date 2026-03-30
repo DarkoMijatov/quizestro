@@ -45,8 +45,8 @@ export default function CategoryDetailPage() {
 
       if (quizIds.length > 0) {
         const [{ data: quizzes }, { data: scores }] = await Promise.all([
-          supabase.from('quizzes').select('id, name, date, location, status').in('id', quizIds).order('date', { ascending: false }),
-          supabase.from('scores').select('quiz_category_id, points, bonus_points').in('quiz_category_id', quizCatIds),
+          supabase.from('quizzes').select('id, name, date, location, status, scoring_mode, categories_filled').in('id', quizIds).order('date', { ascending: false }),
+          supabase.from('scores').select('quiz_id, quiz_category_id, points, bonus_points').in('quiz_category_id', quizCatIds),
         ]);
 
         const quizMap = new Map((quizzes || []).map((q: any) => [q.id, q]));
@@ -60,20 +60,28 @@ export default function CategoryDetailPage() {
           scoresByQC.set(s.quiz_category_id, existing);
         });
 
-        const merged: QuizUsage[] = (qcData || []).map((qc: any) => {
-          const q = quizMap.get(qc.quiz_id) || {};
-          const sc = scoresByQC.get(qc.id) || { total: 0, count: 0 };
-          return {
-            quiz_id: qc.quiz_id,
-            quiz_name: (q as any).name || '—',
-            quiz_date: (q as any).date || '',
-            quiz_location: (q as any).location || null,
-            quiz_status: (q as any).status || '',
-            sort_order: qc.sort_order,
-            avg_score: sc.count > 0 ? sc.total / sc.count : 0,
-            teams_count: sc.count,
-          };
-        }).sort((a: QuizUsage, b: QuizUsage) => b.quiz_date.localeCompare(a.quiz_date));
+        const merged: QuizUsage[] = (qcData || [])
+          .filter((qc: any) => {
+            const quiz = quizMap.get(qc.quiz_id);
+            if (!quiz) return false;
+            if (quiz.scoring_mode !== 'per_part') return true;
+            return !!quiz.categories_filled;
+          })
+          .map((qc: any) => {
+            const q = quizMap.get(qc.quiz_id) || {};
+            const sc = scoresByQC.get(qc.id) || { total: 0, count: 0 };
+            return {
+              quiz_id: qc.quiz_id,
+              quiz_name: (q as any).name || '—',
+              quiz_date: (q as any).date || '',
+              quiz_location: (q as any).location || null,
+              quiz_status: (q as any).status || '',
+              sort_order: qc.sort_order,
+              avg_score: sc.count > 0 ? sc.total / sc.count : 0,
+              teams_count: sc.count,
+            };
+          })
+          .sort((a: QuizUsage, b: QuizUsage) => b.quiz_date.localeCompare(a.quiz_date));
 
         setUsages(merged);
       } else {

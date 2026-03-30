@@ -125,19 +125,36 @@ export default function CategoriesPage() {
     let finishedQuizIds = new Set<string>();
     if (qcQuizIds.length > 0) {
       const { data: quizData } = await supabase
-        .from('quizzes').select('id').in('id', qcQuizIds).eq('status', 'finished');
+        .from('quizzes').select('id, scoring_mode, categories_filled').in('id', qcQuizIds).eq('status', 'finished');
       finishedQuizIds = new Set((quizData || []).map((q: any) => q.id));
     }
-
-    const finishedQcIds = new Set(qcList.filter((qc: any) => finishedQuizIds.has(qc.quiz_id)).map((qc: any) => qc.id));
 
     let scoreMap = new Map<string, { total: number; count: number }>();
     if (qcIds.length > 0) {
       const { data: scoreData } = await supabase
-        .from('scores').select('quiz_category_id, points').in('quiz_category_id', qcIds);
+        .from('scores').select('quiz_id, quiz_category_id, points, bonus_points').in('quiz_category_id', qcIds);
 
       const qcToCat = new Map<string, string>();
       qcList.forEach((qc: any) => qcToCat.set(qc.id, qc.category_id));
+
+      const quizMetaMap = new Map<string, any>();
+      if (qcQuizIds.length > 0) {
+        const { data: quizMeta } = await supabase
+          .from('quizzes').select('id, scoring_mode, status, categories_filled').in('id', qcQuizIds);
+        (quizMeta || []).forEach((q: any) => quizMetaMap.set(q.id, q));
+      }
+
+      const finishedQcIds = new Set(
+        qcList
+          .filter((qc: any) => {
+            if (!finishedQuizIds.has(qc.quiz_id)) return false;
+            const quiz = quizMetaMap.get(qc.quiz_id);
+            if (!quiz) return false;
+            if (quiz.scoring_mode !== 'per_part') return true;
+            return !!quiz.categories_filled;
+          })
+          .map((qc: any) => qc.id)
+      );
 
       (scoreData || []).forEach((s: any) => {
         if (!finishedQcIds.has(s.quiz_category_id)) return;

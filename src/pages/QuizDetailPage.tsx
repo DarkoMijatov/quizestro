@@ -32,6 +32,7 @@ import { exportQuizToExcel } from "@/lib/excelUtils";
 import { QuizDraftManager } from "@/components/QuizDraftManager";
 
 interface QuizData {
+  categories_filled: boolean;
   id: string;
   name: string;
   date: string;
@@ -121,6 +122,10 @@ export default function QuizDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editingAliasTeamId, setEditingAliasTeamId] = useState<string | null>(null);
   const [editingAliasValue, setEditingAliasValue] = useState("");
+  const [isImmersive, setIsImmersive] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("quiz-detail-immersive") === "true";
+  });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
   const [scoringView, setScoringView] = useState<"categories" | "parts">("categories");
@@ -189,6 +194,10 @@ export default function QuizDetailPage() {
   }, []);
 
   useEffect(() => {
+    window.localStorage.setItem("quiz-detail-immersive", String(isImmersive));
+  }, [isImmersive]);
+
+  useEffect(() => {
     const handleResize = () => {
       setViewportSize({
         width: window.innerWidth,
@@ -202,10 +211,22 @@ export default function QuizDetailPage() {
   }, []);
 
   const toggleFullscreen = async () => {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-    } else {
-      await scoringRef.current?.requestFullscreen();
+    if (isImmersive) {
+      setIsImmersive(false);
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+      return;
+    }
+
+    setIsImmersive(true);
+
+    try {
+      if (!document.fullscreenElement) {
+        await scoringRef.current?.requestFullscreen();
+      }
+    } catch {
+      // Keep immersive layout even if browser fullscreen is denied or cleared.
     }
   };
 
@@ -243,9 +264,21 @@ export default function QuizDetailPage() {
     return catPoints;
   };
 
+  const markCategoriesFilled = async () => {
+    if (!quizId || !quiz || quiz.scoring_mode !== "per_part" || quiz.categories_filled) return;
+
+    setQuiz((prev) => (prev ? { ...prev, categories_filled: true } : prev));
+    if (!isOnline) return;
+    await supabase.from("quizzes").update({ categories_filled: true }).eq("id", quizId);
+  };
+
   const updateScore = async (scoreId: string, field: "points" | "bonus_points", value: number) => {
     // Optimistic local update
     setScores((prev) => prev.map((s) => (s.id === scoreId ? { ...s, [field]: value } : s)));
+
+    if (quiz?.scoring_mode === "per_part" && value !== 0) {
+      void markCategoriesFilled();
+    }
 
     if (isOnline) {
       const update: any = { [field]: value };
@@ -522,6 +555,26 @@ export default function QuizDetailPage() {
     setTeams((prev) => [...prev].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id)));
   };
 
+  const normalizeDecimalValue = (value: string) => value.replace(",", ".");
+
+  const parseScoreValue = (value: string) => Number(normalizeDecimalValue(value)) || 0;
+
+  const insertDecimalPoint = (input: HTMLInputElement) => {
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    input.setRangeText(".", start, end, "end");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+
+  const handleDecimalSeparatorKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "," || e.code === "NumpadDecimal") {
+      e.preventDefault();
+      insertDecimalPoint(e.currentTarget);
+      return true;
+    }
+    return false;
+  };
+
   const handleExport = () => {
     if (!quiz) return;
     // Build help info per team+category
@@ -578,8 +631,16 @@ export default function QuizDetailPage() {
 
   const updateQuizStatus = async (status: "draft" | "live" | "finished") => {
     if (!quizId) return;
-    await supabase.from("quizzes").update({ status }).eq("id", quizId);
-    setQuiz((prev) => (prev ? { ...prev, status } : prev));
+    const shouldMarkCategoriesFilled =
+      quiz?.scoring_mode === "per_part" &&
+      scores.some((s) => Number(s.points || 0) !== 0 || Number(s.bonus_points || 0) !== 0);
+    const quizUpdate: Record<string, unknown> = { status };
+    if (shouldMarkCategoriesFilled) {
+      quizUpdate.categories_filled = true;
+    }
+
+    await supabase.from("quizzes").update(quizUpdate).eq("id", quizId);
+    setQuiz((prev) => (prev ? { ...prev, status, categories_filled: shouldMarkCategoriesFilled || prev.categories_filled } : prev));
 
     if (status === "finished") {
       for (let i = 0; i < rankedTeams.length; i++) {
@@ -598,6 +659,8 @@ export default function QuizDetailPage() {
 
   // Keyboard navigation: arrow keys move between score inputs
   const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>, rowIdx: number, colIdx: number) => {
+    if (handleDecimalSeparatorKey(e)) return;
+
     let targetRow = rowIdx;
     let targetCol = colIdx;
 
@@ -635,6 +698,10 @@ export default function QuizDetailPage() {
     }
   };
 
+  const handlePartInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    handleDecimalSeparatorKey(e);
+  };
+
   const setInputRef = (rowIdx: number, colIdx: number, el: HTMLInputElement | null) => {
     const key = `${rowIdx}-${colIdx}`;
     if (el) inputRefs.current.set(key, el);
@@ -652,7 +719,7 @@ export default function QuizDetailPage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <DashboardLayout immersive={isImmersive}>
         <div className="flex justify-center py-24">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -662,7 +729,7 @@ export default function QuizDetailPage() {
 
   if (!quiz) {
     return (
-      <DashboardLayout>
+      <DashboardLayout immersive={isImmersive}>
         <div className="text-center py-24">
           <p className="text-muted-foreground">{t("scoring.notFound")}</p>
           <Button variant="outline" className="mt-4" onClick={() => navigate("/dashboard/quizzes")}>
@@ -686,7 +753,7 @@ export default function QuizDetailPage() {
   const approxTeamColWidth = Math.max(140, Math.floor((viewportSize.width * 2) / Math.max(totalCols + 1, 3)));
   const partsTotalCols = quizParts.length + 2;
   const approxPartTeamColWidth = Math.max(140, Math.floor((viewportSize.width * 2) / Math.max(partsTotalCols + 1, 3)));
-  const estimatedChromeHeight = isFullscreen ? 132 : 208;
+  const estimatedChromeHeight = isImmersive ? 132 : 208;
   const availableTableHeight = Math.max(viewportSize.height - estimatedChromeHeight, 320);
   const headerHeightPx = Math.round(Math.max(32, Math.min(60, availableTableHeight * 0.06)));
   const rowHeightPx = Math.max(26, Math.floor((availableTableHeight - headerHeightPx) / Math.max(teamCount, 1)));
@@ -701,6 +768,7 @@ export default function QuizDetailPage() {
   const scoreInputHeightPx = Math.max(20, Math.floor(rowHeightPx * 0.72));
   const teamCellGapPx = rowHeightPx <= 30 ? 2 : 4;
   const controlGapPx = rowHeightPx <= 30 ? 2 : 3;
+  const stackHelpButtons = rowHeightPx >= 64;
   const scoreFontSize = `${scoreFontPx}px`;
   const displayScoreFontSize = `${Math.max(scoreFontPx + 2, Math.floor(scoreFontPx * 1.12))}px`;
   const totalFontSize = `${Math.max(scoreFontPx + 3, Math.floor(scoreFontPx * 1.18))}px`;
@@ -709,12 +777,12 @@ export default function QuizDetailPage() {
   const headerFontSize = `${headerFontPx}px`;
 
   return (
-    <DashboardLayout>
+    <DashboardLayout immersive={isImmersive}>
       <div
         ref={scoringRef}
         className={cn(
           "flex flex-col",
-          isFullscreen ? "bg-background p-4 h-screen" : "h-[calc(100vh-6rem)]"
+          isImmersive ? "bg-background p-4 h-screen" : "h-[calc(100vh-6rem)]"
         )}
       >
         {/* Header */}
@@ -746,7 +814,7 @@ export default function QuizDetailPage() {
             )}
             
             <Button variant="outline" size="sm" onClick={toggleFullscreen} className="gap-1">
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              {isImmersive || isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </Button>
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-1">
               <Download className="h-4 w-4" /> {t("excel.export")}
@@ -913,7 +981,13 @@ export default function QuizDetailPage() {
                           )}
                         >
                           {canScore ? (
-                            <div className="flex items-center w-full h-full min-w-0" style={{ gap: `${controlGapPx}px` }}>
+                            <div
+                              className={cn(
+                                "w-full h-full min-w-0",
+                                stackHelpButtons ? "flex flex-col items-center justify-center" : "flex items-center",
+                              )}
+                              style={{ gap: `${controlGapPx}px` }}
+                            >
                               {/* Score input */}
                               {(() => {
                                 const cellKey = `${team.id}-${cat.id}`;
@@ -927,7 +1001,7 @@ export default function QuizDetailPage() {
                                     min={0}
                                     step={0.5}
                                     value={displayValue}
-                                    onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
+                                    onChange={(e) => score && updateScore(score.id, "points", parseScoreValue(e.target.value))}
                                     onFocus={(e) => { setFocusedCell(cellKey); e.target.select(); }}
                                     onBlur={() => setFocusedCell(null)}
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
@@ -941,7 +1015,13 @@ export default function QuizDetailPage() {
                                 );
                               })()}
                               {/* Help buttons - horizontal */}
-                              <div className="flex items-center shrink-0" style={{ gap: `${controlGapPx}px` }}>
+                              <div
+                                className={cn(
+                                  "flex items-center shrink-0",
+                                  stackHelpButtons ? "justify-center w-full" : "",
+                                )}
+                                style={{ gap: `${controlGapPx}px` }}
+                              >
                                 {jokerType && (
                                   <button
                                     onClick={() => toggleHelp(team.id, cat.id, jokerType)}
@@ -1132,8 +1212,9 @@ export default function QuizDetailPage() {
                                     min={0}
                                     step={0.5}
                                     value={ps?.points ?? 0}
-                                    onChange={(e) => ps && updatePartScore(ps.id, Number(e.target.value) || 0)}
+                                    onChange={(e) => ps && updatePartScore(ps.id, parseScoreValue(e.target.value))}
                                     onFocus={(e) => e.target.select()}
+                                    onKeyDown={handlePartInputKeyDown}
                                     className="w-full text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors text-foreground border-foreground/15"
                                     style={{ fontSize: scoreFontSize, height: `${scoreInputHeightPx}px`, lineHeight: 1 }}
                                   />
@@ -1244,9 +1325,10 @@ export default function QuizDetailPage() {
                                               min={0}
                                               step={0.5}
                                               value={displayValue}
-                                              onChange={(e) => score && updateScore(score.id, "points", Number(e.target.value) || 0)}
+                                              onChange={(e) => score && updateScore(score.id, "points", parseScoreValue(e.target.value))}
                                               onFocus={(e) => { setFocusedCell(cellKey); e.target.select(); }}
                                               onBlur={() => setFocusedCell(null)}
+                                              onKeyDown={handlePartInputKeyDown}
                                               className={cn(
                                                 "w-full text-center font-bold text-sm bg-transparent border rounded focus:border-primary focus:outline-none h-7",
                                                 showEffective ? "text-primary border-primary/30" : "text-foreground border-foreground/15",

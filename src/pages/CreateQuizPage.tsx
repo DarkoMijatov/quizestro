@@ -72,14 +72,32 @@ interface TeamSelection {
 
 const MANUAL_STEPS = ["step1", "step2", "step3", "step4"] as const;
 
+interface CreateQuizDraft {
+  step: number;
+  mode: "choose" | "manual" | "import";
+  quizName: string;
+  quizDate: string;
+  location: string;
+  selectedLocationId: string | null;
+  selectedLeague: string | null;
+  scoringMode: "per_category" | "per_part";
+  partsCount: number;
+  partNames: string[];
+  categoryPartAssignment: Record<string, number>;
+  selectedCats: string[];
+  selectedTeams: TeamSelection[];
+}
+
 export default function CreateQuizPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentOrg } = useOrganizations();
   const { user } = useAuth();
   const { toast } = useToast();
+  const draftHydratedRef = useRef(false);
 
   const [step, setStep] = useState(0);
+  const [mode, setMode] = useState<"choose" | "manual" | "import">("choose");
   const [creating, setCreating] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importQuizId, setImportQuizId] = useState<string | null>(null);
@@ -130,9 +148,19 @@ export default function CreateQuizPage() {
   const [prefillTeams, setPrefillTeams] = useState<TeamSelection[]>([]);
   const [prefillLocation, setPrefillLocation] = useState("");
 
+  const getDraftKey = () => (currentOrg ? `create-quiz-draft:${currentOrg.id}` : null);
+
+  const clearDraft = () => {
+    const draftKey = getDraftKey();
+    if (draftKey) {
+      window.localStorage.removeItem(draftKey);
+    }
+  };
+
   useEffect(() => {
     if (!currentOrg) return;
     const load = async () => {
+      draftHydratedRef.current = false;
       setLoadingData(true);
       const [catRes, teamRes, leagueRes, htRes, aliasRes, locRes] = await Promise.all([
         supabase
@@ -170,14 +198,88 @@ export default function CreateQuizPage() {
       setOrgLocations((locRes.data as OrgLocation[]) || []);
       setHelpTypes((htRes.data as any) || []);
 
-      // Pre-select default categories
-      const defaults = cats.filter((c) => c.is_default).map((c) => c.id);
-      setSelectedCats(defaults);
+      const draftKey = getDraftKey();
+      const rawDraft = draftKey ? window.localStorage.getItem(draftKey) : null;
+      if (rawDraft) {
+        try {
+          const draft = JSON.parse(rawDraft) as CreateQuizDraft;
+          const validCategoryIds = new Set(cats.map((c) => c.id));
+          const validTeamIds = new Set(((teamRes.data as Team[]) || []).map((t) => t.id));
+          const filteredCats = (draft.selectedCats || []).filter((id) => validCategoryIds.has(id));
+          const filteredTeams = (draft.selectedTeams || []).filter((team) => validTeamIds.has(team.teamId));
+          const filteredAssignment = Object.fromEntries(
+            Object.entries(draft.categoryPartAssignment || {}).filter(([catId]) => validCategoryIds.has(catId))
+          );
+          setStep(draft.step ?? 0);
+          setMode(draft.mode ?? "choose");
+          setQuizName(draft.quizName ?? "");
+          setQuizDate(draft.quizDate ? new Date(draft.quizDate) : new Date());
+          setLocation(draft.location ?? "");
+          setSelectedLocationId(draft.selectedLocationId ?? null);
+          setSelectedLeague(draft.selectedLeague ?? null);
+          setScoringMode(draft.scoringMode ?? "per_category");
+          setPartsCount(draft.partsCount ?? 2);
+          setPartNames(draft.partNames?.length ? draft.partNames : ["", ""]);
+          setCategoryPartAssignment(filteredAssignment);
+          setSelectedCats(filteredCats);
+          setSelectedTeams(filteredTeams);
+          draftHydratedRef.current = true;
+        } catch {
+          window.localStorage.removeItem(draftKey!);
+        }
+      }
+
+      if (!draftHydratedRef.current) {
+        // Pre-select default categories only if no saved draft exists
+        const defaults = cats.filter((c) => c.is_default).map((c) => c.id);
+        setSelectedCats(defaults);
+      }
 
       setLoadingData(false);
     };
     load();
   }, [currentOrg?.id]);
+
+  useEffect(() => {
+    if (loadingData || !currentOrg) return;
+
+    const draftKey = getDraftKey();
+    if (!draftKey) return;
+
+    const draft: CreateQuizDraft = {
+      step,
+      mode,
+      quizName,
+      quizDate: quizDate.toISOString(),
+      location,
+      selectedLocationId,
+      selectedLeague,
+      scoringMode,
+      partsCount,
+      partNames,
+      categoryPartAssignment,
+      selectedCats,
+      selectedTeams,
+    };
+
+    window.localStorage.setItem(draftKey, JSON.stringify(draft));
+  }, [
+    loadingData,
+    currentOrg?.id,
+    step,
+    mode,
+    quizName,
+    quizDate,
+    location,
+    selectedLocationId,
+    selectedLeague,
+    scoringMode,
+    partsCount,
+    partNames,
+    categoryPartAssignment,
+    selectedCats,
+    selectedTeams,
+  ]);
 
   // When league changes, check for previous quiz data
   useEffect(() => {
@@ -364,6 +466,7 @@ export default function CreateQuizPage() {
       setCreating(false);
       return;
     }
+    clearDraft();
     setImportQuizId((quiz as any).id);
     setCreating(false);
     setImportDialogOpen(true);
@@ -385,6 +488,7 @@ export default function CreateQuizPage() {
         created_by: user.id,
         status: "draft",
         scoring_mode: scoringMode,
+        categories_filled: scoringMode === "per_category",
       })
       .select()
       .single();
@@ -478,11 +582,10 @@ export default function CreateQuizPage() {
     }
 
     toast({ title: "✓", description: t("quiz.created") });
+    clearDraft();
     setCreating(false);
     navigate("/dashboard/quizzes");
   };
-
-  const [mode, setMode] = useState<"choose" | "manual" | "import">("choose");
 
   const formatDateLocale = (d: Date) => {
     return i18n.language === "sr" ? format(d, "dd. MMMM yyyy.", { locale: srLatn }) : format(d, "PPP");
