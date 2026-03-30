@@ -27,6 +27,8 @@ import {
   Trophy,
   DollarSign,
 } from "lucide-react";
+import { computeNextDate } from "@/lib/schedule-utils";
+import { format } from "date-fns";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
