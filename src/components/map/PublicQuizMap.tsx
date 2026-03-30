@@ -110,6 +110,10 @@ function getRecurrenceStepDays(schedule: Schedule) {
   return 7;
 }
 
+function diffInWholeDays(later: Date, earlier: Date) {
+  return Math.floor((later.getTime() - earlier.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 function firstMatchingDateOnOrAfter(baseDate: Date, dayOfWeek: number, time: string) {
   const candidate = startOfDayLocal(baseDate);
   const dayDiff = (dayOfWeek - candidate.getDay() + 7) % 7;
@@ -137,18 +141,19 @@ function getScheduleNextOccurrence(schedule: Schedule, rangeFrom: Date, rangeTo?
   const validFromDate = schedule.valid_from
     ? combineDateAndTime(new Date(schedule.valid_from), schedule.start_time)
     : null;
+  const anchor = firstMatchingDateOnOrAfter(validFromDate || rangeFrom, schedule.day_of_week, schedule.start_time);
   const searchStart = validFromDate && validFromDate > rangeFrom ? validFromDate : rangeFrom;
   let candidate = firstMatchingDateOnOrAfter(searchStart, schedule.day_of_week, schedule.start_time);
 
-  if (validFromDate) {
-    const anchor = firstMatchingDateOnOrAfter(validFromDate, schedule.day_of_week, schedule.start_time);
-    const stepDays = getRecurrenceStepDays(schedule);
-    while (candidate < anchor) {
-      candidate = new Date(candidate.getTime() + stepDays * 24 * 60 * 60 * 1000);
-    }
-    while (((candidate.getTime() - anchor.getTime()) / (1000 * 60 * 60 * 24)) % stepDays !== 0) {
-      candidate = new Date(candidate.getTime() + 7 * 24 * 60 * 60 * 1000);
-    }
+  if (candidate < anchor) {
+    candidate = anchor;
+  }
+
+  const stepDays = getRecurrenceStepDays(schedule);
+  const elapsedDays = Math.max(0, diffInWholeDays(candidate, anchor));
+  const remainder = elapsedDays % stepDays;
+  if (remainder !== 0) {
+    candidate = new Date(candidate.getTime() + (stepDays - remainder) * 24 * 60 * 60 * 1000);
   }
 
   const validUntilDate = schedule.valid_until
@@ -288,52 +293,57 @@ export function PublicQuizMap() {
 
   const loadLocations = async () => {
     setLoading(true);
-    const { data: locs } = await supabase
-      .from('org_locations')
-      .select('*')
-      .eq('is_active', true);
+    try {
+      const { data: locs } = await supabase
+        .from('org_locations')
+        .select('*')
+        .eq('is_active', true);
 
-    if (!locs || locs.length === 0) {
+      if (!locs || locs.length === 0) {
+        setLocations([]);
+        return;
+      }
+
+      const orgIds = [...new Set(locs.map(l => l.organization_id))];
+      const { data: orgs } = await supabase
+        .from('organizations')
+        .select('id, name, logo_url')
+        .in('id', orgIds)
+        .eq('public_map_enabled', true)
+        .eq('is_deleted', false);
+
+      const orgMap = new Map((orgs || []).map(o => [o.id, o]));
+
+      const locIds = locs.map(l => l.id);
+      const { data: schedules } = await supabase
+        .from('location_schedules')
+        .select('*')
+        .in('organization_location_id', locIds)
+        .eq('is_active', true);
+
+      const scheduleMap = new Map<string, Schedule[]>();
+      (schedules || []).forEach(s => {
+        const existing = scheduleMap.get(s.organization_location_id) || [];
+        existing.push(s as Schedule);
+        scheduleMap.set(s.organization_location_id, existing);
+      });
+
+      const enriched: OrgLocation[] = locs
+        .filter(l => orgMap.has(l.organization_id))
+        .map(l => ({
+          ...l,
+          org_name: orgMap.get(l.organization_id)?.name,
+          org_logo_url: orgMap.get(l.organization_id)?.logo_url || null,
+          schedules: scheduleMap.get(l.id) || [],
+        }));
+
+      setLocations(enriched);
+    } catch (error) {
+      console.error('Failed to load public quiz map', error);
       setLocations([]);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const orgIds = [...new Set(locs.map(l => l.organization_id))];
-    const { data: orgs } = await supabase
-      .from('organizations')
-      .select('id, name, logo_url')
-      .in('id', orgIds)
-      .eq('public_map_enabled', true)
-      .eq('is_deleted', false);
-
-    const orgMap = new Map((orgs || []).map(o => [o.id, o]));
-
-    const locIds = locs.map(l => l.id);
-    const { data: schedules } = await supabase
-      .from('location_schedules')
-      .select('*')
-      .in('organization_location_id', locIds)
-      .eq('is_active', true);
-
-    const scheduleMap = new Map<string, Schedule[]>();
-    (schedules || []).forEach(s => {
-      const existing = scheduleMap.get(s.organization_location_id) || [];
-      existing.push(s as Schedule);
-      scheduleMap.set(s.organization_location_id, existing);
-    });
-
-    const enriched: OrgLocation[] = locs
-      .filter(l => orgMap.has(l.organization_id))
-      .map(l => ({
-        ...l,
-        org_name: orgMap.get(l.organization_id)?.name,
-        org_logo_url: orgMap.get(l.organization_id)?.logo_url || null,
-        schedules: scheduleMap.get(l.id) || [],
-      }));
-
-    setLocations(enriched);
-    setLoading(false);
   };
 
   const handleGeolocate = useCallback(() => {
