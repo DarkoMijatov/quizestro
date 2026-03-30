@@ -114,7 +114,7 @@ export default function CategoriesPage() {
       const [countRes, dataRes] = await Promise.all([countQuery, dataQuery]);
       setTotalCount(countRes.count || 0);
 
-      const cats = (dataRes.data || []) as CategoryRow[];
+      const cats = (dataRes.data || []).map((c: any) => ({ ...c, avgPoints: null })) as CategoryRow[];
       if (cats.length === 0) {
         setCategories([]);
         return;

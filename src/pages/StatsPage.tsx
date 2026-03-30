@@ -23,7 +23,7 @@ import { format, startOfMonth, startOfYear, subMonths, subYears } from 'date-fns
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-interface TopTeam { name: string; quizzes: number; wins: number; avgPoints: number }
+interface TopTeam { name: string; quizzes: number; wins: number; avgPoints: number; bestQuizPoints: number; bonusPoints: number }
 interface BestCategory { name: string; avgPoints: number }
 interface BestQuiz { name: string; date: string; teamCount: number; avgPoints: number }
 interface TopLeague { name: string; season: string; quizCount: number; leaderName: string; is_active: boolean }
@@ -374,21 +374,47 @@ export default function StatsPage() {
           setTopTeams([]);
           setBestQuizzes([]);
         } else {
-          const teamStats: Record<string, { quizzes: number; wins: number; totalPoints: number }> = {};
+          // Count category_bonuses per team
+          const bonusCountByTeam: Record<string, number> = {};
+          const finishedQtIdToTeam = new Map<string, string>();
+          // We need quiz_team ids for finished quizzes - fetch them
+          const { data: finishedQtFull } = await supabase
+            .from('quiz_teams')
+            .select('id, team_id, quiz_id')
+            .in('quiz_id', [...finishedQuizIds])
+            .eq('organization_id', currentOrg.id);
+          (finishedQtFull || []).forEach((qt: any) => finishedQtIdToTeam.set(qt.id, qt.team_id));
+          const finishedQtIdSet = new Set((finishedQtFull || []).map((qt: any) => qt.id));
+          const { data: cbData } = finishedQtIdSet.size > 0
+            ? await supabase.from('category_bonuses').select('quiz_team_id').in('quiz_team_id', [...finishedQtIdSet])
+            : { data: [] as any[] };
+          (cbData || []).forEach((cb: any) => {
+            const teamId = finishedQtIdToTeam.get(cb.quiz_team_id);
+            if (teamId) bonusCountByTeam[teamId] = (bonusCountByTeam[teamId] || 0) + 1;
+          });
+
+          const teamStats: Record<string, { quizzes: number; wins: number; totalPoints: number; bestQuizPoints: number; bonusPoints: number }> = {};
           const quizStats: Record<string, { totalPoints: number; teamCount: number }> = {};
 
           for (const qt of qtFinished) {
             const tid = qt.team_id;
             const qid = qt.quiz_id;
-            if (!teamStats[tid]) teamStats[tid] = { quizzes: 0, wins: 0, totalPoints: 0 };
+            if (!teamStats[tid]) teamStats[tid] = { quizzes: 0, wins: 0, totalPoints: 0, bestQuizPoints: 0, bonusPoints: 0 };
             if (!quizStats[qid]) quizStats[qid] = { totalPoints: 0, teamCount: 0 };
 
+            const pts = Number(qt.total_points) || 0;
             teamStats[tid].quizzes++;
-            teamStats[tid].totalPoints += Number(qt.total_points) || 0;
+            teamStats[tid].totalPoints += pts;
+            teamStats[tid].bestQuizPoints = Math.max(teamStats[tid].bestQuizPoints, pts);
             if (qt.rank === 1) teamStats[tid].wins++;
 
-            quizStats[qid].totalPoints += Number(qt.total_points) || 0;
+            quizStats[qid].totalPoints += pts;
             quizStats[qid].teamCount++;
+          }
+
+          // Assign bonus counts
+          for (const [teamId, count] of Object.entries(bonusCountByTeam)) {
+            if (teamStats[teamId]) teamStats[teamId].bonusPoints = count;
           }
 
           const [teamNamesRes] = await Promise.all([
@@ -403,6 +429,8 @@ export default function StatsPage() {
                 quizzes: s.quizzes,
                 wins: s.wins,
                 avgPoints: s.quizzes > 0 ? s.totalPoints / s.quizzes : 0,
+                bestQuizPoints: s.bestQuizPoints,
+                bonusPoints: s.bonusPoints,
               }))
               .sort((a, b) => b.avgPoints - a.avgPoints)
           );
@@ -551,6 +579,8 @@ export default function StatsPage() {
     { key: 'quizzes', label: t('stats.quizzesPlayed'), getValue: (r: TopTeam) => r.quizzes, align: 'right' as const },
     { key: 'wins', label: t('stats.wins'), getValue: (r: TopTeam) => r.wins, align: 'right' as const },
     { key: 'avgPoints', label: t('stats.avgPoints'), getValue: (r: TopTeam) => r.avgPoints, align: 'right' as const },
+    { key: 'bestQuizPoints', label: t('teamsTable.bestQuizPoints', 'Najviše poena'), getValue: (r: TopTeam) => r.bestQuizPoints, align: 'right' as const },
+    { key: 'bonusPoints', label: t('teamsTable.bonusPoints', 'Bonus'), getValue: (r: TopTeam) => r.bonusPoints, align: 'right' as const },
   ];
 
   const catColumns = [

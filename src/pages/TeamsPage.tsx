@@ -130,15 +130,15 @@ export default function TeamsPage() {
 
     const finishedQtData = qtData.filter((qt: any) => finishedQuizIds.has(qt.quiz_id));
     const finishedQtIds = finishedQtData.map((qt: any) => qt.id);
-    const { data: bonusScores } = finishedQtIds.length > 0
-      ? await supabase.from('scores').select('quiz_team_id, bonus_points').in('quiz_team_id', finishedQtIds)
+    const { data: categoryBonusData } = finishedQtIds.length > 0
+      ? await supabase.from('category_bonuses').select('quiz_team_id').in('quiz_team_id', finishedQtIds)
       : { data: [] as any[] };
 
-    const bonusPointsByQuizTeam = new Map<string, number>();
-    (bonusScores || []).forEach((score: any) => {
-      bonusPointsByQuizTeam.set(
-        score.quiz_team_id,
-        (bonusPointsByQuizTeam.get(score.quiz_team_id) || 0) + Number(score.bonus_points || 0)
+    const bonusCountByQuizTeam = new Map<string, number>();
+    (categoryBonusData || []).forEach((cb: any) => {
+      bonusCountByQuizTeam.set(
+        cb.quiz_team_id,
+        (bonusCountByQuizTeam.get(cb.quiz_team_id) || 0) + 1
       );
     });
 
@@ -150,7 +150,7 @@ export default function TeamsPage() {
       agg.totalPts += totalPoints;
       if (qt.rank === 1) agg.wins++;
       agg.bestQuizPoints = agg.bestQuizPoints == null ? totalPoints : Math.max(agg.bestQuizPoints, totalPoints);
-      agg.bonusPoints += bonusPointsByQuizTeam.get(qt.id) || 0;
+      agg.bonusPoints += bonusCountByQuizTeam.get(qt.id) || 0;
       aggMap.set(qt.team_id, agg);
     });
 
