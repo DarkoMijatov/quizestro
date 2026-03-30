@@ -148,13 +148,22 @@
   "teamsTable": {
     "participations": "Participations",
     "wins": "Wins",
-    "avgPoints": "Avg Points"
+    "avgPoints": "Avg Points",
+    "bestQuizPoints": "Best quiz points",
+    "totalPoints": "Total points",
+    "bonusPoints": "Bonus points"
   },
   "teamDetail": {
     "quizzesPlayed": "Quizzes played",
     "avgPoints": "Avg points",
     "wins": "Wins",
     "bestRank": "Best rank",
+    "bestQuizPoints": "Best quiz points",
+    "totalPoints": "Total points",
+    "bonusPoints": "Bonus points",
+    "categoryAverages": "Avg by category",
+    "noCategoryStats": "Not enough data to show category stats.",
+    "appearances": "Entries",
     "quizHistory": "Quiz history",
     "noHistory": "This team hasn't participated in any quizzes yet."
   },
@@ -182,6 +191,9 @@
     "timesUsed": "Times used",
     "avgScore": "Avg score",
     "highestAvg": "Highest avg",
+    "teamAverages": "Avg by team",
+    "noTeamStats": "Not enough data to show team stats.",
+    "appearances": "Entries",
     "quizHistory": "Used in quizzes",
     "noHistory": "This category hasn't been used in any quizzes yet."
   },

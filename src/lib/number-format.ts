@@ -16,3 +16,10 @@ export function formatAverage(value: number, language?: string) {
     maximumFractionDigits: 2,
   });
 }
+
+export function formatPoints(value: number, language?: string) {
+  return formatLocalizedNumber(value, language, {
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+}

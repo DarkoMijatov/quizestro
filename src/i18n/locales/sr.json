@@ -157,13 +157,22 @@
   "teamsTable": {
     "participations": "Učešća",
     "wins": "Pobede",
-    "avgPoints": "Prosek bodova"
+    "avgPoints": "Prosek bodova",
+    "bestQuizPoints": "Najviše poena na kvizu",
+    "totalPoints": "Ukupno poena",
+    "bonusPoints": "Bonus poeni"
   },
   "teamDetail": {
     "quizzesPlayed": "Odigranih kvizova",
     "avgPoints": "Prosek bodova",
     "wins": "Pobeda",
     "bestRank": "Najbolji plasman",
+    "bestQuizPoints": "Najviše poena na kvizu",
+    "totalPoints": "Ukupno poena",
+    "bonusPoints": "Bonus poeni",
+    "categoryAverages": "Prosek po kategorijama",
+    "noCategoryStats": "Nema dovoljno podataka za prikaz po kategorijama.",
+    "appearances": "Broj unosa",
     "quizHistory": "Istorija kvizova",
     "noHistory": "Ovaj tim još nije učestvovao ni u jednom kvizu."
   },
@@ -191,6 +200,9 @@
     "timesUsed": "Puta korišćena",
     "avgScore": "Prosek bodova",
     "highestAvg": "Najviši prosek",
+    "teamAverages": "Prosek po timovima",
+    "noTeamStats": "Nema dovoljno podataka za prikaz po timovima.",
+    "appearances": "Broj unosa",
     "quizHistory": "Korišćena u kvizovima",
     "noHistory": "Ova kategorija još nije korišćena ni u jednom kvizu."
   },

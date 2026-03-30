@@ -19,6 +19,13 @@ interface QuizUsage {
   teams_count: number;
 }
 
+interface TeamCategoryAverageRow {
+  team_id: string;
+  team_name: string;
+  avg_score: number;
+  appearances: number;
+}
+
 export default function CategoryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -27,6 +34,7 @@ export default function CategoryDetailPage() {
 
   const [category, setCategory] = useState<{ id: string; name: string } | null>(null);
   const [usages, setUsages] = useState<QuizUsage[]>([]);
+  const [teamAverages, setTeamAverages] = useState<TeamCategoryAverageRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,24 +49,41 @@ export default function CategoryDetailPage() {
 
       setCategory(catData as any);
 
-      const quizCatIds = (qcData || []).map((qc: any) => qc.id);
       const quizIds = (qcData || []).map((qc: any) => qc.quiz_id);
 
       if (quizIds.length > 0) {
-        const [{ data: quizzes }, { data: scores }] = await Promise.all([
+        const [{ data: quizzes }, { data: allQuizCategories }, { data: quizTeams }] = await Promise.all([
           supabase.from('quizzes').select('id, name, date, location, status, scoring_mode').in('id', quizIds).order('date', { ascending: false }),
-          supabase.from('scores').select('quiz_id, quiz_category_id, points, bonus_points').in('quiz_category_id', quizCatIds),
+          supabase.from('quiz_categories').select('id, quiz_id').in('quiz_id', quizIds),
+          supabase.from('quiz_teams').select('id, quiz_id, team_id, teams(name)').in('quiz_id', quizIds),
         ]);
+        const allQuizCategoryIds = (allQuizCategories || []).map((qc: any) => qc.id);
+        const { data: scores } = allQuizCategoryIds.length > 0
+          ? await supabase.from('scores').select('quiz_id, quiz_team_id, quiz_category_id, points, bonus_points').in('quiz_category_id', allQuizCategoryIds)
+          : { data: [] as any[] };
 
         const quizMap = new Map((quizzes || []).map((q: any) => [q.id, q]));
-        const perPartQuizzesWithCategoryScores = new Set(
-          (scores || [])
-            .filter((s: any) => {
-              const quiz = quizMap.get(s.quiz_id);
-              if (!quiz || quiz.scoring_mode !== 'per_part') return false;
-              return Number(s.points || 0) !== 0 || Number(s.bonus_points || 0) !== 0;
+        const teamCountByQuiz = new Map<string, number>();
+        (quizTeams || []).forEach((qt: any) => {
+          teamCountByQuiz.set(qt.quiz_id, (teamCountByQuiz.get(qt.quiz_id) || 0) + 1);
+        });
+        const categoryCountByQuiz = new Map<string, number>();
+        (allQuizCategories || []).forEach((qc: any) => {
+          categoryCountByQuiz.set(qc.quiz_id, (categoryCountByQuiz.get(qc.quiz_id) || 0) + 1);
+        });
+        const scoreCountByQuiz = new Map<string, number>();
+        (scores || []).forEach((s: any) => {
+          scoreCountByQuiz.set(s.quiz_id, (scoreCountByQuiz.get(s.quiz_id) || 0) + 1);
+        });
+        const completePerPartQuizIds = new Set(
+          (quizzes || [])
+            .filter((quiz: any) => quiz.scoring_mode === 'per_part')
+            .filter((quiz: any) => {
+              const expectedScoreCount = (teamCountByQuiz.get(quiz.id) || 0) * (categoryCountByQuiz.get(quiz.id) || 0);
+              const actualScoreCount = scoreCountByQuiz.get(quiz.id) || 0;
+              return expectedScoreCount > 0 && actualScoreCount === expectedScoreCount;
             })
-            .map((s: any) => s.quiz_id)
+            .map((quiz: any) => quiz.id)
         );
         
         // Group scores by quiz_category_id
@@ -75,7 +100,7 @@ export default function CategoryDetailPage() {
             const quiz = quizMap.get(qc.quiz_id);
             if (!quiz) return false;
             if (quiz.scoring_mode !== 'per_part') return true;
-            return perPartQuizzesWithCategoryScores.has(qc.quiz_id);
+            return completePerPartQuizIds.has(qc.quiz_id);
           })
           .map((qc: any) => {
             const q = quizMap.get(qc.quiz_id) || {};
@@ -94,8 +119,45 @@ export default function CategoryDetailPage() {
           .sort((a: QuizUsage, b: QuizUsage) => b.quiz_date.localeCompare(a.quiz_date));
 
         setUsages(merged);
+
+        const validQuizIds = new Set(
+          (qcData || [])
+            .filter((qc: any) => {
+              const quiz = quizMap.get(qc.quiz_id);
+              if (!quiz) return false;
+              if (quiz.scoring_mode !== 'per_part') return true;
+              return completePerPartQuizIds.has(qc.quiz_id);
+            })
+            .map((qc: any) => qc.quiz_id)
+        );
+        const targetQuizCategoryIds = new Set((qcData || []).map((qc: any) => qc.id));
+        const teamMap = new Map((quizTeams || []).map((qt: any) => [qt.id, { team_id: qt.team_id, team_name: qt.teams?.name || '—' }]));
+        const teamStats = new Map<string, { team_id: string; team_name: string; total: number; count: number }>();
+
+        (scores || [])
+          .filter((score: any) => validQuizIds.has(score.quiz_id) && targetQuizCategoryIds.has(score.quiz_category_id))
+          .forEach((score: any) => {
+            const teamInfo = teamMap.get(score.quiz_team_id);
+            if (!teamInfo) return;
+            const existing = teamStats.get(teamInfo.team_id) || { ...teamInfo, total: 0, count: 0 };
+            existing.total += Number(score.points || 0) + Number(score.bonus_points || 0);
+            existing.count += 1;
+            teamStats.set(teamInfo.team_id, existing);
+          });
+
+        setTeamAverages(
+          Array.from(teamStats.values())
+            .map((item) => ({
+              team_id: item.team_id,
+              team_name: item.team_name,
+              avg_score: item.count > 0 ? item.total / item.count : 0,
+              appearances: item.count,
+            }))
+            .sort((a, b) => b.avg_score - a.avg_score)
+        );
       } else {
         setUsages([]);
+        setTeamAverages([]);
       }
 
       setLoading(false);
@@ -168,6 +230,29 @@ export default function CategoryDetailPage() {
 
         {/* Quiz usage history */}
         <div>
+          <h2 className="font-display text-lg font-semibold mb-3">{t('categoryDetail.teamAverages', 'Prosek po timovima')}</h2>
+          {teamAverages.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card p-8 text-center mb-6">
+              <p className="text-muted-foreground">{t('categoryDetail.noTeamStats', 'Nema dovoljno podataka za prikaz po timovima.')}</p>
+            </div>
+          ) : (
+            <div className="space-y-2 mb-6">
+              {teamAverages.map((item, index) => (
+                <div key={item.team_id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+                  <div className="min-w-0">
+                    <p className="font-medium">{index + 1}. {item.team_name}</p>
+                    <p className="text-xs text-muted-foreground">{t('categoryDetail.appearances', 'Broj unosa')}: {item.appearances}</p>
+                  </div>
+                  <div className="text-right shrink-0 ml-4">
+                    <p className="text-lg font-bold">{formatAverage(item.avg_score, i18n.language)}</p>
+                    <p className="text-xs text-muted-foreground">{t('categoryDetail.avgScore')}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div>
           <h2 className="font-display text-lg font-semibold mb-3">{t('categoryDetail.quizHistory')}</h2>
           {usages.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center">
@@ -202,6 +287,7 @@ export default function CategoryDetailPage() {
               ))}
             </div>
           )}
+        </div>
         </div>
       </div>
     </DashboardLayout>

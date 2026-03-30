@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, Eye, Pencil, Trash2, Users, Loader2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { formatAverage } from '@/lib/number-format';
+import { formatAverage, formatPoints } from '@/lib/number-format';
 
 interface TeamRow {
   id: string;
@@ -29,6 +29,9 @@ interface TeamRow {
   participations: number;
   wins: number;
   avgPoints: number | null;
+  bestQuizPoints: number | null;
+  totalPoints: number;
+  bonusPoints: number;
 }
 
 interface TeamAlias {
@@ -105,7 +108,7 @@ export default function TeamsPage() {
     // Fetch aliases + aggregates for filtered teams
     const [aliasRes, qtRes] = await Promise.all([
       supabase.from('team_aliases').select('*').in('team_id', teamIds),
-      supabase.from('quiz_teams').select('team_id, total_points, rank, quiz_id').in('team_id', teamIds),
+      supabase.from('quiz_teams').select('id, team_id, total_points, rank, quiz_id').in('team_id', teamIds),
     ]);
 
     // Aliases
@@ -126,12 +129,29 @@ export default function TeamsPage() {
       finishedQuizIds = new Set((quizData || []).map((q: any) => q.id));
     }
 
-    const aggMap = new Map<string, { count: number; wins: number; totalPts: number }>();
-    qtData.filter((qt: any) => finishedQuizIds.has(qt.quiz_id)).forEach((qt: any) => {
-      const agg = aggMap.get(qt.team_id) || { count: 0, wins: 0, totalPts: 0 };
+    const finishedQtData = qtData.filter((qt: any) => finishedQuizIds.has(qt.quiz_id));
+    const finishedQtIds = finishedQtData.map((qt: any) => qt.id);
+    const { data: bonusScores } = finishedQtIds.length > 0
+      ? await supabase.from('scores').select('quiz_team_id, bonus_points').in('quiz_team_id', finishedQtIds)
+      : { data: [] as any[] };
+
+    const bonusPointsByQuizTeam = new Map<string, number>();
+    (bonusScores || []).forEach((score: any) => {
+      bonusPointsByQuizTeam.set(
+        score.quiz_team_id,
+        (bonusPointsByQuizTeam.get(score.quiz_team_id) || 0) + Number(score.bonus_points || 0)
+      );
+    });
+
+    const aggMap = new Map<string, { count: number; wins: number; totalPts: number; bestQuizPoints: number | null; bonusPoints: number }>();
+    finishedQtData.forEach((qt: any) => {
+      const agg = aggMap.get(qt.team_id) || { count: 0, wins: 0, totalPts: 0, bestQuizPoints: null, bonusPoints: 0 };
+      const totalPoints = Number(qt.total_points || 0);
       agg.count++;
-      agg.totalPts += Number(qt.total_points || 0);
+      agg.totalPts += totalPoints;
       if (qt.rank === 1) agg.wins++;
+      agg.bestQuizPoints = agg.bestQuizPoints == null ? totalPoints : Math.max(agg.bestQuizPoints, totalPoints);
+      agg.bonusPoints += bonusPointsByQuizTeam.get(qt.id) || 0;
       aggMap.set(qt.team_id, agg);
     });
 
@@ -142,6 +162,9 @@ export default function TeamsPage() {
         participations: agg?.count || 0,
         wins: agg?.wins || 0,
         avgPoints: agg && agg.count > 0 ? agg.totalPts / agg.count : null,
+        bestQuizPoints: agg?.bestQuizPoints ?? null,
+        totalPoints: agg?.totalPts || 0,
+        bonusPoints: agg?.bonusPoints || 0,
       };
     }).sort((a, b) => {
       const sortKey = params.sortKey || 'avgPoints';
@@ -154,6 +177,12 @@ export default function TeamsPage() {
             return row.wins;
           case 'avgPoints':
             return row.avgPoints ?? -1;
+          case 'bestQuizPoints':
+            return row.bestQuizPoints ?? -1;
+          case 'totalPoints':
+            return row.totalPoints;
+          case 'bonusPoints':
+            return row.bonusPoints;
           case 'created_at':
             return row.created_at;
           case 'name':
@@ -241,6 +270,24 @@ export default function TeamsPage() {
       sortable: true,
       render: (r) => r.avgPoints != null ? formatAverage(r.avgPoints, i18n.language) : '—',
       getValue: (r) => r.avgPoints,
+    },
+    {
+      key: 'bestQuizPoints', label: t('teamsTable.bestQuizPoints', 'Najviše poena na kvizu'),
+      sortable: true,
+      render: (r) => r.bestQuizPoints != null ? formatPoints(r.bestQuizPoints, i18n.language) : '—',
+      getValue: (r) => r.bestQuizPoints,
+    },
+    {
+      key: 'totalPoints', label: t('teamsTable.totalPoints', 'Ukupno poena'),
+      sortable: true,
+      render: (r) => formatPoints(r.totalPoints, i18n.language),
+      getValue: (r) => r.totalPoints,
+    },
+    {
+      key: 'bonusPoints', label: t('teamsTable.bonusPoints', 'Bonus poeni'),
+      sortable: true,
+      render: (r) => formatPoints(r.bonusPoints, i18n.language),
+      getValue: (r) => r.bonusPoints,
     },
     {
       key: 'actions', label: '',

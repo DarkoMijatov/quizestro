@@ -108,7 +108,6 @@ export default function CategoriesPage() {
       .in('category_id', catIds);
 
     const qcList = qcData || [];
-    const qcIds = qcList.map((qc: any) => qc.id);
     const qcQuizIds = [...new Set(qcList.map((qc: any) => qc.quiz_id))];
 
     let finishedQuizIds = new Set<string>();
@@ -120,8 +119,19 @@ export default function CategoriesPage() {
 
     let scoreMap = new Map<string, { total: number; count: number }>();
     if (qcIds.length > 0) {
-      const { data: scoreData } = await supabase
-        .from('scores').select('quiz_id, quiz_category_id, points, bonus_points').in('quiz_category_id', qcIds);
+      const [{ data: allQuizCategories }, { data: quizTeams }] = await Promise.all([
+        supabase
+          .from('quiz_categories')
+          .select('id, quiz_id')
+          .in('quiz_id', qcQuizIds),
+        supabase
+          .from('quiz_teams').select('quiz_id').in('quiz_id', qcQuizIds),
+      ]);
+      const allQuizCategoryIds = (allQuizCategories || []).map((qc: any) => qc.id);
+      const { data: scoreData } = allQuizCategoryIds.length > 0
+        ? await supabase
+            .from('scores').select('quiz_id, quiz_category_id, points, bonus_points').in('quiz_category_id', allQuizCategoryIds)
+        : { data: [] as any[] };
 
       const qcToCat = new Map<string, string>();
       qcList.forEach((qc: any) => qcToCat.set(qc.id, qc.category_id));
@@ -133,14 +143,27 @@ export default function CategoriesPage() {
         (quizMeta || []).forEach((q: any) => quizMetaMap.set(q.id, q));
       }
 
-      const perPartQuizzesWithCategoryScores = new Set(
-        (scoreData || [])
-          .filter((s: any) => {
-            const quiz = quizMetaMap.get(s.quiz_id);
-            if (!quiz || quiz.scoring_mode !== 'per_part') return false;
-            return Number(s.points || 0) !== 0 || Number(s.bonus_points || 0) !== 0;
+      const teamCountByQuiz = new Map<string, number>();
+      (quizTeams || []).forEach((qt: any) => {
+        teamCountByQuiz.set(qt.quiz_id, (teamCountByQuiz.get(qt.quiz_id) || 0) + 1);
+      });
+      const categoryCountByQuiz = new Map<string, number>();
+      (allQuizCategories || []).forEach((qc: any) => {
+        categoryCountByQuiz.set(qc.quiz_id, (categoryCountByQuiz.get(qc.quiz_id) || 0) + 1);
+      });
+      const scoreCountByQuiz = new Map<string, number>();
+      (scoreData || []).forEach((s: any) => {
+        scoreCountByQuiz.set(s.quiz_id, (scoreCountByQuiz.get(s.quiz_id) || 0) + 1);
+      });
+      const completePerPartQuizIds = new Set(
+        (quizMeta || [])
+          .filter((quiz: any) => quiz.scoring_mode === 'per_part')
+          .filter((quiz: any) => {
+            const expectedScoreCount = (teamCountByQuiz.get(quiz.id) || 0) * (categoryCountByQuiz.get(quiz.id) || 0);
+            const actualScoreCount = scoreCountByQuiz.get(quiz.id) || 0;
+            return expectedScoreCount > 0 && actualScoreCount === expectedScoreCount;
           })
-          .map((s: any) => s.quiz_id)
+          .map((quiz: any) => quiz.id)
       );
 
       const finishedQcIds = new Set(
@@ -150,7 +173,7 @@ export default function CategoriesPage() {
             const quiz = quizMetaMap.get(qc.quiz_id);
             if (!quiz) return false;
             if (quiz.scoring_mode !== 'per_part') return true;
-            return perPartQuizzesWithCategoryScores.has(qc.quiz_id);
+            return completePerPartQuizIds.has(qc.quiz_id);
           })
           .map((qc: any) => qc.id)
       );

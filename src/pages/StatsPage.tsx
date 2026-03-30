@@ -185,17 +185,19 @@ export default function StatsPage() {
 
     const loadAll = async () => {
       // Fetch base data in parallel
-      const [quizzesRes, qtRes, scoresRes, leaguesRes] = await Promise.all([
+      const [quizzesRes, qtRes, scoresRes, leaguesRes, qcRes] = await Promise.all([
         supabase.from('quizzes').select('id, name, date, status, league_id, scoring_mode').eq('organization_id', currentOrg.id),
         supabase.from('quiz_teams').select('team_id, quiz_id, total_points, rank').eq('organization_id', currentOrg.id),
         supabase.from('scores').select('quiz_category_id, quiz_id, points, bonus_points').eq('organization_id', currentOrg.id),
         supabase.from('leagues').select('id, name, season, is_active').eq('organization_id', currentOrg.id),
+        supabase.from('quiz_categories').select('id, quiz_id, category_id').eq('organization_id', currentOrg.id),
       ]);
 
       const allQuizzes = quizzesRes.data || [];
       const allQt = qtRes.data || [];
       const allScores = scoresRes.data || [];
       const allLeagues = leaguesRes.data || [];
+      const allQuizCategories = qcRes.data || [];
       const finishedQuizIds = new Set(allQuizzes.filter(q => q.status === 'finished').map(q => q.id));
       const qtFinished = allQt.filter(qt => finishedQuizIds.has(qt.quiz_id));
 
@@ -229,14 +231,27 @@ export default function StatsPage() {
       // === Best Categories (async, independent) ===
       (async () => {
         const quizMap = new Map(allQuizzes.map(q => [q.id, q]));
-        const perPartQuizzesWithCategoryScores = new Set(
-          allScores
-            .filter((s: any) => {
-              const quiz = quizMap.get(s.quiz_id);
-              if (!quiz || quiz.scoring_mode !== 'per_part') return false;
-              return Number(s.points || 0) !== 0 || Number(s.bonus_points || 0) !== 0;
+        const teamCountByQuiz = new Map<string, number>();
+        allQt.forEach((qt: any) => {
+          teamCountByQuiz.set(qt.quiz_id, (teamCountByQuiz.get(qt.quiz_id) || 0) + 1);
+        });
+        const categoryCountByQuiz = new Map<string, number>();
+        allQuizCategories.forEach((qc: any) => {
+          categoryCountByQuiz.set(qc.quiz_id, (categoryCountByQuiz.get(qc.quiz_id) || 0) + 1);
+        });
+        const scoreCountByQuiz = new Map<string, number>();
+        allScores.forEach((s: any) => {
+          scoreCountByQuiz.set(s.quiz_id, (scoreCountByQuiz.get(s.quiz_id) || 0) + 1);
+        });
+        const completePerPartQuizIds = new Set(
+          allQuizzes
+            .filter((quiz: any) => quiz.scoring_mode === 'per_part')
+            .filter((quiz: any) => {
+              const expectedScoreCount = (teamCountByQuiz.get(quiz.id) || 0) * (categoryCountByQuiz.get(quiz.id) || 0);
+              const actualScoreCount = scoreCountByQuiz.get(quiz.id) || 0;
+              return expectedScoreCount > 0 && actualScoreCount === expectedScoreCount;
             })
-            .map((s: any) => s.quiz_id)
+            .map((quiz: any) => quiz.id)
         );
 
         const finishedScores = allScores.filter((s: any) => {
@@ -244,12 +259,11 @@ export default function StatsPage() {
           const quiz = quizMap.get(s.quiz_id);
           if (!quiz) return false;
           if (quiz.scoring_mode !== 'per_part') return true;
-          return perPartQuizzesWithCategoryScores.has(s.quiz_id);
+          return completePerPartQuizIds.has(s.quiz_id);
         });
 
         if (finishedScores.length === 0) { setBestCategories([]); setCatsLoading(false); return; }
-        const { data: qcData } = await supabase.from('quiz_categories').select('id, category_id').eq('organization_id', currentOrg.id);
-        const qcMap = new Map((qcData || []).map(qc => [qc.id, qc.category_id]));
+        const qcMap = new Map(allQuizCategories.map((qc: any) => [qc.id, qc.category_id]));
         const catStats: Record<string, { total: number; count: number }> = {};
         for (const s of finishedScores) {
           const catId = qcMap.get(s.quiz_category_id);
