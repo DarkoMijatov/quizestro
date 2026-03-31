@@ -148,7 +148,10 @@ function MarkerClusterGroup({ locations, onSelectLocation }: { locations: OrgLoc
         </div>
       `, { className: 'quiz-map-popup' });
       
-      marker.on('click', () => onSelectLocation(loc));
+      marker.on('click', () => {
+        marker.openPopup();
+        onSelectLocation(loc);
+      });
       cluster.addLayer(marker);
     });
 
