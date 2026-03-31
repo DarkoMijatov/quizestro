@@ -48,10 +48,12 @@
       "period": "/mes",
       "features": [
         "1 organizacija",
-        "Samo vlasnik",
+        "Samo vlasnik (bez dodatnih admina)",
         "Do 20 kvizova godišnje",
-        "Osnovno bodovanje",
-        "Upravljanje timovima"
+        "Bodovanje uživo sa rangiranjem",
+        "Upravljanje timovima i alijasima",
+        "Javna mapa kvizova",
+        "Izvoz rezultata"
       ],
       "cta": "Započnite besplatno"
     },
@@ -63,12 +65,15 @@
       "period": "/mes",
       "popular": "Najpopularnije",
       "features": [
-        "Neograničene organizacije",
-        "Do 3 admina",
-        "Neograničeni kvizovi",
-        "Lige i sezone",
-        "Banka pitanja",
-        "Kompletno brendiranje",
+        "Neograničeni kvizovi i organizacije",
+        "Do 3 admina po organizaciji",
+        "Lige, sezone i rang liste",
+        "Banka pitanja (tekst, višestruki izbor, spajanje)",
+        "Džoker, dupla šansa i bonus pomoći",
+        "Višedelni kvizovi",
+        "Kompletno brendiranje (boje, logo)",
+        "Detaljne statistike timova i kategorija",
+        "Lokacije sa rasporedom na javnoj mapi",
         "Prioritetna podrška"
       ],
       "cta": "Započnite probni period"
