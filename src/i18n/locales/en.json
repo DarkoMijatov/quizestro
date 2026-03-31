@@ -49,7 +49,15 @@
       "priceDisplay": "€0",
       "currency": "€",
       "period": "/month",
-      "features": ["1 organization", "Owner only", "Up to 20 quizzes per year", "Basic scoring", "Team management"],
+      "features": [
+        "1 organization",
+        "Owner only (no extra admins)",
+        "Up to 20 quizzes per year",
+        "Live scoring with rankings",
+        "Team & alias management",
+        "Public quiz map",
+        "Results export"
+      ],
       "cta": "Get started free"
     },
     "premium": {
@@ -60,12 +68,15 @@
       "period": "/month",
       "popular": "Most popular",
       "features": [
-        "Unlimited organizations",
-        "Up to 3 admins",
-        "Unlimited quizzes",
-        "Leagues & seasons",
-        "Question bank",
-        "Full branding customization",
+        "Unlimited quizzes & organizations",
+        "Up to 3 admins per organization",
+        "Leagues, seasons & leaderboards",
+        "Question bank (text, multiple choice, matching)",
+        "Joker, double chance & bonus helps",
+        "Multi-part quizzes",
+        "Full branding (colors, logo)",
+        "Detailed team & category statistics",
+        "Locations with schedules on public map",
         "Priority support"
       ],
       "cta": "Start free trial"
