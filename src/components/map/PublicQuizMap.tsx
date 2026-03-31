@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { Search, MapPin, Clock, Calendar as CalendarIcon, Loader2, LocateFixed, ArrowRight, X, SlidersHorizontal, List, Map as MapIcon } from 'lucide-react';
 import { formatNextOccurrence } from '@/lib/schedule-utils';
 import { Link } from 'react-router-dom';
