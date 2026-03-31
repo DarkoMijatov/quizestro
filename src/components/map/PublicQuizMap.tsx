@@ -333,23 +333,18 @@ export function PublicQuizMap() {
       result = result.filter(l => l.schedules?.some(s => s.category === categoryFilter));
     }
 
-    const rangeFrom = dateFrom || new Date();
-    const rangeTo = dateTo;
+    const rangeFrom = dateFrom ? startOfDay(dateFrom) : startOfDay(new Date());
+    const rangeTo = dateTo ? startOfDay(dateTo) : undefined;
     result = result.map(l => {
       if (!l.schedules || l.schedules.length === 0) return { ...l, schedules: [] };
       const validSchedules = l.schedules.filter(s => {
-        if (s.schedule_type === 'one_time' && s.event_date) {
-          const eventDate = new Date(s.event_date);
-          if (eventDate < rangeFrom) return false;
-          if (rangeTo && eventDate > rangeTo) return false;
-          return true;
-        }
-        if (s.schedule_type === 'recurring') {
-          if (s.valid_until && new Date(s.valid_until) < rangeFrom) return false;
-          if (rangeTo && s.valid_from && new Date(s.valid_from) > rangeTo) return false;
-          return true;
-        }
-        return false;
+        // Use computeNextDate to get the actual next occurrence
+        const nextDate = computeNextDate(s);
+        if (!nextDate) return false;
+        const next = startOfDay(nextDate);
+        if (next < rangeFrom) return false;
+        if (rangeTo && next > rangeTo) return false;
+        return true;
       });
       return { ...l, schedules: validSchedules };
     }).filter(l => l.schedules!.length > 0);
