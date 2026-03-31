@@ -15,9 +15,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Search, MapPin, Navigation, Clock, Calendar as CalendarIcon, Loader2, LocateFixed, ArrowRight, X } from 'lucide-react';
+import { Search, MapPin, Clock, Calendar as CalendarIcon, Loader2, LocateFixed, ArrowRight, X, SlidersHorizontal, List, Map as MapIcon } from 'lucide-react';
 import { formatNextOccurrence } from '@/lib/schedule-utils';
 import { Link } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Fix Leaflet default icon issue
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -172,6 +173,7 @@ function MarkerClusterGroup({ locations, onSelectLocation }: { locations: OrgLoc
 
 export function PublicQuizMap() {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [locations, setLocations] = useState<OrgLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -189,10 +191,11 @@ export function PublicQuizMap() {
   const [geoLoading, setGeoLoading] = useState(false);
   const [detectedCity, setDetectedCity] = useState<string | null>(null);
   const [cityFilter, setCityFilter] = useState<string>('auto');
+  const [showFilters, setShowFilters] = useState(false);
+  const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
 
   useEffect(() => {
     loadLocations();
-    // Auto-detect user city
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
@@ -206,7 +209,7 @@ export function PublicQuizMap() {
             }
           } catch { /* ignore */ }
         },
-        () => { /* geolocation denied, no city filter */ },
+        () => {},
         { enableHighAccuracy: false, timeout: 5000 }
       );
     }
@@ -294,10 +297,11 @@ export function PublicQuizMap() {
     return Array.from(cities).sort();
   }, [locations]);
 
+  const hasActiveFilters = search.trim() || dayFilter !== 'all' || typeFilter !== 'all' || categoryFilter !== 'all' || radius !== 'all' || cityFilter !== 'auto';
+
   const filtered = useMemo(() => {
     let result = locations;
 
-    // City filter (default to detected city)
     if (cityFilter === 'auto' && detectedCity) {
       result = result.filter(l => l.city.toLowerCase() === detectedCity.toLowerCase());
     } else if (cityFilter !== 'all' && cityFilter !== 'auto') {
@@ -328,7 +332,6 @@ export function PublicQuizMap() {
       result = result.filter(l => l.schedules?.some(s => s.category === categoryFilter));
     }
 
-    // Date range filter — filter individual schedules, remove locations with none left
     const rangeFrom = dateFrom || new Date();
     const rangeTo = dateTo;
     result = result.map(l => {
@@ -371,221 +374,359 @@ export function PublicQuizMap() {
   const mappable = filtered.filter(l => l.latitude && l.longitude);
 
   const handleSelectLocation = useCallback((loc: OrgLocation) => {
-    // Navigate to location detail page
-  }, []);
+    if (isMobile) setMobileView('list');
+  }, [isMobile]);
+
+  const resetFilters = () => {
+    setSearch('');
+    setDayFilter('all');
+    setTypeFilter('all');
+    setCategoryFilter('all');
+    setRadius('all');
+    setCityFilter('auto');
+    setDateFrom(new Date());
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    setDateTo(d);
+  };
+
+  const renderFilters = () => (
+    <div className={cn(
+      "gap-2 relative z-[1000]",
+      isMobile ? "flex flex-col" : "flex flex-wrap"
+    )}>
+      {/* Search + City + Geo - always visible */}
+      <div className="flex gap-2 flex-1 min-w-0">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t('map.searchPlaceholder')}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-10 h-9 text-sm"
+          />
+        </div>
+        <Select value={cityFilter} onValueChange={setCityFilter}>
+          <SelectTrigger className="w-[130px] h-9 text-sm shrink-0">
+            <SelectValue placeholder={t('mapSettings.city')} />
+          </SelectTrigger>
+          <SelectContent className="z-[9999]">
+            <SelectItem value="all">{t('map.allCities')}</SelectItem>
+            {detectedCity && <SelectItem value="auto">{detectedCity}</SelectItem>}
+            {allCities.filter(c => c !== detectedCity).map(city => (
+              <SelectItem key={city} value={city}>{city}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Secondary filters row */}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" className="gap-1.5 h-9 text-sm" onClick={handleGeolocate} disabled={geoLoading}>
+          {geoLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LocateFixed className="h-3.5 w-3.5" />}
+          <span className="hidden sm:inline">{t('map.useMyLocation')}</span>
+        </Button>
+        <Select value={radius} onValueChange={setRadius}>
+          <SelectTrigger className="w-[100px] h-9 text-sm">
+            <SelectValue placeholder={t('map.radius')} />
+          </SelectTrigger>
+          <SelectContent className="z-[9999]">
+            <SelectItem value="all">{t('map.radius')}</SelectItem>
+            <SelectItem value="5">5 {t('map.km')}</SelectItem>
+            <SelectItem value="10">10 {t('map.km')}</SelectItem>
+            <SelectItem value="25">25 {t('map.km')}</SelectItem>
+            <SelectItem value="50">50 {t('map.km')}</SelectItem>
+            <SelectItem value="100">100 {t('map.km')}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={dayFilter} onValueChange={setDayFilter}>
+          <SelectTrigger className="w-[120px] h-9 text-sm">
+            <SelectValue placeholder={t('map.dayOfWeek')} />
+          </SelectTrigger>
+          <SelectContent className="z-[9999]">
+            <SelectItem value="all">{t('map.allDays')}</SelectItem>
+            {DAY_NAMES_KEYS.map((key, i) => (
+              <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[120px] h-9 text-sm">
+            <SelectValue placeholder={t('map.eventType')} />
+          </SelectTrigger>
+          <SelectContent className="z-[9999]">
+            <SelectItem value="all">{t('map.allEvents')}</SelectItem>
+            <SelectItem value="recurring">{t('map.recurring')}</SelectItem>
+            <SelectItem value="one_time">{t('map.oneTime')}</SelectItem>
+          </SelectContent>
+        </Select>
+        {allCategories.length > 0 && (
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[130px] h-9 text-sm">
+              <SelectValue placeholder={t('map.category')} />
+            </SelectTrigger>
+            <SelectContent className="z-[9999]">
+              <SelectItem value="all">{t('map.allCategories')}</SelectItem>
+              {allCategories.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("gap-1.5 h-9 text-sm", !dateFrom && "text-muted-foreground")}>
+              <CalendarIcon className="h-3.5 w-3.5" />
+              {dateFrom ? format(dateFrom, 'dd.MM') : t('filters.dateFrom')}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+            <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
+          </PopoverContent>
+        </Popover>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("gap-1.5 h-9 text-sm", !dateTo && "text-muted-foreground")}>
+              <CalendarIcon className="h-3.5 w-3.5" />
+              {dateTo ? format(dateTo, 'dd.MM') : t('filters.dateTo')}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+            <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
+          </PopoverContent>
+        </Popover>
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" className="h-9 text-sm gap-1" onClick={resetFilters}>
+            <X className="h-3.5 w-3.5" />{t('filters.clearDates')}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderLocationCard = (loc: OrgLocation) => (
+    <Link key={loc.id} to={`/quiz-map/${loc.id}`}>
+      <div className="rounded-xl border border-border bg-card p-3 sm:p-4 hover:border-primary/30 transition-colors cursor-pointer">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2.5 flex-1 min-w-0">
+            {loc.org_logo_url ? (
+              <img src={loc.org_logo_url} alt="" className="h-9 w-9 rounded-lg object-cover border border-border shrink-0" />
+            ) : (
+              <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center text-xs font-bold text-primary shrink-0">
+                {(loc.org_name || '?').slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-sm truncate">{loc.venue_name}</p>
+              <p className="text-xs text-muted-foreground truncate">{loc.org_name}</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            {loc._distance !== undefined && (
+              <Badge variant="outline" className="text-[10px] px-1.5">
+                {loc._distance.toFixed(1)} {t('map.km')}
+              </Badge>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
+          <MapPin className="h-3 w-3 shrink-0" />
+          <span className="truncate">{loc.address_line ? `${loc.address_line}, ${loc.city}` : `${loc.city}, ${loc.country}`}</span>
+        </div>
+        {loc.schedules && loc.schedules.length > 0 && (
+          <div className="mt-2 space-y-1">
+            {loc.schedules.slice(0, 2).map(s => (
+              <div key={s.id} className="flex items-center gap-1.5 text-xs">
+                {s.schedule_type === 'recurring' ? (
+                  <Clock className="h-3 w-3 text-primary shrink-0" />
+                ) : (
+                  <CalendarIcon className="h-3 w-3 text-primary shrink-0" />
+                )}
+                <span className="truncate">{getNextOccurrence(s, t)}</span>
+                {s.title && <Badge variant="secondary" className="text-[10px] px-1.5 shrink-0">{s.title}</Badge>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Link>
+  );
 
   return (
-    <section id="quiz-map" className="py-24">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-10">
-          <h2 className="font-display text-3xl md:text-4xl font-bold">{t('map.title')}</h2>
-          <p className="mt-4 text-muted-foreground text-lg">{t('map.subtitle')}</p>
+    <section id="quiz-map" className="py-6 sm:py-12 lg:py-16">
+      <div className="container mx-auto px-3 sm:px-4">
+        {/* Header */}
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold">{t('map.title')}</h2>
+          <p className="mt-2 text-muted-foreground text-sm sm:text-base lg:text-lg">{t('map.subtitle')}</p>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-6 relative z-[1000]">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('map.searchPlaceholder')}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={cityFilter} onValueChange={setCityFilter}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder={t('mapSettings.city')} />
-            </SelectTrigger>
-            <SelectContent className="z-[9999]">
-              <SelectItem value="all">{t('map.allCities')}</SelectItem>
-              {detectedCity && <SelectItem value="auto">{detectedCity}</SelectItem>}
-              {allCities.filter(c => c !== detectedCity).map(city => (
-                <SelectItem key={city} value={city}>{city}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm" className="gap-2" onClick={handleGeolocate} disabled={geoLoading}>
-            {geoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
-            {t('map.useMyLocation')}
-          </Button>
-          <Select value={radius} onValueChange={setRadius}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder={t('map.radius')} />
-            </SelectTrigger>
-            <SelectContent className="z-[9999]">
-              <SelectItem value="all">{t('map.radius')}</SelectItem>
-              <SelectItem value="5">5 {t('map.km')}</SelectItem>
-              <SelectItem value="10">10 {t('map.km')}</SelectItem>
-              <SelectItem value="25">25 {t('map.km')}</SelectItem>
-              <SelectItem value="50">50 {t('map.km')}</SelectItem>
-              <SelectItem value="100">100 {t('map.km')}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={dayFilter} onValueChange={setDayFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder={t('map.dayOfWeek')} />
-            </SelectTrigger>
-            <SelectContent className="z-[9999]">
-              <SelectItem value="all">{t('map.allDays')}</SelectItem>
-              {DAY_NAMES_KEYS.map((key, i) => (
-                <SelectItem key={i} value={i.toString()}>{t(`map.${key}`)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder={t('map.eventType')} />
-            </SelectTrigger>
-            <SelectContent className="z-[9999]">
-              <SelectItem value="all">{t('map.allEvents')}</SelectItem>
-              <SelectItem value="recurring">{t('map.recurring')}</SelectItem>
-              <SelectItem value="one_time">{t('map.oneTime')}</SelectItem>
-            </SelectContent>
-          </Select>
-          {allCategories.length > 0 && (
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder={t('map.category')} />
-              </SelectTrigger>
-              <SelectContent className="z-[9999]">
-                <SelectItem value="all">{t('map.allCategories')}</SelectItem>
-                {allCategories.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className={cn("gap-2 w-[140px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
-                <CalendarIcon className="h-4 w-4" />
-                {dateFrom ? format(dateFrom, 'dd.MM.yyyy') : t('filters.dateFrom')}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 z-[9999]" align="start">
-              <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
-            </PopoverContent>
-          </Popover>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className={cn("gap-2 w-[140px] justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
-                <CalendarIcon className="h-4 w-4" />
-                {dateTo ? format(dateTo, 'dd.MM.yyyy') : t('filters.dateTo')}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 z-[9999]" align="start">
-              <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
-            </PopoverContent>
-          </Popover>
-          {(dateFrom || dateTo) && (
-            <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
-              <X className="h-4 w-4 mr-1" />{t('filters.clearDates')}
+        {/* Mobile: filter toggle + view toggle */}
+        {isMobile && (
+          <div className="flex gap-2 mb-3">
+            <Button
+              variant={showFilters ? 'default' : 'outline'}
+              size="sm"
+              className="gap-1.5 flex-1"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              {t('map.filters', 'Filteri')}
+              {hasActiveFilters && <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">!</Badge>}
             </Button>
-          )}
-        </div>
-
-        {/* Map + Results */}
-        <div className="grid lg:grid-cols-5 gap-6">
-          {/* Map */}
-          <div className="lg:col-span-3 rounded-xl overflow-hidden border border-border bg-card" style={{ height: 500 }}>
-            {loading ? (
-              <div className="h-full flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <MapContainer
-                center={userPos ? [userPos.lat, userPos.lng] : [44.8, 20.46]}
-                zoom={userPos ? 12 : 6}
-                style={{ height: '100%', width: '100%' }}
-                scrollWheelZoom
+            <div className="flex rounded-lg border border-border overflow-hidden">
+              <Button
+                variant={mobileView === 'map' ? 'default' : 'ghost'}
+                size="sm"
+                className="rounded-none px-3"
+                onClick={() => setMobileView('map')}
               >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                />
-                <MarkerClusterGroup locations={mappable} onSelectLocation={handleSelectLocation} />
-                {userPos && (
-                  <Marker
-                    position={[userPos.lat, userPos.lng]}
-                    icon={L.divIcon({
-                      className: '',
-                      html: '<div style="width:16px;height:16px;background:hsl(210,100%,56%);border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>',
-                      iconSize: [16, 16],
-                      iconAnchor: [8, 8],
-                    })}
-                  />
-                )}
-              </MapContainer>
-            )}
+                <MapIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={mobileView === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                className="rounded-none px-3"
+                onClick={() => setMobileView('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
+        )}
 
-          {/* Results list */}
-          <div className="lg:col-span-2 space-y-3 max-h-[500px] overflow-y-auto">
-            <h3 className="font-display font-semibold text-lg">
-              {t('map.upcomingQuizNights')} <Badge variant="secondary">{filtered.length}</Badge>
-            </h3>
-            {filtered.length === 0 ? (
-              <div className="rounded-xl border border-border bg-card p-8 text-center">
-                <MapPin className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm">{t('map.noResults')}</p>
-              </div>
-            ) : (
-              filtered.map(loc => (
-                <Link key={loc.id} to={`/quiz-map/${loc.id}`}>
-                  <div className="rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors cursor-pointer">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        {loc.org_logo_url ? (
-                          <img src={loc.org_logo_url} alt="" className="h-10 w-10 rounded-lg object-cover border border-border shrink-0" />
-                        ) : (
-                          <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center text-sm font-bold text-primary shrink-0">
-                            {(loc.org_name || '?').slice(0, 1).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-sm truncate">{loc.venue_name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{loc.org_name}</p>
-                        </div>
-                      </div>
-                      {loc._distance !== undefined && (
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {loc._distance.toFixed(1)} {t('map.km')}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      {loc.city}, {loc.country}
-                    </div>
-                    {loc.schedules && loc.schedules.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {loc.schedules.slice(0, 2).map(s => (
-                          <div key={s.id} className="flex items-center gap-1.5 text-xs">
-                            {s.schedule_type === 'recurring' ? (
-                              <Clock className="h-3 w-3 text-primary" />
-                            ) : (
-                              <CalendarIcon className="h-3 w-3 text-primary" />
-                            )}
-                            <span>{getNextOccurrence(s, t)}</span>
-                            {s.title && <Badge variant="secondary" className="text-[10px] px-1.5">{s.title}</Badge>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              ))
-            )}
+        {/* Filters - collapsible on mobile */}
+        {(isMobile ? showFilters : true) && (
+          <div className="mb-4 sm:mb-6">
+            {renderFilters()}
           </div>
-        </div>
+        )}
+
+        {/* Desktop: Map + List side by side */}
+        {!isMobile && (
+          <div className="grid lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-3 rounded-xl overflow-hidden border border-border bg-card" style={{ height: 520 }}>
+              {loading ? (
+                <div className="h-full flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <MapContainer
+                  center={userPos ? [userPos.lat, userPos.lng] : [44.8, 20.46]}
+                  zoom={userPos ? 12 : 6}
+                  style={{ height: '100%', width: '100%' }}
+                  scrollWheelZoom
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  />
+                  <MarkerClusterGroup locations={mappable} onSelectLocation={handleSelectLocation} />
+                  {userPos && (
+                    <Marker
+                      position={[userPos.lat, userPos.lng]}
+                      icon={L.divIcon({
+                        className: '',
+                        html: '<div style="width:16px;height:16px;background:hsl(210,100%,56%);border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>',
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8],
+                      })}
+                    />
+                  )}
+                </MapContainer>
+              )}
+            </div>
+
+            <div className="lg:col-span-2 space-y-3 max-h-[520px] overflow-y-auto">
+              <h3 className="font-display font-semibold text-lg flex items-center gap-2">
+                {t('map.upcomingQuizNights')} <Badge variant="secondary">{filtered.length}</Badge>
+              </h3>
+              {filtered.length === 0 ? (
+                <div className="rounded-xl border border-border bg-card p-8 text-center">
+                  <MapPin className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground text-sm">{t('map.noResults')}</p>
+                </div>
+              ) : (
+                filtered.map(loc => renderLocationCard(loc))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile: toggle between map and list */}
+        {isMobile && (
+          <>
+            {mobileView === 'map' && (
+              <div className="rounded-xl overflow-hidden border border-border bg-card" style={{ height: 'calc(100vh - 220px)', minHeight: 300 }}>
+                {loading ? (
+                  <div className="h-full flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <MapContainer
+                    center={userPos ? [userPos.lat, userPos.lng] : [44.8, 20.46]}
+                    zoom={userPos ? 12 : 6}
+                    style={{ height: '100%', width: '100%' }}
+                    scrollWheelZoom
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    />
+                    <MarkerClusterGroup locations={mappable} onSelectLocation={handleSelectLocation} />
+                    {userPos && (
+                      <Marker
+                        position={[userPos.lat, userPos.lng]}
+                        icon={L.divIcon({
+                          className: '',
+                          html: '<div style="width:16px;height:16px;background:hsl(210,100%,56%);border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>',
+                          iconSize: [16, 16],
+                          iconAnchor: [8, 8],
+                        })}
+                      />
+                    )}
+                  </MapContainer>
+                )}
+              </div>
+            )}
+
+            {mobileView === 'list' && (
+              <div className="space-y-2">
+                <h3 className="font-display font-semibold text-base flex items-center gap-2">
+                  {t('map.upcomingQuizNights')} <Badge variant="secondary">{filtered.length}</Badge>
+                </h3>
+                {filtered.length === 0 ? (
+                  <div className="rounded-xl border border-border bg-card p-8 text-center">
+                    <MapPin className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-muted-foreground text-sm">{t('map.noResults')}</p>
+                  </div>
+                ) : (
+                  filtered.map(loc => renderLocationCard(loc))
+                )}
+              </div>
+            )}
+
+            {/* Floating result count on map view */}
+            {mobileView === 'map' && filtered.length > 0 && (
+              <Button
+                variant="default"
+                size="sm"
+                className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[1000] gap-1.5 shadow-lg rounded-full px-4"
+                onClick={() => setMobileView('list')}
+              >
+                <List className="h-3.5 w-3.5" />
+                {t('map.showList', 'Prikaži listu')} ({filtered.length})
+              </Button>
+            )}
+          </>
+        )}
 
         {/* Organizer CTA */}
-        <div className="mt-12 rounded-xl border border-primary/30 bg-primary/5 p-8 text-center">
-          <h3 className="font-display text-xl font-bold">{t('map.organizerCta')}</h3>
-          <p className="mt-2 text-muted-foreground">{t('map.organizerCtaDesc')}</p>
+        <div className="mt-8 sm:mt-12 rounded-xl border border-primary/30 bg-primary/5 p-6 sm:p-8 text-center">
+          <h3 className="font-display text-lg sm:text-xl font-bold">{t('map.organizerCta')}</h3>
+          <p className="mt-2 text-muted-foreground text-sm">{t('map.organizerCtaDesc')}</p>
           <Link to="/register">
-            <Button className="mt-4 gap-2">
+            <Button className="mt-4 gap-2" size="sm">
               {t('map.registerOrganization')} <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
