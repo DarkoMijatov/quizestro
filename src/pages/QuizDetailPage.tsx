@@ -138,6 +138,7 @@ export default function QuizDetailPage() {
   const scoringRef = useRef<HTMLDivElement>(null);
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
+  const manualTeamOrderRef = useRef<string[] | null>(null);
 
   const canEdit = currentRole === "owner" || currentRole === "admin";
 
@@ -167,7 +168,16 @@ export default function QuizDetailPage() {
     const quizData = quizRes.data as any;
     setQuiz(quizData);
     setCategories((catRes.data as any) || []);
-    setTeams((teamRes.data as any) || []);
+    const fetchedTeams = ((teamRes.data as any[]) || []);
+    if (manualTeamOrderRef.current) {
+      const orderMap = new Map(manualTeamOrderRef.current.map((id, i) => [id, i]));
+      fetchedTeams.sort((a: any, b: any) => {
+        const ai = orderMap.has(a.id) ? (orderMap.get(a.id) as number) : Number.MAX_SAFE_INTEGER;
+        const bi = orderMap.has(b.id) ? (orderMap.get(b.id) as number) : Number.MAX_SAFE_INTEGER;
+        return ai - bi;
+      });
+    }
+    setTeams(fetchedTeams);
     setScores((scoreRes.data as any) || []);
     setHelpTypes((helpTypeRes.data as any) || []);
     setHelpUsages((helpUsageRes.data as any) || []);
@@ -576,7 +586,11 @@ export default function QuizDetailPage() {
   });
 
   const handleManualSort = () => {
-    setTeams((prev) => [...prev].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id)));
+    setTeams((prev) => {
+      const sorted = [...prev].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id));
+      manualTeamOrderRef.current = sorted.map((t) => t.id);
+      return sorted;
+    });
   };
 
   const decimalSeparator = i18n.language === "sr" ? "," : ".";
