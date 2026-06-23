@@ -168,7 +168,16 @@ export default function QuizDetailPage() {
     const quizData = quizRes.data as any;
     setQuiz(quizData);
     setCategories((catRes.data as any) || []);
-    setTeams((teamRes.data as any) || []);
+    const fetchedTeams = ((teamRes.data as any[]) || []);
+    if (manualTeamOrderRef.current) {
+      const orderMap = new Map(manualTeamOrderRef.current.map((id, i) => [id, i]));
+      fetchedTeams.sort((a: any, b: any) => {
+        const ai = orderMap.has(a.id) ? (orderMap.get(a.id) as number) : Number.MAX_SAFE_INTEGER;
+        const bi = orderMap.has(b.id) ? (orderMap.get(b.id) as number) : Number.MAX_SAFE_INTEGER;
+        return ai - bi;
+      });
+    }
+    setTeams(fetchedTeams);
     setScores((scoreRes.data as any) || []);
     setHelpTypes((helpTypeRes.data as any) || []);
     setHelpUsages((helpUsageRes.data as any) || []);
