@@ -99,7 +99,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative pt-16 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBg} alt="" className="w-full h-full object-cover" />
+          <img src={heroBg} alt="" width="1920" height="1080" fetchPriority="high" decoding="async" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/80 to-background" />
         </div>
         <div className="relative container mx-auto px-4 py-24 md:py-40 text-center">
