@@ -109,11 +109,13 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Check if user already exists
-    const { data: { users } } = await adminClient.auth.admin.listUsers();
-    const existingUser = users?.find(
-      (u) => u.email?.toLowerCase() === email.toLowerCase()
-    );
+    // Check if user already exists (targeted email lookup via profiles)
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("user_id")
+      .ilike("email", email)
+      .maybeSingle();
+    const existingUser = profile ? { id: profile.user_id as string } : null;
 
     if (existingUser) {
       // Check if already a member
