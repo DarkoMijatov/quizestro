@@ -579,16 +579,20 @@ export function PublicQuizMap() {
                 size="sm"
                 className="rounded-none px-3"
                 onClick={() => setMobileView('map')}
+                aria-label={t('map.showMap', 'Show map')}
+                aria-pressed={mobileView === 'map'}
               >
-                <MapIcon className="h-4 w-4" />
+                <MapIcon className="h-4 w-4" aria-hidden="true" />
               </Button>
               <Button
                 variant={mobileView === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 className="rounded-none px-3"
                 onClick={() => setMobileView('list')}
+                aria-label={t('map.showList', 'Show list')}
+                aria-pressed={mobileView === 'list'}
               >
-                <List className="h-4 w-4" />
+                <List className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
