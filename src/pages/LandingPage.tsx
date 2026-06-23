@@ -95,6 +95,7 @@ export default function LandingPage() {
       />
       <Navbar />
 
+      <main>
       {/* Hero */}
       <section className="relative pt-16 overflow-hidden">
         <div className="absolute inset-0">
@@ -361,6 +362,7 @@ export default function LandingPage() {
           </motion.form>
         </div>
       </section>
+      </main>
 
       <Footer />
       <CookieBanner />
