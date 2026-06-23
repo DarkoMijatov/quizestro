@@ -14,7 +14,7 @@ const languages = [
 ];
 
 export function LanguageSwitcher({ variant = 'default' }: { variant?: 'default' | 'ghost' | 'sidebar' }) {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -26,8 +26,13 @@ export function LanguageSwitcher({ variant = 'default' }: { variant?: 'default' 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant={variant === 'ghost' || variant === 'sidebar' ? 'ghost' : 'outline'} size="sm" className={variant === 'sidebar' ? 'gap-2 w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground' : 'gap-2'}>
-          <Globe className="h-4 w-4" />
+        <Button
+          variant={variant === 'ghost' || variant === 'sidebar' ? 'ghost' : 'outline'}
+          size="sm"
+          className={variant === 'sidebar' ? 'gap-2 w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground' : 'gap-2'}
+          aria-label={t('nav.changeLanguage', 'Change language')}
+        >
+          <Globe className="h-4 w-4" aria-hidden="true" />
           <span>{current.flag}</span>
         </Button>
       </DropdownMenuTrigger>
