@@ -55,13 +55,32 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get org name for email
+    // Get org name + subscription tier for email & limit check
     const { data: org } = await adminClient
       .from("organizations")
-      .select("name")
+      .select("name, subscription_tier, premium_override, premium_override_until")
       .eq("id", organization_id)
       .single();
     const orgName = org?.name || "Organizacija";
+
+    // Server-side enforcement: Free plan cannot invite additional members
+    const isPro =
+      ["premium", "trial"].includes(org?.subscription_tier ?? "") ||
+      (org?.premium_override === true &&
+        (!org?.premium_override_until || new Date(org.premium_override_until) > new Date()));
+
+    if (!isPro) {
+      const { count: memberCount } = await adminClient
+        .from("memberships")
+        .select("*", { count: "exact", head: true })
+        .eq("organization_id", organization_id);
+      if ((memberCount ?? 0) >= 1) {
+        return new Response(
+          JSON.stringify({ error: "free_plan_member_limit" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     const appUrl = Deno.env.get("APP_URL") || "https://quizestro.com";
     const inviteUrl = `${appUrl}/register`;
@@ -90,11 +109,13 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Check if user already exists
-    const { data: { users } } = await adminClient.auth.admin.listUsers();
-    const existingUser = users?.find(
-      (u) => u.email?.toLowerCase() === email.toLowerCase()
-    );
+    // Check if user already exists (targeted email lookup via profiles)
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("user_id")
+      .ilike("email", email)
+      .maybeSingle();
+    const existingUser = profile ? { id: profile.user_id as string } : null;
 
     if (existingUser) {
       // Check if already a member
