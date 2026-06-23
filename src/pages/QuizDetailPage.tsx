@@ -596,6 +596,9 @@ export default function QuizDetailPage() {
     setTeams((prev) => {
       const sorted = [...prev].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id));
       manualTeamOrderRef.current = sorted.map((t) => t.id);
+      if (manualOrderStorageKey) {
+        try { localStorage.setItem(manualOrderStorageKey, JSON.stringify(manualTeamOrderRef.current)); } catch {}
+      }
       return sorted;
     });
   };
