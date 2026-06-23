@@ -138,6 +138,7 @@ export default function QuizDetailPage() {
   const scoringRef = useRef<HTMLDivElement>(null);
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
+  const manualTeamOrderRef = useRef<string[] | null>(null);
 
   const canEdit = currentRole === "owner" || currentRole === "admin";
 
