@@ -139,6 +139,13 @@ export default function QuizDetailPage() {
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
   const manualTeamOrderRef = useRef<string[] | null>(null);
+  const manualOrderStorageKey = quizId ? `quiz-manual-team-order:${quizId}` : null;
+  if (manualOrderStorageKey && manualTeamOrderRef.current === null) {
+    try {
+      const raw = localStorage.getItem(manualOrderStorageKey);
+      if (raw) manualTeamOrderRef.current = JSON.parse(raw);
+    } catch {}
+  }
 
   const canEdit = currentRole === "owner" || currentRole === "admin";
 
