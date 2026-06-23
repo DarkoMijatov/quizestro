@@ -136,13 +136,46 @@ export default function LocationDetailPage() {
 
   const pageTitle = location ? `${location.venue_name} - ${orgName}` : t("map.locationDetails");
 
-  // SEO: Update document title
+  // SEO: Update document title and inject LocalBusiness JSON-LD
   useEffect(() => {
     if (location) {
       document.title = `${location.venue_name} | ${orgName} - Quizestro`;
     }
+
+    const SCRIPT_ID = "ld-location-localbusiness";
+    document.getElementById(SCRIPT_ID)?.remove();
+
+    if (location) {
+      const ld: Record<string, unknown> = {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        name: location.venue_name,
+        url: `https://www.quizestro.com/locations/${location.id}`,
+        address: {
+          "@type": "PostalAddress",
+          ...(location.address_line ? { streetAddress: location.address_line } : {}),
+          addressLocality: location.city,
+          ...(location.postal_code ? { postalCode: location.postal_code } : {}),
+          addressCountry: location.country,
+        },
+        ...(location.latitude && location.longitude
+          ? { geo: { "@type": "GeoCoordinates", latitude: location.latitude, longitude: location.longitude } }
+          : {}),
+        ...(location.description ? { description: location.description } : {}),
+        ...(location.contact_email ? { email: location.contact_email } : {}),
+        ...(location.contact_phone ? { telephone: location.contact_phone } : {}),
+        ...(location.website_url ? { sameAs: [location.website_url, location.instagram_url, location.facebook_url].filter(Boolean) } : {}),
+      };
+      const script = document.createElement("script");
+      script.id = SCRIPT_ID;
+      script.type = "application/ld+json";
+      script.text = JSON.stringify(ld);
+      document.head.appendChild(script);
+    }
+
     return () => {
       document.title = "Quizestro";
+      document.getElementById(SCRIPT_ID)?.remove();
     };
   }, [location, orgName]);
 
