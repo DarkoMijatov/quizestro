@@ -11,7 +11,7 @@ interface SEOHeadProps {
   noIndex?: boolean;
 }
 
-const BASE_URL = 'https://quizestro.lovable.app';
+const BASE_URL = 'https://www.quizestro.com';
 
 export function SEOHead({
   titleKey,
