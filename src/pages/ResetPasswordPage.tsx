@@ -39,7 +39,7 @@ export default function ResetPasswordPage() {
 
   return (
     <>
-    <SEOHead titleKey="auth.resetPassword" noIndex />
+    <SEOHead titleKey="auth.resetPassword" descriptionFallback="Set a new password for your Quizestro account." noIndex />
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="flex items-center gap-2 font-display font-bold text-xl">
