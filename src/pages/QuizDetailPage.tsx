@@ -586,7 +586,11 @@ export default function QuizDetailPage() {
   });
 
   const handleManualSort = () => {
-    setTeams((prev) => [...prev].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id)));
+    setTeams((prev) => {
+      const sorted = [...prev].sort((a, b) => getTeamRankTotal(b.id) - getTeamRankTotal(a.id));
+      manualTeamOrderRef.current = sorted.map((t) => t.id);
+      return sorted;
+    });
   };
 
   const decimalSeparator = i18n.language === "sr" ? "," : ".";
