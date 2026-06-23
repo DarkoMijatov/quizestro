@@ -1,0 +1,18 @@
+# Quizestro
+
+> All-in-one platform for organizing pub quiz events: live scoring, teams, leagues, and a public quiz map.
+
+Quizestro helps quiz organizers run pub quiz nights with real-time scoring, team management, recurring schedules, leagues and seasons, a centralized question bank, and a public map of upcoming quizzes. Available in English and Serbian.
+
+## Pages
+
+- [Home](/): Overview of Quizestro, features, and pricing.
+- [Quiz Map](/map): Public interactive map of pub quizzes with schedules, cities, and next-date filters.
+- [Terms of Service](/terms): Legal terms for using Quizestro.
+- [Privacy Policy](/privacy): How user data is handled.
+- [Refund Policy](/refund): Subscription refund terms.
+
+## Optional
+
+- [Sign in](/login): Account sign-in for organizers.
+- [Create account](/register): Register a new organizer account.
