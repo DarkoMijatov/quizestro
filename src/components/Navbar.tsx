@@ -51,7 +51,13 @@ export function Navbar() {
         </div>
 
         {/* Mobile toggle */}
-        <button className="md:hidden" onClick={() => setOpen(!open)}>
+        <button
+          type="button"
+          className="md:hidden"
+          onClick={() => setOpen(!open)}
+          aria-label={open ? t('nav.closeMenu', 'Close menu') : t('nav.openMenu', 'Open menu')}
+          aria-expanded={open}
+        >
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
