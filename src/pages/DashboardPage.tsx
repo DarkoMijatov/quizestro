@@ -126,8 +126,18 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="space-y-8">
+        {isBirthday && (
+          <div className="rounded-xl border-2 border-primary/40 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 p-6 flex items-center gap-4 animate-in fade-in slide-in-from-top-2">
+            <div className="h-14 w-14 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <PartyPopper className="h-7 w-7 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-display text-2xl md:text-3xl font-bold">Srećan rođendan! 🎉</h2>
+              <p className="text-muted-foreground mt-1">Kvizdarija slavi danas — želimo vam puno uspeha!</p>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between">
-          <div>
             <h1 className="font-display text-2xl md:text-3xl font-bold">{t("dashboard.welcome")}</h1>
             <p className="text-muted-foreground mt-1">
               {currentOrg?.name} · <span className="capitalize">{currentRole}</span>
