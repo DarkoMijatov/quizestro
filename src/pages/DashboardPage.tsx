@@ -138,6 +138,7 @@ export default function DashboardPage() {
           </div>
         )}
         <div className="flex items-center justify-between">
+          <div>
             <h1 className="font-display text-2xl md:text-3xl font-bold">{t("dashboard.welcome")}</h1>
             <p className="text-muted-foreground mt-1">
               {currentOrg?.name} · <span className="capitalize">{currentRole}</span>
