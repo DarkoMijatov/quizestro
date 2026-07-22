@@ -136,7 +136,6 @@ export default function DashboardPage() {
             </div>
             <div>
               <h2 className="font-display text-2xl md:text-3xl font-bold">Srećan rođendan! 🎉</h2>
-              <p className="text-muted-foreground mt-1">Kvizdarija slavi danas — želimo vam puno uspeha!</p>
             </div>
           </div>
         )}
