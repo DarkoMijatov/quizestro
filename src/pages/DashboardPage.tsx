@@ -11,7 +11,10 @@ import { Trophy, Users, FolderOpen, Award, Plus, Loader2, Calendar, MapPin, Arro
 import { useOrganizations } from "@/hooks/useOrganizations";
 import { format } from "date-fns";
 
-const BIRTHDAY_ORG_ID = "22974233-cea6-4bec-8f09-8651012a7941";
+const BIRTHDAY_ORG_IDS = new Set([
+  "22974233-cea6-4bec-8f09-8651012a7941",
+  "82fb1b63-7ba6-496f-9c9f-3af58beef212",
+]);
 const BIRTHDAY_DATE = "2026-07-22";
 
 interface RecentQuiz {
