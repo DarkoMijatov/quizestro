@@ -39,6 +39,26 @@ export default function DashboardPage() {
   const isFree = !isOrgPremium(currentOrg);
   const TOTAL_LIMIT = 20;
 
+  const today = format(new Date(), "yyyy-MM-dd");
+  const isBirthday = currentOrg?.id === BIRTHDAY_ORG_ID && today === BIRTHDAY_DATE;
+
+  useEffect(() => {
+    if (!isBirthday) return;
+    const fire = (originX: number) => {
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        startVelocity: 55,
+        origin: { x: originX, y: 0.6 },
+      });
+    };
+    fire(0.2);
+    setTimeout(() => fire(0.8), 250);
+    setTimeout(() => fire(0.5), 500);
+    const interval = setInterval(() => fire(Math.random()), 1500);
+    return () => clearInterval(interval);
+  }, [isBirthday]);
+
   useEffect(() => {
     if (!currentOrg) return;
     const load = async () => {
