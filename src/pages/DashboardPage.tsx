@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import confetti from "canvas-confetti";
 import { supabase } from "@/integrations/supabase/client";
 import { isOrgPremium } from "@/lib/premium";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Users, FolderOpen, Award, Plus, Loader2, Calendar, MapPin, ArrowRight, Zap } from "lucide-react";
+import { Trophy, Users, FolderOpen, Award, Plus, Loader2, Calendar, MapPin, ArrowRight, Zap, PartyPopper } from "lucide-react";
 import { useOrganizations } from "@/hooks/useOrganizations";
 import { format } from "date-fns";
+
+const BIRTHDAY_ORG_ID = "22974233-cea6-4bec-8f09-8651012a7941";
+const BIRTHDAY_DATE = "2026-07-22";
 
 interface RecentQuiz {
   id: string;
