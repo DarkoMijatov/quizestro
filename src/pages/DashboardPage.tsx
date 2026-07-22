@@ -43,7 +43,7 @@ export default function DashboardPage() {
   const TOTAL_LIMIT = 20;
 
   const today = format(new Date(), "yyyy-MM-dd");
-  const isBirthday = currentOrg?.id === BIRTHDAY_ORG_ID && today === BIRTHDAY_DATE;
+  const isBirthday = !!currentOrg && BIRTHDAY_ORG_IDS.has(currentOrg.id) && today === BIRTHDAY_DATE;
 
   useEffect(() => {
     if (!isBirthday) return;
