@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import confetti from "canvas-confetti";
 import { supabase } from "@/integrations/supabase/client";
 import { isOrgPremium } from "@/lib/premium";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Users, FolderOpen, Award, Plus, Loader2, Calendar, MapPin, ArrowRight, Zap } from "lucide-react";
+import { Trophy, Users, FolderOpen, Award, Plus, Loader2, Calendar, MapPin, ArrowRight, Zap, PartyPopper } from "lucide-react";
 import { useOrganizations } from "@/hooks/useOrganizations";
 import { format } from "date-fns";
+
+const BIRTHDAY_ORG_ID = "22974233-cea6-4bec-8f09-8651012a7941";
+const BIRTHDAY_DATE = "2026-07-22";
 
 interface RecentQuiz {
   id: string;
@@ -34,6 +38,26 @@ export default function DashboardPage() {
 
   const isFree = !isOrgPremium(currentOrg);
   const TOTAL_LIMIT = 20;
+
+  const today = format(new Date(), "yyyy-MM-dd");
+  const isBirthday = currentOrg?.id === BIRTHDAY_ORG_ID && today === BIRTHDAY_DATE;
+
+  useEffect(() => {
+    if (!isBirthday) return;
+    const fire = (originX: number) => {
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        startVelocity: 55,
+        origin: { x: originX, y: 0.6 },
+      });
+    };
+    fire(0.2);
+    setTimeout(() => fire(0.8), 250);
+    setTimeout(() => fire(0.5), 500);
+    const interval = setInterval(() => fire(Math.random()), 1500);
+    return () => clearInterval(interval);
+  }, [isBirthday]);
 
   useEffect(() => {
     if (!currentOrg) return;
@@ -102,6 +126,17 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="space-y-8">
+        {isBirthday && (
+          <div className="rounded-xl border-2 border-primary/40 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 p-6 flex items-center gap-4 animate-in fade-in slide-in-from-top-2">
+            <div className="h-14 w-14 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <PartyPopper className="h-7 w-7 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-display text-2xl md:text-3xl font-bold">Srećan rođendan! 🎉</h2>
+              <p className="text-muted-foreground mt-1">Kvizdarija slavi danas — želimo vam puno uspeha!</p>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl md:text-3xl font-bold">{t("dashboard.welcome")}</h1>
