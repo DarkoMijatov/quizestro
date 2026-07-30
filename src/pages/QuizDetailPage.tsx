@@ -955,10 +955,14 @@ export default function QuizDetailPage() {
               >
                 {t("scoring.team")}
               </div>
-              {categories.map((cat) => (
+              {categories.map((cat, headColIdx) => (
                 <div
                   key={cat.id}
-                  className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0"
+                  className={cn(
+                    "p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0 transition-colors",
+                    hoveredCell?.col === headColIdx && "bg-primary/10",
+                    focusedPos?.col === headColIdx && "bg-primary/20",
+                  )}
                   style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
                 >
                   {(cat.category as any)?.name || "?"}
