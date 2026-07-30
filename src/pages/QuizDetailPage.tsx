@@ -1065,13 +1065,24 @@ export default function QuizDetailPage() {
                       const jokerDisabled = !!jokerDisabledElsewhere || !!jokerDisabledByMarker;
                       const markerDisabled = !!markerDisabledElsewhere || !!markerDisabledByJoker;
 
+                      const isHoveredCol = hoveredCell?.col === colIdx;
+                      const isHoveredCellExact = hoveredCell?.col === colIdx && hoveredCell?.row === rowIdx;
+                      const isFocusedCol = focusedPos?.col === colIdx;
+                      const isFocusedCellExact = focusedPos?.col === colIdx && focusedPos?.row === rowIdx;
+
                       return (
                         <div
                           key={cat.id}
+                          onMouseEnter={() => setHoveredCell({ row: rowIdx, col: colIdx })}
+                          onMouseLeave={() => setHoveredCell((c) => (c && c.row === rowIdx && c.col === colIdx ? null : c))}
                           className={cn(
-                            "p-0.5 flex items-center justify-center border-l-2 border-foreground/20 min-h-0 overflow-hidden",
+                            "p-0.5 flex items-center justify-center border-l-2 border-foreground/20 min-h-0 overflow-hidden transition-colors",
                             hasJoker && "bg-primary/[0.08]",
                             hasBonusPt && !hasJoker && "bg-yellow-500/[0.06]",
+                            isHoveredCol && "bg-primary/[0.07]",
+                            isFocusedCol && "bg-primary/[0.10]",
+                            isHoveredCellExact && "bg-primary/[0.14]",
+                            isFocusedCellExact && "bg-primary/[0.22] ring-2 ring-inset ring-primary/50",
                           )}
                         >
                           {canScore ? (
