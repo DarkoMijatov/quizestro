@@ -1231,7 +1231,7 @@ export default function QuizDetailPage() {
                     })}
 
                     {/* Total */}
-                    <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
+                    <div data-col={categories.length + 1} className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
                       <span className="font-black text-primary leading-none" style={{ fontSize: totalFontSize }}>
                         {formatScoreForLocale(total)}
                       </span>
