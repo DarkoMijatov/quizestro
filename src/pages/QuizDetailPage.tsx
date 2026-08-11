@@ -128,8 +128,6 @@ export default function QuizDetailPage() {
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
-  const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
-  const [focusedPos, setFocusedPos] = useState<{ row: number; col: number } | null>(null);
   const [editingValues, setEditingValues] = useState<Record<string, string>>({});
   const [scoringView, setScoringView] = useState<"categories" | "parts">("categories");
   const [expandedPart, setExpandedPart] = useState<string | null>(null);
@@ -138,6 +136,29 @@ export default function QuizDetailPage() {
     height: typeof window !== "undefined" ? window.innerHeight : 900,
   }));
   const scoringRef = useRef<HTMLDivElement>(null);
+  const hlRootRef = useRef<HTMLDivElement>(null);
+
+  // Imperative crosshair highlighting (no React re-renders -> no input lag)
+  const applyHighlight = useCallback((kind: "hover" | "focus", row: number | null, col: number | null) => {
+    const root = hlRootRef.current;
+    if (!root) return;
+    root.querySelectorAll(`.qz-${kind}-col, .qz-${kind}-row, .qz-${kind}-cell`).forEach((el) => {
+      el.classList.remove(`qz-${kind}-col`, `qz-${kind}-row`, `qz-${kind}-cell`);
+    });
+    if (row === null || col === null) return;
+    root.querySelectorAll(`[data-col="${col}"]`).forEach((el) => el.classList.add(`qz-${kind}-col`));
+    root.querySelectorAll(`[data-row="${row}"]`).forEach((el) => el.classList.add(`qz-${kind}-row`));
+    root.querySelectorAll(`[data-row="${row}"][data-col="${col}"]`).forEach((el) => el.classList.add(`qz-${kind}-cell`));
+  }, []);
+
+  const handleHlMouseOver = useCallback((e: React.MouseEvent) => {
+    const cell = (e.target as HTMLElement).closest("[data-row][data-col]") as HTMLElement | null;
+    if (!cell) return;
+    applyHighlight("hover", Number(cell.dataset.row), Number(cell.dataset.col));
+  }, [applyHighlight]);
+
+  const handleHlMouseLeave = useCallback(() => applyHighlight("hover", null, null), [applyHighlight]);
+
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
   const manualTeamOrderRef = useRef<string[] | null>(null);
@@ -929,6 +950,9 @@ export default function QuizDetailPage() {
 
         {/* Scoring Table */}
         <div
+          ref={hlRootRef}
+          onMouseOver={handleHlMouseOver}
+          onMouseLeave={handleHlMouseLeave}
           className="rounded-xl border-2 border-foreground/20 shadow-md overflow-hidden min-h-0 flex-1 mt-2 flex flex-col"
           style={{
             backgroundColor: currentOrg?.branding_bg_color || undefined,
@@ -958,11 +982,8 @@ export default function QuizDetailPage() {
               {categories.map((cat, headColIdx) => (
                 <div
                   key={cat.id}
-                  className={cn(
-                    "p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0 transition-colors",
-                    hoveredCell?.col === headColIdx && "bg-primary/10",
-                    focusedPos?.col === headColIdx && "bg-primary/20",
-                  )}
+                  data-col={headColIdx}
+                  className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0 transition-colors"
                   style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
                 >
                   {(cat.category as any)?.name || "?"}
@@ -984,11 +1005,10 @@ export default function QuizDetailPage() {
                 return (
                   <div
                     key={team.id}
+                    data-row={rowIdx}
                     className={cn(
                       "grid w-full border-b-2 border-foreground/20 last:border-0 flex-1 min-h-0 overflow-hidden transition-colors",
                       rowIdx === 0 && "bg-primary/[0.04]",
-                      hoveredCell?.row === rowIdx && "bg-primary/[0.07]",
-                      focusedPos?.row === rowIdx && "bg-primary/[0.12]",
                     )}
                     style={{ gridTemplateColumns: colTemplate, minHeight: `${rowHeightPx}px` }}
                   >
@@ -1065,24 +1085,15 @@ export default function QuizDetailPage() {
                       const jokerDisabled = !!jokerDisabledElsewhere || !!jokerDisabledByMarker;
                       const markerDisabled = !!markerDisabledElsewhere || !!markerDisabledByJoker;
 
-                      const isHoveredCol = hoveredCell?.col === colIdx;
-                      const isHoveredCellExact = hoveredCell?.col === colIdx && hoveredCell?.row === rowIdx;
-                      const isFocusedCol = focusedPos?.col === colIdx;
-                      const isFocusedCellExact = focusedPos?.col === colIdx && focusedPos?.row === rowIdx;
-
                       return (
                         <div
                           key={cat.id}
-                          onMouseEnter={() => setHoveredCell({ row: rowIdx, col: colIdx })}
-                          onMouseLeave={() => setHoveredCell((c) => (c && c.row === rowIdx && c.col === colIdx ? null : c))}
+                          data-row={rowIdx}
+                          data-col={colIdx}
                           className={cn(
                             "p-0.5 flex items-center justify-center border-l-2 border-foreground/20 min-h-0 overflow-hidden transition-colors",
                             hasJoker && "bg-primary/[0.08]",
                             hasBonusPt && !hasJoker && "bg-yellow-500/[0.06]",
-                            isHoveredCol && "bg-primary/[0.07]",
-                            isFocusedCol && "bg-primary/[0.10]",
-                            isHoveredCellExact && "bg-primary/[0.14]",
-                            isFocusedCellExact && "bg-primary/[0.22] ring-2 ring-inset ring-primary/50",
                           )}
                         >
                           {canScore ? (
@@ -1108,14 +1119,14 @@ export default function QuizDetailPage() {
                                     onChange={(e) => setEditingValue(cellKey, e.target.value)}
                                     onFocus={(e) => {
                                       setFocusedCell(cellKey);
-                                      setFocusedPos({ row: rowIdx, col: colIdx });
+                                      applyHighlight("focus", rowIdx, colIdx);
                                       setEditingValue(cellKey, formatEditableScore(score?.points ?? 0));
                                       e.target.select();
                                     }}
                                     onBlur={() => {
                                       if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value));
                                       setFocusedCell(null);
-                                      setFocusedPos((p) => (p && p.row === rowIdx && p.col === colIdx ? null : p));
+                                      applyHighlight("focus", null, null);
                                     }}
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
