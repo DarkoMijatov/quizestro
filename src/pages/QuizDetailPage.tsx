@@ -991,6 +991,7 @@ export default function QuizDetailPage() {
               {categories.map((cat, headColIdx) => (
                 <div
                   key={cat.id}
+                  data-col={headColIdx + 1}
                   className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0 transition-colors"
                   style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
                 >
@@ -998,6 +999,7 @@ export default function QuizDetailPage() {
                 </div>
               ))}
               <div
+                data-col={categories.length + 1}
                 className="p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center"
                 style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
               >
