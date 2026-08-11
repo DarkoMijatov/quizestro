@@ -1124,16 +1124,16 @@ export default function QuizDetailPage() {
                                     onChange={(e) => setEditingValue(cellKey, e.target.value)}
                                     onFocus={(e) => {
                                       setFocusedCell(cellKey);
-                                      applyHighlight(rowIdx);
+                                      applyHighlight(rowIdx, colIdx + 1);
                                       setEditingValue(cellKey, formatEditableScore(score?.points ?? 0));
                                       e.target.select();
                                     }}
                                     onBlur={(e) => {
                                       if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value));
                                       setFocusedCell(null);
-                                      // keep the row highlight if focus moves to another cell in the table
+                                      // keep the highlight if focus moves to another cell in the table
                                       const next = e.relatedTarget as HTMLElement | null;
-                                      if (!next || !next.closest("[data-row]")) applyHighlight(null);
+                                      if (!next || !next.closest("[data-row]")) applyHighlight(null, null);
                                     }}
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
