@@ -982,6 +982,7 @@ export default function QuizDetailPage() {
               }}
             >
               <div
+                data-col="0"
                 className="p-1 font-bold uppercase tracking-wide flex items-center justify-center text-center"
                 style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
               >
