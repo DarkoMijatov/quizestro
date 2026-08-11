@@ -159,9 +159,6 @@
 }
 
 /* Live scoring row highlight (applied imperatively, no re-render) */
-.qz-hover-row {
-  background-color: hsl(var(--primary) / 0.07);
-}
 .qz-focus-row {
   background-color: hsl(var(--primary) / 0.14);
 }

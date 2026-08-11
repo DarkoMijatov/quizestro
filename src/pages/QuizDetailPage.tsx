@@ -139,30 +139,16 @@ export default function QuizDetailPage() {
   const hlRootRef = useRef<HTMLDivElement>(null);
 
   // Imperative row highlighting (no React re-renders, updates only on real position change)
-  const activeHlRef = useRef<{ hover: HTMLElement | null; focus: HTMLElement | null }>({ hover: null, focus: null });
+  const activeHlRef = useRef<HTMLElement | null>(null);
 
-  const applyHighlight = useCallback((kind: "hover" | "focus", row: number | null) => {
+  const applyHighlight = useCallback((row: number | null) => {
     const root = hlRootRef.current;
-    const prev = activeHlRef.current[kind];
+    const prev = activeHlRef.current;
     const next = row === null || !root ? null : (root.querySelector(`[data-row="${row}"]`) as HTMLElement | null);
     if (prev === next) return;
-    prev?.classList.remove(`qz-${kind}-row`);
-    next?.classList.add(`qz-${kind}-row`);
-    activeHlRef.current[kind] = next;
-  }, []);
-
-  const handleHlMouseOver = useCallback((e: React.MouseEvent) => {
-    const rowEl = (e.target as HTMLElement).closest("[data-row]") as HTMLElement | null;
-    if (rowEl === activeHlRef.current.hover) return;
-    const prev = activeHlRef.current.hover;
-    prev?.classList.remove("qz-hover-row");
-    rowEl?.classList.add("qz-hover-row");
-    activeHlRef.current.hover = rowEl;
-  }, []);
-
-  const handleHlMouseLeave = useCallback(() => {
-    activeHlRef.current.hover?.classList.remove("qz-hover-row");
-    activeHlRef.current.hover = null;
+    prev?.classList.remove("qz-focus-row");
+    next?.classList.add("qz-focus-row");
+    activeHlRef.current = next;
   }, []);
 
 
@@ -793,7 +779,7 @@ export default function QuizDetailPage() {
     } else return;
 
     if (targetRow === rowIdx && targetCol === colIdx) {
-      applyHighlight("focus", rowIdx);
+      applyHighlight(rowIdx);
       return;
     }
 
@@ -801,7 +787,7 @@ export default function QuizDetailPage() {
     const el = inputRefs.current.get(key);
     if (el) {
       // highlight the destination row before focus so the highlight never flickers
-      applyHighlight("focus", targetRow);
+      applyHighlight(targetRow);
       el.focus();
       el.select();
     }
@@ -965,8 +951,6 @@ export default function QuizDetailPage() {
         {/* Scoring Table */}
         <div
           ref={hlRootRef}
-          onMouseOver={handleHlMouseOver}
-          onMouseLeave={handleHlMouseLeave}
           className="rounded-xl border-2 border-foreground/20 shadow-md overflow-hidden min-h-0 flex-1 mt-2 flex flex-col"
           style={{
             backgroundColor: currentOrg?.branding_bg_color || undefined,
@@ -1130,7 +1114,7 @@ export default function QuizDetailPage() {
                                     onChange={(e) => setEditingValue(cellKey, e.target.value)}
                                     onFocus={(e) => {
                                       setFocusedCell(cellKey);
-                                      applyHighlight("focus", rowIdx);
+                                      applyHighlight(rowIdx);
                                       setEditingValue(cellKey, formatEditableScore(score?.points ?? 0));
                                       e.target.select();
                                     }}
@@ -1139,7 +1123,7 @@ export default function QuizDetailPage() {
                                       setFocusedCell(null);
                                       // keep the row highlight if focus moves to another cell in the table
                                       const next = e.relatedTarget as HTMLElement | null;
-                                      if (!next || !next.closest("[data-row]")) applyHighlight("focus", null);
+                                      if (!next || !next.closest("[data-row]")) applyHighlight(null);
                                     }}
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
