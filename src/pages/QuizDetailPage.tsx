@@ -138,17 +138,27 @@ export default function QuizDetailPage() {
   const scoringRef = useRef<HTMLDivElement>(null);
   const hlRootRef = useRef<HTMLDivElement>(null);
 
-  // Imperative row highlighting (no React re-renders, updates only on real position change)
-  const activeHlRef = useRef<HTMLElement | null>(null);
+  // Imperative row+column highlighting (no React re-renders, updates only on real position change)
+  const activeHlRef = useRef<{ row: HTMLElement | null; cols: HTMLElement[] }>({ row: null, cols: [] });
 
-  const applyHighlight = useCallback((row: number | null) => {
+  const applyHighlight = useCallback((row: number | null, col: number | null) => {
     const root = hlRootRef.current;
-    const prev = activeHlRef.current;
-    const next = row === null || !root ? null : (root.querySelector(`[data-row="${row}"]`) as HTMLElement | null);
-    if (prev === next) return;
-    prev?.classList.remove("qz-focus-row");
-    next?.classList.add("qz-focus-row");
-    activeHlRef.current = next;
+    // Row
+    const prevRow = activeHlRef.current.row;
+    const nextRow = row === null || !root ? null : (root.querySelector(`[data-row="${row}"]`) as HTMLElement | null);
+    if (prevRow !== nextRow) {
+      prevRow?.classList.remove("qz-focus-row");
+      nextRow?.classList.add("qz-focus-row");
+    }
+    // Column (all cells with matching data-col, including header)
+    const prevCols = activeHlRef.current.cols;
+    prevCols.forEach((c) => c.classList.remove("qz-focus-col"));
+    let nextCols: HTMLElement[] = [];
+    if (col !== null && root) {
+      nextCols = Array.from(root.querySelectorAll(`[data-col="${col}"]`)) as HTMLElement[];
+      nextCols.forEach((c) => c.classList.add("qz-focus-col"));
+    }
+    activeHlRef.current = { row: nextRow, cols: nextCols };
   }, []);
 
 
