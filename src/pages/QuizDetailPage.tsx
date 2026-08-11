@@ -138,26 +138,33 @@ export default function QuizDetailPage() {
   const scoringRef = useRef<HTMLDivElement>(null);
   const hlRootRef = useRef<HTMLDivElement>(null);
 
-  // Imperative crosshair highlighting (no React re-renders -> no input lag)
-  const applyHighlight = useCallback((kind: "hover" | "focus", row: number | null, col: number | null) => {
+  // Imperative row highlighting (no React re-renders, updates only on real position change)
+  const activeHlRef = useRef<{ hover: HTMLElement | null; focus: HTMLElement | null }>({ hover: null, focus: null });
+
+  const applyHighlight = useCallback((kind: "hover" | "focus", row: number | null) => {
     const root = hlRootRef.current;
-    if (!root) return;
-    root.querySelectorAll(`.qz-${kind}-col, .qz-${kind}-row, .qz-${kind}-cell`).forEach((el) => {
-      el.classList.remove(`qz-${kind}-col`, `qz-${kind}-row`, `qz-${kind}-cell`);
-    });
-    if (row === null || col === null) return;
-    root.querySelectorAll(`[data-col="${col}"]`).forEach((el) => el.classList.add(`qz-${kind}-col`));
-    root.querySelectorAll(`[data-row="${row}"]`).forEach((el) => el.classList.add(`qz-${kind}-row`));
-    root.querySelectorAll(`[data-row="${row}"][data-col="${col}"]`).forEach((el) => el.classList.add(`qz-${kind}-cell`));
+    const prev = activeHlRef.current[kind];
+    const next = row === null || !root ? null : (root.querySelector(`[data-row="${row}"]`) as HTMLElement | null);
+    if (prev === next) return;
+    prev?.classList.remove(`qz-${kind}-row`);
+    next?.classList.add(`qz-${kind}-row`);
+    activeHlRef.current[kind] = next;
   }, []);
 
   const handleHlMouseOver = useCallback((e: React.MouseEvent) => {
-    const cell = (e.target as HTMLElement).closest("[data-row][data-col]") as HTMLElement | null;
-    if (!cell) return;
-    applyHighlight("hover", Number(cell.dataset.row), Number(cell.dataset.col));
-  }, [applyHighlight]);
+    const rowEl = (e.target as HTMLElement).closest("[data-row]") as HTMLElement | null;
+    if (rowEl === activeHlRef.current.hover) return;
+    const prev = activeHlRef.current.hover;
+    prev?.classList.remove("qz-hover-row");
+    rowEl?.classList.add("qz-hover-row");
+    activeHlRef.current.hover = rowEl;
+  }, []);
 
-  const handleHlMouseLeave = useCallback(() => applyHighlight("hover", null, null), [applyHighlight]);
+  const handleHlMouseLeave = useCallback(() => {
+    activeHlRef.current.hover?.classList.remove("qz-hover-row");
+    activeHlRef.current.hover = null;
+  }, []);
+
 
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
