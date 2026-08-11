@@ -1098,6 +1098,7 @@ export default function QuizDetailPage() {
                       return (
                         <div
                           key={cat.id}
+                          data-col={colIdx + 1}
                           className={cn(
                             "p-0.5 flex items-center justify-center border-l-2 border-foreground/20 min-h-0 overflow-hidden transition-colors",
                             hasJoker && "bg-primary/[0.08]",
