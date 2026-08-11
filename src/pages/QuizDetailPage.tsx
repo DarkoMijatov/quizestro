@@ -989,7 +989,6 @@ export default function QuizDetailPage() {
               {categories.map((cat, headColIdx) => (
                 <div
                   key={cat.id}
-                  data-col={headColIdx}
                   className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0 transition-colors"
                   style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
                 >
@@ -1095,8 +1094,6 @@ export default function QuizDetailPage() {
                       return (
                         <div
                           key={cat.id}
-                          data-row={rowIdx}
-                          data-col={colIdx}
                           className={cn(
                             "p-0.5 flex items-center justify-center border-l-2 border-foreground/20 min-h-0 overflow-hidden transition-colors",
                             hasJoker && "bg-primary/[0.08]",
@@ -1126,14 +1123,14 @@ export default function QuizDetailPage() {
                                     onChange={(e) => setEditingValue(cellKey, e.target.value)}
                                     onFocus={(e) => {
                                       setFocusedCell(cellKey);
-                                      applyHighlight("focus", rowIdx, colIdx);
+                                      applyHighlight("focus", rowIdx);
                                       setEditingValue(cellKey, formatEditableScore(score?.points ?? 0));
                                       e.target.select();
                                     }}
                                     onBlur={() => {
                                       if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value));
                                       setFocusedCell(null);
-                                      applyHighlight("focus", null, null);
+                                      applyHighlight("focus", null);
                                     }}
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
