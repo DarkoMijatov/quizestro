@@ -766,12 +766,21 @@ export default function QuizDetailPage() {
     let targetRow = rowIdx;
     let targetCol = colIdx;
 
-    if (e.key === "ArrowDown") {
+    if (e.key === "ArrowDown" || e.key === "Enter") {
       targetRow = Math.min(rowIdx + 1, rankedTeams.length - 1);
       e.preventDefault();
     } else if (e.key === "ArrowUp") {
       targetRow = Math.max(rowIdx - 1, 0);
       e.preventDefault();
+    } else if ((e.key === "Tab" && e.shiftKey) || e.key === "ArrowLeft") {
+      if (colIdx > 0) {
+        targetCol = colIdx - 1;
+        e.preventDefault();
+      } else if (rowIdx > 0) {
+        targetRow = rowIdx - 1;
+        targetCol = categories.length - 1;
+        e.preventDefault();
+      }
     } else if (e.key === "ArrowRight" || e.key === "Tab") {
       if (colIdx < categories.length - 1) {
         targetCol = colIdx + 1;
@@ -781,20 +790,18 @@ export default function QuizDetailPage() {
         targetCol = 0;
         e.preventDefault();
       }
-    } else if (e.key === "ArrowLeft") {
-      if (colIdx > 0) {
-        targetCol = colIdx - 1;
-        e.preventDefault();
-      } else if (rowIdx > 0) {
-        targetRow = rowIdx - 1;
-        targetCol = categories.length - 1;
-        e.preventDefault();
-      }
     } else return;
+
+    if (targetRow === rowIdx && targetCol === colIdx) {
+      applyHighlight("focus", rowIdx);
+      return;
+    }
 
     const key = `${targetRow}-${targetCol}`;
     const el = inputRefs.current.get(key);
     if (el) {
+      // highlight the destination row before focus so the highlight never flickers
+      applyHighlight("focus", targetRow);
       el.focus();
       el.select();
     }
@@ -1127,10 +1134,12 @@ export default function QuizDetailPage() {
                                       setEditingValue(cellKey, formatEditableScore(score?.points ?? 0));
                                       e.target.select();
                                     }}
-                                    onBlur={() => {
+                                    onBlur={(e) => {
                                       if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value));
                                       setFocusedCell(null);
-                                      applyHighlight("focus", null);
+                                      // keep the row highlight if focus moves to another cell in the table
+                                      const next = e.relatedTarget as HTMLElement | null;
+                                      if (!next || !next.closest("[data-row]")) applyHighlight("focus", null);
                                     }}
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
