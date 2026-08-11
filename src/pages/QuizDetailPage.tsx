@@ -779,7 +779,7 @@ export default function QuizDetailPage() {
     } else return;
 
     if (targetRow === rowIdx && targetCol === colIdx) {
-      applyHighlight("focus", rowIdx);
+      applyHighlight(rowIdx);
       return;
     }
 
@@ -787,7 +787,7 @@ export default function QuizDetailPage() {
     const el = inputRefs.current.get(key);
     if (el) {
       // highlight the destination row before focus so the highlight never flickers
-      applyHighlight("focus", targetRow);
+      applyHighlight(targetRow);
       el.focus();
       el.select();
     }
@@ -951,8 +951,6 @@ export default function QuizDetailPage() {
         {/* Scoring Table */}
         <div
           ref={hlRootRef}
-          onMouseOver={handleHlMouseOver}
-          onMouseLeave={handleHlMouseLeave}
           className="rounded-xl border-2 border-foreground/20 shadow-md overflow-hidden min-h-0 flex-1 mt-2 flex flex-col"
           style={{
             backgroundColor: currentOrg?.branding_bg_color || undefined,
@@ -1116,7 +1114,7 @@ export default function QuizDetailPage() {
                                     onChange={(e) => setEditingValue(cellKey, e.target.value)}
                                     onFocus={(e) => {
                                       setFocusedCell(cellKey);
-                                      applyHighlight("focus", rowIdx);
+                                      applyHighlight(rowIdx);
                                       setEditingValue(cellKey, formatEditableScore(score?.points ?? 0));
                                       e.target.select();
                                     }}
@@ -1125,7 +1123,7 @@ export default function QuizDetailPage() {
                                       setFocusedCell(null);
                                       // keep the row highlight if focus moves to another cell in the table
                                       const next = e.relatedTarget as HTMLElement | null;
-                                      if (!next || !next.closest("[data-row]")) applyHighlight("focus", null);
+                                      if (!next || !next.closest("[data-row]")) applyHighlight(null);
                                     }}
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
