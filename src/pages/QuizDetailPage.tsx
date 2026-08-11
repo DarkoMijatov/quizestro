@@ -136,6 +136,29 @@ export default function QuizDetailPage() {
     height: typeof window !== "undefined" ? window.innerHeight : 900,
   }));
   const scoringRef = useRef<HTMLDivElement>(null);
+  const hlRootRef = useRef<HTMLDivElement>(null);
+
+  // Imperative crosshair highlighting (no React re-renders -> no input lag)
+  const applyHighlight = useCallback((kind: "hover" | "focus", row: number | null, col: number | null) => {
+    const root = hlRootRef.current;
+    if (!root) return;
+    root.querySelectorAll(`.qz-${kind}-col, .qz-${kind}-row, .qz-${kind}-cell`).forEach((el) => {
+      el.classList.remove(`qz-${kind}-col`, `qz-${kind}-row`, `qz-${kind}-cell`);
+    });
+    if (row === null || col === null) return;
+    root.querySelectorAll(`[data-col="${col}"]`).forEach((el) => el.classList.add(`qz-${kind}-col`));
+    root.querySelectorAll(`[data-row="${row}"]`).forEach((el) => el.classList.add(`qz-${kind}-row`));
+    root.querySelectorAll(`[data-row="${row}"][data-col="${col}"]`).forEach((el) => el.classList.add(`qz-${kind}-cell`));
+  }, []);
+
+  const handleHlMouseOver = useCallback((e: React.MouseEvent) => {
+    const cell = (e.target as HTMLElement).closest("[data-row][data-col]") as HTMLElement | null;
+    if (!cell) return;
+    applyHighlight("hover", Number(cell.dataset.row), Number(cell.dataset.col));
+  }, [applyHighlight]);
+
+  const handleHlMouseLeave = useCallback(() => applyHighlight("hover", null, null), [applyHighlight]);
+
 
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
   const manualTeamOrderRef = useRef<string[] | null>(null);
