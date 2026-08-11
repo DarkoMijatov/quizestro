@@ -158,8 +158,11 @@
   }
 }
 
-/* Live scoring row highlight (applied imperatively, no re-render) */
+/* Live scoring row/column highlight (applied imperatively, no re-render) */
 .qz-focus-row {
   background-color: hsl(var(--primary) / 0.14);
+}
+.qz-focus-col {
+  background-color: hsl(var(--primary) / 0.07);
 }
 

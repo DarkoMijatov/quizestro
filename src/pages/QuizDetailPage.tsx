@@ -138,17 +138,27 @@ export default function QuizDetailPage() {
   const scoringRef = useRef<HTMLDivElement>(null);
   const hlRootRef = useRef<HTMLDivElement>(null);
 
-  // Imperative row highlighting (no React re-renders, updates only on real position change)
-  const activeHlRef = useRef<HTMLElement | null>(null);
+  // Imperative row+column highlighting (no React re-renders, updates only on real position change)
+  const activeHlRef = useRef<{ row: HTMLElement | null; cols: HTMLElement[] }>({ row: null, cols: [] });
 
-  const applyHighlight = useCallback((row: number | null) => {
+  const applyHighlight = useCallback((row: number | null, col: number | null) => {
     const root = hlRootRef.current;
-    const prev = activeHlRef.current;
-    const next = row === null || !root ? null : (root.querySelector(`[data-row="${row}"]`) as HTMLElement | null);
-    if (prev === next) return;
-    prev?.classList.remove("qz-focus-row");
-    next?.classList.add("qz-focus-row");
-    activeHlRef.current = next;
+    // Row
+    const prevRow = activeHlRef.current.row;
+    const nextRow = row === null || !root ? null : (root.querySelector(`[data-row="${row}"]`) as HTMLElement | null);
+    if (prevRow !== nextRow) {
+      prevRow?.classList.remove("qz-focus-row");
+      nextRow?.classList.add("qz-focus-row");
+    }
+    // Column (all cells with matching data-col, including header)
+    const prevCols = activeHlRef.current.cols;
+    prevCols.forEach((c) => c.classList.remove("qz-focus-col"));
+    let nextCols: HTMLElement[] = [];
+    if (col !== null && root) {
+      nextCols = Array.from(root.querySelectorAll(`[data-col="${col}"]`)) as HTMLElement[];
+      nextCols.forEach((c) => c.classList.add("qz-focus-col"));
+    }
+    activeHlRef.current = { row: nextRow, cols: nextCols };
   }, []);
 
 
@@ -779,15 +789,15 @@ export default function QuizDetailPage() {
     } else return;
 
     if (targetRow === rowIdx && targetCol === colIdx) {
-      applyHighlight(rowIdx);
+      applyHighlight(rowIdx, targetCol + 1);
       return;
     }
 
     const key = `${targetRow}-${targetCol}`;
     const el = inputRefs.current.get(key);
     if (el) {
-      // highlight the destination row before focus so the highlight never flickers
-      applyHighlight(targetRow);
+      // highlight the destination row+col before focus so the highlight never flickers
+      applyHighlight(targetRow, targetCol + 1);
       el.focus();
       el.select();
     }
@@ -972,6 +982,7 @@ export default function QuizDetailPage() {
               }}
             >
               <div
+                data-col="0"
                 className="p-1 font-bold uppercase tracking-wide flex items-center justify-center text-center"
                 style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
               >
@@ -980,6 +991,7 @@ export default function QuizDetailPage() {
               {categories.map((cat, headColIdx) => (
                 <div
                   key={cat.id}
+                  data-col={headColIdx + 1}
                   className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0 transition-colors"
                   style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
                 >
@@ -987,6 +999,7 @@ export default function QuizDetailPage() {
                 </div>
               ))}
               <div
+                data-col={categories.length + 1}
                 className="p-1 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 flex items-center justify-center"
                 style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
               >
@@ -1010,7 +1023,7 @@ export default function QuizDetailPage() {
                     style={{ gridTemplateColumns: colTemplate, minHeight: `${rowHeightPx}px` }}
                   >
                     {/* Rank + Team */}
-                    <div className="flex items-center p-0.5 min-w-0 overflow-hidden" style={{ gap: `${teamCellGapPx}px` }}>
+                    <div data-col="0" className="flex items-center p-0.5 min-w-0 overflow-hidden" style={{ gap: `${teamCellGapPx}px` }}>
                       <div
                         className="flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground"
                         style={{ width: `${rankCirclePx}px`, height: `${rankCirclePx}px`, fontSize: `${Math.max(8, Math.floor(rankCirclePx * 0.45))}px` }}
@@ -1085,6 +1098,7 @@ export default function QuizDetailPage() {
                       return (
                         <div
                           key={cat.id}
+                          data-col={colIdx + 1}
                           className={cn(
                             "p-0.5 flex items-center justify-center border-l-2 border-foreground/20 min-h-0 overflow-hidden transition-colors",
                             hasJoker && "bg-primary/[0.08]",
@@ -1114,16 +1128,16 @@ export default function QuizDetailPage() {
                                     onChange={(e) => setEditingValue(cellKey, e.target.value)}
                                     onFocus={(e) => {
                                       setFocusedCell(cellKey);
-                                      applyHighlight(rowIdx);
+                                      applyHighlight(rowIdx, colIdx + 1);
                                       setEditingValue(cellKey, formatEditableScore(score?.points ?? 0));
                                       e.target.select();
                                     }}
                                     onBlur={(e) => {
                                       if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value));
                                       setFocusedCell(null);
-                                      // keep the row highlight if focus moves to another cell in the table
+                                      // keep the highlight if focus moves to another cell in the table
                                       const next = e.relatedTarget as HTMLElement | null;
-                                      if (!next || !next.closest("[data-row]")) applyHighlight(null);
+                                      if (!next || !next.closest("[data-row]")) applyHighlight(null, null);
                                     }}
                                     onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
@@ -1217,7 +1231,7 @@ export default function QuizDetailPage() {
                     })}
 
                     {/* Total */}
-                    <div className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
+                    <div data-col={categories.length + 1} className="p-1 flex items-center justify-center border-l-2 border-foreground/20">
                       <span className="font-black text-primary leading-none" style={{ fontSize: totalFontSize }}>
                         {formatScoreForLocale(total)}
                       </span>
