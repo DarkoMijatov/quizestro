@@ -982,11 +982,8 @@ export default function QuizDetailPage() {
               {categories.map((cat, headColIdx) => (
                 <div
                   key={cat.id}
-                  className={cn(
-                    "p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0 transition-colors",
-                    hoveredCell?.col === headColIdx && "bg-primary/10",
-                    focusedPos?.col === headColIdx && "bg-primary/20",
-                  )}
+                  data-col={headColIdx}
+                  className="p-0.5 font-bold uppercase tracking-wide text-center border-l-2 border-foreground/20 break-words leading-tight flex items-center justify-center overflow-hidden min-w-0 transition-colors"
                   style={{ fontSize: headerFontSize, color: currentOrg?.branding_text_color || undefined }}
                 >
                   {(cat.category as any)?.name || "?"}
