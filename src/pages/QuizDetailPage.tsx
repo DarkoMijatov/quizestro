@@ -1023,7 +1023,7 @@ export default function QuizDetailPage() {
                     style={{ gridTemplateColumns: colTemplate, minHeight: `${rowHeightPx}px` }}
                   >
                     {/* Rank + Team */}
-                    <div className="flex items-center p-0.5 min-w-0 overflow-hidden" style={{ gap: `${teamCellGapPx}px` }}>
+                    <div data-col="0" className="flex items-center p-0.5 min-w-0 overflow-hidden" style={{ gap: `${teamCellGapPx}px` }}>
                       <div
                         className="flex-shrink-0 rounded-full bg-foreground/10 flex items-center justify-center font-black text-foreground"
                         style={{ width: `${rankCirclePx}px`, height: `${rankCirclePx}px`, fontSize: `${Math.max(8, Math.floor(rankCirclePx * 0.45))}px` }}
