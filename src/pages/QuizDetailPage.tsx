@@ -128,8 +128,6 @@ export default function QuizDetailPage() {
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [focusedCell, setFocusedCell] = useState<string | null>(null);
-  const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
-  const [focusedPos, setFocusedPos] = useState<{ row: number; col: number } | null>(null);
   const [editingValues, setEditingValues] = useState<Record<string, string>>({});
   const [scoringView, setScoringView] = useState<"categories" | "parts">("categories");
   const [expandedPart, setExpandedPart] = useState<string | null>(null);
