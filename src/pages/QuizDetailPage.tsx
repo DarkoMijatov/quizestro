@@ -1005,11 +1005,10 @@ export default function QuizDetailPage() {
                 return (
                   <div
                     key={team.id}
+                    data-row={rowIdx}
                     className={cn(
                       "grid w-full border-b-2 border-foreground/20 last:border-0 flex-1 min-h-0 overflow-hidden transition-colors",
                       rowIdx === 0 && "bg-primary/[0.04]",
-                      hoveredCell?.row === rowIdx && "bg-primary/[0.07]",
-                      focusedPos?.row === rowIdx && "bg-primary/[0.12]",
                     )}
                     style={{ gridTemplateColumns: colTemplate, minHeight: `${rowHeightPx}px` }}
                   >
