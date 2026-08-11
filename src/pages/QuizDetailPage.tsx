@@ -789,15 +789,15 @@ export default function QuizDetailPage() {
     } else return;
 
     if (targetRow === rowIdx && targetCol === colIdx) {
-      applyHighlight(rowIdx);
+      applyHighlight(rowIdx, targetCol + 1);
       return;
     }
 
     const key = `${targetRow}-${targetCol}`;
     const el = inputRefs.current.get(key);
     if (el) {
-      // highlight the destination row before focus so the highlight never flickers
-      applyHighlight(targetRow);
+      // highlight the destination row+col before focus so the highlight never flickers
+      applyHighlight(targetRow, targetCol + 1);
       el.focus();
       el.select();
     }
