@@ -139,30 +139,16 @@ export default function QuizDetailPage() {
   const hlRootRef = useRef<HTMLDivElement>(null);
 
   // Imperative row highlighting (no React re-renders, updates only on real position change)
-  const activeHlRef = useRef<{ hover: HTMLElement | null; focus: HTMLElement | null }>({ hover: null, focus: null });
+  const activeHlRef = useRef<HTMLElement | null>(null);
 
-  const applyHighlight = useCallback((kind: "hover" | "focus", row: number | null) => {
+  const applyHighlight = useCallback((row: number | null) => {
     const root = hlRootRef.current;
-    const prev = activeHlRef.current[kind];
+    const prev = activeHlRef.current;
     const next = row === null || !root ? null : (root.querySelector(`[data-row="${row}"]`) as HTMLElement | null);
     if (prev === next) return;
-    prev?.classList.remove(`qz-${kind}-row`);
-    next?.classList.add(`qz-${kind}-row`);
-    activeHlRef.current[kind] = next;
-  }, []);
-
-  const handleHlMouseOver = useCallback((e: React.MouseEvent) => {
-    const rowEl = (e.target as HTMLElement).closest("[data-row]") as HTMLElement | null;
-    if (rowEl === activeHlRef.current.hover) return;
-    const prev = activeHlRef.current.hover;
-    prev?.classList.remove("qz-hover-row");
-    rowEl?.classList.add("qz-hover-row");
-    activeHlRef.current.hover = rowEl;
-  }, []);
-
-  const handleHlMouseLeave = useCallback(() => {
-    activeHlRef.current.hover?.classList.remove("qz-hover-row");
-    activeHlRef.current.hover = null;
+    prev?.classList.remove("qz-focus-row");
+    next?.classList.add("qz-focus-row");
+    activeHlRef.current = next;
   }, []);
 
 
