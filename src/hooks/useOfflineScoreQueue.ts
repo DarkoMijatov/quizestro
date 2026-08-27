@@ -79,19 +79,23 @@ interface UseOfflineScoreQueueOptions {
 
 export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueOptions) {
   const isOnline = useOnlineStatus();
-  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [queue, setQueue] = useState<QueueItem[]>(() => (quizId ? loadQueue(quizId) : []));
+  const [queueQuizId, setQueueQuizId] = useState(quizId);
   const [syncing, setSyncing] = useState(false);
   const syncingRef = useRef(false);
 
-  // Load queue from storage on mount
+  // Keep the in-memory queue tied to its quiz. Without this guard, changing
+  // routes could briefly persist the previous quiz's queue under the new ID.
   useEffect(() => {
-    if (quizId) setQueue(loadQueue(quizId));
-  }, [quizId]);
+    if (quizId === queueQuizId) return;
+    setQueue(quizId ? loadQueue(quizId) : []);
+    setQueueQuizId(quizId);
+  }, [quizId, queueQuizId]);
 
   // Persist queue changes
   useEffect(() => {
-    if (quizId) saveQueue(quizId, queue);
-  }, [queue, quizId]);
+    if (quizId && queueQuizId === quizId) saveQueue(quizId, queue);
+  }, [queue, quizId, queueQuizId]);
 
   // ── Enqueue helpers ──
 
@@ -180,13 +184,24 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
             const { error } = await supabase.from('help_usages').delete().eq('id', h.helpUsageId);
             if (error) throw error;
           } else if (h.action === 'add') {
-            const { error } = await supabase.from('help_usages').insert({
-              help_type_id: h.helpTypeId!,
-              quiz_team_id: h.quizTeamId!,
-              quiz_category_id: h.quizCategoryId!,
-              quiz_id: h.quizId!,
-              organization_id: h.organizationId!,
-            });
+            if (!h.helpTypeId || !h.quizTeamId || !h.quizCategoryId || !h.quizId || !h.organizationId) {
+              throw new Error('Nedostaju podaci za sinhronizaciju pomoći.');
+            }
+            // A successful request can remain in local storage if the tab closes before
+            // queue cleanup. Ignore that exact replay instead of surfacing a duplicate-key error.
+            const { error } = await supabase.from('help_usages').upsert(
+              {
+                help_type_id: h.helpTypeId,
+                quiz_team_id: h.quizTeamId,
+                quiz_category_id: h.quizCategoryId,
+                quiz_id: h.quizId,
+                organization_id: h.organizationId,
+              },
+              {
+                onConflict: 'quiz_team_id,help_type_id,quiz_id',
+                ignoreDuplicates: true,
+              },
+            );
             if (error) throw error;
           }
         } else if (item.type === 'category_bonus') {

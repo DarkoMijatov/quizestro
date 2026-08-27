@@ -504,20 +504,47 @@ export default function QuizDetailPage() {
       if (isOnline) {
         const { data, error } = await supabase
           .from("help_usages")
-          .insert({
-            help_type_id: helpType.id,
-            quiz_team_id: teamId,
-            quiz_category_id: catId,
-            quiz_id: quizId,
-            organization_id: currentOrg.id,
-          })
+          .upsert(
+            {
+              help_type_id: helpType.id,
+              quiz_team_id: teamId,
+              quiz_category_id: catId,
+              quiz_id: quizId,
+              organization_id: currentOrg.id,
+            },
+            {
+              onConflict: "quiz_team_id,help_type_id,quiz_id",
+              ignoreDuplicates: true,
+            },
+          )
           .select()
-          .single();
+          .maybeSingle();
         if (error) {
           toast({ title: error.message, variant: "destructive" });
           return;
         }
-        if (data) setHelpUsages((prev) => [...prev, data as any]);
+        if (data) {
+          setHelpUsages((prev) => (prev.some((usage) => usage.id === data.id) ? prev : [...prev, data as any]));
+        } else {
+          // The row already existed (for example after replaying a request). Rehydrate it
+          // so the current quiz UI immediately reflects the persisted Joker/DC state.
+          const { data: existingUsage, error: existingError } = await supabase
+            .from("help_usages")
+            .select("*")
+            .eq("quiz_id", quizId)
+            .eq("quiz_team_id", teamId)
+            .eq("help_type_id", helpType.id)
+            .maybeSingle();
+          if (existingError) {
+            toast({ title: existingError.message, variant: "destructive" });
+            return;
+          }
+          if (existingUsage) {
+            setHelpUsages((prev) =>
+              prev.some((usage) => usage.id === existingUsage.id) ? prev : [...prev, existingUsage as any],
+            );
+          }
+        }
       } else {
         const localId = enqueueHelpToggle({
           action: "add",
