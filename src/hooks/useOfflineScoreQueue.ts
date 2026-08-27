@@ -180,13 +180,24 @@ export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueO
             const { error } = await supabase.from('help_usages').delete().eq('id', h.helpUsageId);
             if (error) throw error;
           } else if (h.action === 'add') {
-            const { error } = await supabase.from('help_usages').insert({
-              help_type_id: h.helpTypeId!,
-              quiz_team_id: h.quizTeamId!,
-              quiz_category_id: h.quizCategoryId!,
-              quiz_id: h.quizId!,
-              organization_id: h.organizationId!,
-            });
+            if (!h.helpTypeId || !h.quizTeamId || !h.quizCategoryId || !h.quizId || !h.organizationId) {
+              throw new Error('Nedostaju podaci za sinhronizaciju pomoći.');
+            }
+            // A successful request can remain in local storage if the tab closes before
+            // queue cleanup. Ignore that exact replay instead of surfacing a duplicate-key error.
+            const { error } = await supabase.from('help_usages').upsert(
+              {
+                help_type_id: h.helpTypeId,
+                quiz_team_id: h.quizTeamId,
+                quiz_category_id: h.quizCategoryId,
+                quiz_id: h.quizId,
+                organization_id: h.organizationId,
+              },
+              {
+                onConflict: 'quiz_team_id,help_type_id,quiz_id',
+                ignoreDuplicates: true,
+              },
+            );
             if (error) throw error;
           }
         } else if (item.type === 'category_bonus') {
