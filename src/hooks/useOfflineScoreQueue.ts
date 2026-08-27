@@ -79,19 +79,23 @@ interface UseOfflineScoreQueueOptions {
 
 export function useOfflineScoreQueue({ quizId, onSynced }: UseOfflineScoreQueueOptions) {
   const isOnline = useOnlineStatus();
-  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [queue, setQueue] = useState<QueueItem[]>(() => (quizId ? loadQueue(quizId) : []));
+  const [queueQuizId, setQueueQuizId] = useState(quizId);
   const [syncing, setSyncing] = useState(false);
   const syncingRef = useRef(false);
 
-  // Load queue from storage on mount
+  // Keep the in-memory queue tied to its quiz. Without this guard, changing
+  // routes could briefly persist the previous quiz's queue under the new ID.
   useEffect(() => {
-    if (quizId) setQueue(loadQueue(quizId));
-  }, [quizId]);
+    if (quizId === queueQuizId) return;
+    setQueue(quizId ? loadQueue(quizId) : []);
+    setQueueQuizId(quizId);
+  }, [quizId, queueQuizId]);
 
   // Persist queue changes
   useEffect(() => {
-    if (quizId) saveQueue(quizId, queue);
-  }, [queue, quizId]);
+    if (quizId && queueQuizId === quizId) saveQueue(quizId, queue);
+  }, [queue, quizId, queueQuizId]);
 
   // ── Enqueue helpers ──
 
