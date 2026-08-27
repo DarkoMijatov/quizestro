@@ -479,12 +479,19 @@ export default function QuizDetailPage() {
   const toggleHelp = async (teamId: string, catId: string, helpType: HelpType) => {
     if (!currentOrg || !quizId) return;
     const existing = getHelpUsage(teamId, catId, helpType.id);
+    // Drop any stale inline edit draft so the cell re-renders with the effective (doubled) value
+    clearEditingValue(`${teamId}-${catId}`);
+    setFocusedCell((prev) => (prev === `${teamId}-${catId}` ? null : prev));
 
     if (existing) {
       // Optimistic remove
       setHelpUsages((prev) => prev.filter((h) => h.id !== existing.id));
       if (isOnline) {
-        await supabase.from("help_usages").delete().eq("id", existing.id);
+        const { error } = await supabase.from("help_usages").delete().eq("id", existing.id);
+        if (error) {
+          setHelpUsages((prev) => [...prev, existing]);
+          toast({ title: error.message, variant: "destructive" });
+        }
       } else {
         enqueueHelpToggle({ action: "remove", helpUsageId: existing.id });
       }
@@ -495,7 +502,7 @@ export default function QuizDetailPage() {
       }
 
       if (isOnline) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("help_usages")
           .insert({
             help_type_id: helpType.id,
@@ -506,6 +513,10 @@ export default function QuizDetailPage() {
           })
           .select()
           .single();
+        if (error) {
+          toast({ title: error.message, variant: "destructive" });
+          return;
+        }
         if (data) setHelpUsages((prev) => [...prev, data as any]);
       } else {
         const localId = enqueueHelpToggle({
@@ -529,6 +540,7 @@ export default function QuizDetailPage() {
       }
     }
   };
+
 
   const getTeamTotal = (teamId: string) => {
     let total = 0;
@@ -1133,7 +1145,7 @@ export default function QuizDetailPage() {
                                       e.target.select();
                                     }}
                                     onBlur={(e) => {
-                                      if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value));
+                                      if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value)); else clearEditingValue(cellKey);
                                       setFocusedCell(null);
                                       // keep the highlight if focus moves to another cell in the table
                                       const next = e.relatedTarget as HTMLElement | null;
@@ -1480,7 +1492,7 @@ export default function QuizDetailPage() {
                                                 e.target.select();
                                               }}
                                               onBlur={() => {
-                                                if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value));
+                                                if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value)); else clearEditingValue(cellKey);
                                                 setFocusedCell(null);
                                               }}
                                               onKeyDown={(e) => score && handlePartInputKeyDown(e, cellKey, (value) => updateScore(score.id, "points", value))}
