@@ -1145,7 +1145,7 @@ export default function QuizDetailPage() {
                                       e.target.select();
                                     }}
                                     onBlur={(e) => {
-                                      if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value));
+                                      if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value)); else clearEditingValue(cellKey);
                                       setFocusedCell(null);
                                       // keep the highlight if focus moves to another cell in the table
                                       const next = e.relatedTarget as HTMLElement | null;
@@ -1492,7 +1492,7 @@ export default function QuizDetailPage() {
                                                 e.target.select();
                                               }}
                                               onBlur={() => {
-                                                if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value));
+                                                if (score) commitScoreDraft(cellKey, (value) => updateScore(score.id, "points", value)); else clearEditingValue(cellKey);
                                                 setFocusedCell(null);
                                               }}
                                               onKeyDown={(e) => score && handlePartInputKeyDown(e, cellKey, (value) => updateScore(score.id, "points", value))}
