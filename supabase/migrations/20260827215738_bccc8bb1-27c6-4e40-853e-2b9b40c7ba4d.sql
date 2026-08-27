@@ -1,0 +1,1 @@
+ALTER TABLE public.memberships DISABLE TRIGGER enforce_admin_cap_on_membership;
