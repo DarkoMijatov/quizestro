@@ -135,32 +135,19 @@ export default function CategoriesPage() {
         return quiz?.status === 'finished';
       }))];
 
-      const [allScoresRes, partScoresRes, helpTypesRes, helpUsagesRes, categoryBonusesRes] = await Promise.all([
+      const [allScoresRes, partScoresRes] = await Promise.all([
         validQuizIds.length > 0
-          ? supabase.from('scores').select('quiz_id, quiz_team_id, quiz_category_id, points, bonus_points').in('quiz_id', validQuizIds)
+          ? supabase.from('scores').select('quiz_id, quiz_team_id, quiz_category_id, points').in('quiz_id', validQuizIds)
           : Promise.resolve({ data: [] as any[] }),
         validQuizIds.length > 0
           ? supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', validQuizIds)
           : Promise.resolve({ data: [] as any[] }),
-        supabase.from('help_types').select('id, effect').eq('organization_id', currentOrg.id),
-        validQuizIds.length > 0
-          ? supabase.from('help_usages').select('quiz_id, quiz_team_id, quiz_category_id, help_type_id').in('quiz_id', validQuizIds)
-          : Promise.resolve({ data: [] as any[] }),
-        validQuizIds.length > 0
-          ? supabase.from('category_bonuses').select('quiz_id, quiz_team_id, quiz_category_id').in('quiz_id', validQuizIds)
-          : Promise.resolve({ data: [] as any[] }),
       ]);
 
-      const jokerHelpTypeIds = (helpTypesRes.data || [])
-        .filter((helpType: any) => helpType.effect === 'double')
-        .map((helpType: any) => helpType.id);
       const completeQuizIds = getCompleteCategoryStatsQuizIds({
         quizzes: quizMeta,
         scores: allScoresRes.data || [],
         partScores: partScoresRes.data || [],
-        helpUsages: helpUsagesRes.data || [],
-        categoryBonuses: categoryBonusesRes.data || [],
-        jokerHelpTypeIds,
       });
 
       const scoreSourceQuizIds = qcList
