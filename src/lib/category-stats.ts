@@ -10,7 +10,6 @@ type ScoreLike = {
   quiz_team_id: string;
   quiz_category_id: string;
   points?: number | null;
-  bonus_points?: number | null;
 };
 
 type PartScoreLike = {
@@ -19,48 +18,16 @@ type PartScoreLike = {
   points?: number | null;
 };
 
-type HelpUsageLike = {
-  quiz_id: string;
-  quiz_team_id: string;
-  quiz_category_id: string;
-  help_type_id: string;
-};
-
-type CategoryBonusLike = {
-  quiz_id: string;
-  quiz_team_id: string;
-  quiz_category_id: string;
-};
-
-function makeCellKey(quizTeamId: string, quizCategoryId: string) {
-  return `${quizTeamId}:${quizCategoryId}`;
-}
-
 export function getCompleteCategoryStatsQuizIds({
   quizzes,
   scores,
   partScores,
-  helpUsages,
-  categoryBonuses,
-  jokerHelpTypeIds,
 }: {
   quizzes: QuizLike[];
   scores: ScoreLike[];
   partScores: PartScoreLike[];
-  helpUsages: HelpUsageLike[];
-  categoryBonuses: CategoryBonusLike[];
-  jokerHelpTypeIds: string[];
 }) {
   const validQuizIds = new Set<string>();
-  const jokerHelpTypeSet = new Set(jokerHelpTypeIds);
-  const jokerUsageSet = new Set(
-    helpUsages
-      .filter((usage) => jokerHelpTypeSet.has(usage.help_type_id))
-      .map((usage) => makeCellKey(usage.quiz_team_id, usage.quiz_category_id))
-  );
-  const categoryBonusSet = new Set(
-    categoryBonuses.map((bonus) => makeCellKey(bonus.quiz_team_id, bonus.quiz_category_id))
-  );
 
   for (const quiz of quizzes) {
     if (quiz.status !== 'finished') continue;
