@@ -34,6 +34,24 @@ type StatsSectionKey = 'teams' | 'categories' | 'quizzes' | 'leagues';
 
 const SECTION_PAGE_SIZE = 8;
 
+// Supabase caps a single select at 1000 rows; fetch everything in pages so
+// averages are computed on the full dataset.
+async function fetchAllRows<T = any>(
+  build: (from: number, to: number) => any,
+  pageSize = 1000
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let page = 0; ; page++) {
+    const from = page * pageSize;
+    const { data, error } = await build(from, from + pageSize - 1);
+    if (error) throw error;
+    const rows = (data || []) as T[];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
+}
+
 function getRangeFromPreset(preset: StatsRangePreset) {
   const today = new Date();
   switch (preset) {
