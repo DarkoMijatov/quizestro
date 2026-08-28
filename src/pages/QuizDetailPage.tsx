@@ -1158,7 +1158,7 @@ export default function QuizDetailPage() {
                       const hasBonusPt = hasCategoryBonus(team.id, cat.id);
                       const displayPts = getDisplayPoints(team.id, cat.id);
                       const catBonusExisting = getCategoryBonus(cat.id);
-                      const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
+                      const bonusDisabled = false;
                       const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
                       const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
                       const jokerDisabledByMarker = jokerType && !hasJoker && !!hasMarker;
@@ -1516,7 +1516,7 @@ export default function QuizDetailPage() {
                                     const hasBonusPt = hasCategoryBonus(team.id, cat.id);
                                     const displayPts = getDisplayPoints(team.id, cat.id);
                                     const catBonusExisting = getCategoryBonus(cat.id);
-                                    const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
+                                    const bonusDisabled = false;
                                     const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
                                     const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
                                     const jokerDisabledByMarker2 = jokerType && !hasJoker && !!hasMarker;
