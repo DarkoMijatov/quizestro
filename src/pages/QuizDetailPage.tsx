@@ -1157,7 +1157,6 @@ export default function QuizDetailPage() {
                       const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
                       const hasBonusPt = hasCategoryBonus(team.id, cat.id);
                       const displayPts = getDisplayPoints(team.id, cat.id);
-                      const catBonusExisting = getCategoryBonus(cat.id);
                       const bonusDisabled = false;
                       const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
                       const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
@@ -1515,7 +1514,6 @@ export default function QuizDetailPage() {
                                     const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
                                     const hasBonusPt = hasCategoryBonus(team.id, cat.id);
                                     const displayPts = getDisplayPoints(team.id, cat.id);
-                                    const catBonusExisting = getCategoryBonus(cat.id);
                                     const bonusDisabled = false;
                                     const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
                                     const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
