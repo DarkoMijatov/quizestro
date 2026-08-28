@@ -432,7 +432,7 @@ export default function QuizDetailPage() {
     } else {
       // Award bonus to this team
       if (isOnline) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("category_bonuses")
           .insert({
             quiz_id: quizId,
@@ -442,6 +442,7 @@ export default function QuizDetailPage() {
           })
           .select()
           .single();
+        if (error) toast({ title: error.message, variant: "destructive" });
         if (data) setCategoryBonuses((prev) => [...prev, data as any]);
       } else {
         const localId = enqueueCategoryBonus({
