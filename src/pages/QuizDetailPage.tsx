@@ -364,7 +364,18 @@ export default function QuizDetailPage() {
         // Remove bonus from this team
         setCategoryBonuses((prev) => prev.filter((cb) => cb.id !== existing.id));
         if (isOnline) {
-          await supabase.from("category_bonuses").delete().eq("id", existing.id);
+          const { data: deleted, error } = await supabase
+            .from("category_bonuses")
+            .delete()
+            .eq("id", existing.id)
+            .select("id");
+          if (error || !deleted || deleted.length === 0) {
+            setCategoryBonuses((prev) => (prev.some((cb) => cb.id === existing.id) ? prev : [...prev, existing]));
+            toast({
+              title: error?.message || t("scoring.bonusRemoveFailed", "Nije moguće ukloniti bonus poen"),
+              variant: "destructive",
+            });
+          }
         } else {
           enqueueCategoryBonus({ action: "remove", quizCategoryId: catId });
         }
@@ -372,8 +383,20 @@ export default function QuizDetailPage() {
         // Switch bonus to this team
         setCategoryBonuses((prev) => prev.filter((cb) => cb.id !== existing.id));
         if (isOnline) {
-          await supabase.from("category_bonuses").delete().eq("id", existing.id);
-          const { data } = await supabase
+          const { data: deleted, error: delError } = await supabase
+            .from("category_bonuses")
+            .delete()
+            .eq("id", existing.id)
+            .select("id");
+          if (delError || !deleted || deleted.length === 0) {
+            setCategoryBonuses((prev) => (prev.some((cb) => cb.id === existing.id) ? prev : [...prev, existing]));
+            toast({
+              title: delError?.message || t("scoring.bonusRemoveFailed", "Nije moguće ukloniti bonus poen"),
+              variant: "destructive",
+            });
+            return;
+          }
+          const { data, error } = await supabase
             .from("category_bonuses")
             .insert({
               quiz_id: quizId,
@@ -383,6 +406,7 @@ export default function QuizDetailPage() {
             })
             .select()
             .single();
+          if (error) toast({ title: error.message, variant: "destructive" });
           if (data) setCategoryBonuses((prev) => [...prev, data as any]);
         } else {
           const localId = enqueueCategoryBonus({
@@ -408,7 +432,7 @@ export default function QuizDetailPage() {
     } else {
       // Award bonus to this team
       if (isOnline) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("category_bonuses")
           .insert({
             quiz_id: quizId,
@@ -418,6 +442,7 @@ export default function QuizDetailPage() {
           })
           .select()
           .single();
+        if (error) toast({ title: error.message, variant: "destructive" });
         if (data) setCategoryBonuses((prev) => [...prev, data as any]);
       } else {
         const localId = enqueueCategoryBonus({
@@ -487,10 +512,17 @@ export default function QuizDetailPage() {
       // Optimistic remove
       setHelpUsages((prev) => prev.filter((h) => h.id !== existing.id));
       if (isOnline) {
-        const { error } = await supabase.from("help_usages").delete().eq("id", existing.id);
-        if (error) {
-          setHelpUsages((prev) => [...prev, existing]);
-          toast({ title: error.message, variant: "destructive" });
+        const { data: deleted, error } = await supabase
+          .from("help_usages")
+          .delete()
+          .eq("id", existing.id)
+          .select("id");
+        if (error || !deleted || deleted.length === 0) {
+          setHelpUsages((prev) => (prev.some((h) => h.id === existing.id) ? prev : [...prev, existing]));
+          toast({
+            title: error?.message || t("scoring.helpRemoveFailed", "Nije moguće ukloniti pomoć"),
+            variant: "destructive",
+          });
         }
       } else {
         enqueueHelpToggle({ action: "remove", helpUsageId: existing.id });
@@ -1125,8 +1157,7 @@ export default function QuizDetailPage() {
                       const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
                       const hasBonusPt = hasCategoryBonus(team.id, cat.id);
                       const displayPts = getDisplayPoints(team.id, cat.id);
-                      const catBonusExisting = getCategoryBonus(cat.id);
-                      const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
+                      const bonusDisabled = false;
                       const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
                       const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
                       const jokerDisabledByMarker = jokerType && !hasJoker && !!hasMarker;
@@ -1483,8 +1514,7 @@ export default function QuizDetailPage() {
                                     const hasMarker = markerType && getHelpUsage(team.id, cat.id, markerType.id);
                                     const hasBonusPt = hasCategoryBonus(team.id, cat.id);
                                     const displayPts = getDisplayPoints(team.id, cat.id);
-                                    const catBonusExisting = getCategoryBonus(cat.id);
-                                    const bonusDisabled = !!catBonusExisting && catBonusExisting.quiz_team_id !== team.id;
+                                    const bonusDisabled = false;
                                     const jokerDisabledElsewhere = jokerType && !hasJoker && hasTeamUsedHelp(team.id, jokerType.id);
                                     const markerDisabledElsewhere = markerType && !hasMarker && hasTeamUsedHelp(team.id, markerType.id);
                                     const jokerDisabledByMarker2 = jokerType && !hasJoker && !!hasMarker;
