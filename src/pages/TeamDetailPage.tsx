@@ -127,27 +127,18 @@ export default function TeamDetailPage() {
 
         const finishedQtIds = finishedParticipations.map((p) => p.quiz_team_id);
         const finishedQuizIds = [...new Set(finishedParticipations.map((p) => p.quiz_id))];
-        const [{ data: scores }, { data: helpTypes }, { data: helpUsages }, { data: categoryBonuses }, { data: partScores }] = await Promise.all([
+        const [{ data: scores }, { data: partScores }] = await Promise.all([
           supabase
             .from('scores')
-            .select('quiz_id, quiz_team_id, quiz_category_id, points, bonus_points')
+            .select('quiz_id, quiz_team_id, quiz_category_id, points')
             .in('quiz_team_id', finishedQtIds),
-          supabase.from('help_types').select('id, effect').eq('organization_id', currentOrg.id),
-          supabase.from('help_usages').select('quiz_id, quiz_team_id, quiz_category_id, help_type_id').in('quiz_id', finishedQuizIds),
-          supabase.from('category_bonuses').select('quiz_id, quiz_team_id, quiz_category_id').in('quiz_id', finishedQuizIds),
           supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', finishedQuizIds),
         ]);
 
-        const jokerHelpTypeIds = (helpTypes || [])
-          .filter((helpType: any) => helpType.effect === 'double')
-          .map((helpType: any) => helpType.id);
         const completeQuizIds = getCompleteCategoryStatsQuizIds({
           quizzes: (quizzes || []).filter((quiz: any) => finishedQuizIds.includes(quiz.id)) as any[],
           scores: (scores || []) as any[],
           partScores: (partScores || []) as any[],
-          helpUsages: (helpUsages || []) as any[],
-          categoryBonuses: (categoryBonuses || []) as any[],
-          jokerHelpTypeIds,
         });
 
         const completeFinishedQtIdSet = new Set(
