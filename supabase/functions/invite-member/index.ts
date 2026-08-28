@@ -5,6 +5,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+type InviteRole = "user" | "admin";
+type CallerRole = "owner" | "admin" | "user";
+
+function isInviteRole(value: unknown): value is InviteRole {
+  return value === "user" || value === "admin";
+}
+
+function canInviteRole(callerRole: CallerRole, requestedRole: InviteRole): boolean {
+  if (callerRole === "owner") return true;
+  if (callerRole === "admin") return requestedRole === "user";
+  return false;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -41,15 +54,36 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Never trust a requested membership role just because this function uses
+    // the service-role client later. Service role bypasses RLS, so authorization
+    // has to be enforced explicitly before any membership or pending-invite write.
+    if (!isInviteRole(role)) {
+      return new Response(JSON.stringify({ error: "invalid_role" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const requestedRole: InviteRole = role;
+
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // Check if caller is admin/owner of org
-    const { data: callerRole } = await adminClient.rpc("get_user_org_role", {
+    const { data: callerRoleData } = await adminClient.rpc("get_user_org_role", {
       _user_id: caller.id,
       _org_id: organization_id,
     });
+    const callerRole = callerRoleData as CallerRole | null;
     if (!callerRole || !["owner", "admin"].includes(callerRole)) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Admins may only add regular users. Owners may add users or admins.
+    // Ownership must never be granted through the invitation flow.
+    if (!canInviteRole(callerRole, requestedRole)) {
+      return new Response(JSON.stringify({ error: "insufficient_role_to_invite" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -133,11 +167,11 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Add membership directly
+      // Add membership directly using the already-authorized requested role.
       const { error: memberError } = await adminClient.from("memberships").insert({
         user_id: existingUser.id,
         organization_id,
-        role,
+        role: requestedRole,
         invited_by: caller.id,
       });
 
@@ -154,11 +188,11 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } else {
-      // Store pending invite
+      // Store pending invite with the same server-authorized role rules.
       const { error: inviteStoreError } = await adminClient
         .from("pending_invites")
         .upsert(
-          { email: email.toLowerCase(), organization_id, role, invited_by: caller.id },
+          { email: email.toLowerCase(), organization_id, role: requestedRole, invited_by: caller.id },
           { onConflict: "email,organization_id" }
         );
 
