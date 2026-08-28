@@ -107,7 +107,7 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
   const createAndAddCategory = async () => {
     if (!catSearch.trim()) return;
     setCreatingCat(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("categories")
       .insert({
         name: catSearch.trim(),
@@ -115,7 +115,13 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
       })
       .select()
       .single();
-    if (data) {
+    if (error) {
+      toast({
+        title: t("common.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    } else if (data) {
       const newCat = data as Category;
       setAllCategories((prev) => [...prev, newCat]);
       setCatSearch("");
@@ -123,6 +129,7 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
     }
     setCreatingCat(false);
   };
+
 
   const createAndAddTeam = async () => {
     if (!teamSearch.trim()) return;
