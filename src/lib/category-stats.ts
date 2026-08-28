@@ -74,18 +74,13 @@ export function getCompleteCategoryStatsQuizIds({
 
     if (quizScores.length === 0 || quizPartScores.length === 0) continue;
 
+    // Category averages are based on raw entered points only, so completeness
+    // is checked against raw points as well (excluding Joker doubling and Bonus +1).
     const categoryTotalsByTeam = new Map<string, number>();
     for (const score of quizScores) {
-      let displayPoints = Number(score.points || 0) + Number(score.bonus_points || 0);
-      if (jokerUsageSet.has(makeCellKey(score.quiz_team_id, score.quiz_category_id))) {
-        displayPoints *= 2;
-      }
-      if (categoryBonusSet.has(makeCellKey(score.quiz_team_id, score.quiz_category_id))) {
-        displayPoints += 1;
-      }
       categoryTotalsByTeam.set(
         score.quiz_team_id,
-        (categoryTotalsByTeam.get(score.quiz_team_id) || 0) + displayPoints
+        (categoryTotalsByTeam.get(score.quiz_team_id) || 0) + Number(score.points || 0)
       );
     }
 
