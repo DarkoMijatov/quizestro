@@ -361,21 +361,17 @@ export default function StatsPage() {
         }
 
         const filteredLeagueIds = [...new Set(allQuizzes.map((quiz: any) => quiz.league_id).filter(Boolean))];
-        const [qtRes, scoresRes, qcRes, leaguesRes, partScoresRes] = await Promise.all([
-          supabase.from('quiz_teams').select('team_id, quiz_id, total_points, rank').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
-          supabase.from('scores').select('quiz_category_id, quiz_id, quiz_team_id, points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
-          supabase.from('quiz_categories').select('id, quiz_id, category_id, quiz_part_id').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
+        const [qtForRange, scoresForRange, qcForRange, leaguesRes, partScoresForRange] = await Promise.all([
+          fetchAllRows((from, to) => supabase.from('quiz_teams').select('team_id, quiz_id, total_points, rank').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id).range(from, to)),
+          fetchAllRows((from, to) => supabase.from('scores').select('quiz_category_id, quiz_id, quiz_team_id, points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id).range(from, to)),
+          fetchAllRows((from, to) => supabase.from('quiz_categories').select('id, quiz_id, category_id, quiz_part_id').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id).range(from, to)),
           filteredLeagueIds.length > 0
             ? supabase.from('leagues').select('id, name, season, is_active').in('id', filteredLeagueIds).eq('organization_id', currentOrg.id)
             : Promise.resolve({ data: [], error: null } as any),
-          supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
+          fetchAllRows((from, to) => supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id).range(from, to)),
         ]);
 
-        const qtForRange = qtRes.data || [];
-        const scoresForRange = scoresRes.data || [];
-        const qcForRange = qcRes.data || [];
         const leaguesForRange = leaguesRes.data || [];
-        const partScoresForRange = partScoresRes.data || [];
         const finishedQuizIds = new Set(allQuizzes.filter(q => q.status === 'finished').map(q => q.id));
         const qtFinished = qtForRange.filter(qt => finishedQuizIds.has(qt.quiz_id));
         const quizMap = new Map(allQuizzes.map(q => [q.id, q]));
