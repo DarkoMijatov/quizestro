@@ -364,7 +364,18 @@ export default function QuizDetailPage() {
         // Remove bonus from this team
         setCategoryBonuses((prev) => prev.filter((cb) => cb.id !== existing.id));
         if (isOnline) {
-          await supabase.from("category_bonuses").delete().eq("id", existing.id);
+          const { data: deleted, error } = await supabase
+            .from("category_bonuses")
+            .delete()
+            .eq("id", existing.id)
+            .select("id");
+          if (error || !deleted || deleted.length === 0) {
+            setCategoryBonuses((prev) => (prev.some((cb) => cb.id === existing.id) ? prev : [...prev, existing]));
+            toast({
+              title: error?.message || t("scoring.bonusRemoveFailed", "Nije moguće ukloniti bonus poen"),
+              variant: "destructive",
+            });
+          }
         } else {
           enqueueCategoryBonus({ action: "remove", quizCategoryId: catId });
         }
@@ -372,8 +383,20 @@ export default function QuizDetailPage() {
         // Switch bonus to this team
         setCategoryBonuses((prev) => prev.filter((cb) => cb.id !== existing.id));
         if (isOnline) {
-          await supabase.from("category_bonuses").delete().eq("id", existing.id);
-          const { data } = await supabase
+          const { data: deleted, error: delError } = await supabase
+            .from("category_bonuses")
+            .delete()
+            .eq("id", existing.id)
+            .select("id");
+          if (delError || !deleted || deleted.length === 0) {
+            setCategoryBonuses((prev) => (prev.some((cb) => cb.id === existing.id) ? prev : [...prev, existing]));
+            toast({
+              title: delError?.message || t("scoring.bonusRemoveFailed", "Nije moguće ukloniti bonus poen"),
+              variant: "destructive",
+            });
+            return;
+          }
+          const { data, error } = await supabase
             .from("category_bonuses")
             .insert({
               quiz_id: quizId,
@@ -383,6 +406,7 @@ export default function QuizDetailPage() {
             })
             .select()
             .single();
+          if (error) toast({ title: error.message, variant: "destructive" });
           if (data) setCategoryBonuses((prev) => [...prev, data as any]);
         } else {
           const localId = enqueueCategoryBonus({
