@@ -1,22 +1,15 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  canInviteRole,
+  isInviteRole,
+  type CallerRole,
+  type InviteRole,
+} from "./authorization.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-type InviteRole = "user" | "admin";
-type CallerRole = "owner" | "admin" | "user";
-
-function isInviteRole(value: unknown): value is InviteRole {
-  return value === "user" || value === "admin";
-}
-
-function canInviteRole(callerRole: CallerRole, requestedRole: InviteRole): boolean {
-  if (callerRole === "owner") return true;
-  if (callerRole === "admin") return requestedRole === "user";
-  return false;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
