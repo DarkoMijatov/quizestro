@@ -446,9 +446,6 @@ export default function StatsPage() {
           quizzes: allQuizzes,
           scores: scoresForRange,
           partScores: partScoresForRange,
-          helpUsages: helpUsagesForRange,
-          categoryBonuses: categoryBonusesForRange,
-          jokerHelpTypeIds,
         });
 
         const finishedScores = scoresForRange.filter((score: any) => validCategoryQuizIds.has(score.quiz_id));
