@@ -127,11 +127,12 @@ export default function TeamDetailPage() {
 
         const finishedQtIds = finishedParticipations.map((p) => p.quiz_team_id);
         const finishedQuizIds = [...new Set(finishedParticipations.map((p) => p.quiz_id))];
-        const [{ data: scores }, { data: partScores }] = await Promise.all([
+        const [{ data: scores }, { data: categoryBonuses }, { data: partScores }] = await Promise.all([
           supabase
             .from('scores')
             .select('quiz_id, quiz_team_id, quiz_category_id, points')
             .in('quiz_team_id', finishedQtIds),
+          supabase.from('category_bonuses').select('quiz_id, quiz_team_id, quiz_category_id').in('quiz_id', finishedQuizIds),
           supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', finishedQuizIds),
         ]);
 
