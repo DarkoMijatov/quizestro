@@ -343,17 +343,14 @@ export default function StatsPage() {
         }
 
         const filteredLeagueIds = [...new Set(allQuizzes.map((quiz: any) => quiz.league_id).filter(Boolean))];
-        const [qtRes, scoresRes, qcRes, leaguesRes, partScoresRes, helpTypesRes, helpUsagesRes, categoryBonusesRes] = await Promise.all([
+        const [qtRes, scoresRes, qcRes, leaguesRes, partScoresRes] = await Promise.all([
           supabase.from('quiz_teams').select('team_id, quiz_id, total_points, rank').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
-          supabase.from('scores').select('quiz_category_id, quiz_id, quiz_team_id, points, bonus_points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
+          supabase.from('scores').select('quiz_category_id, quiz_id, quiz_team_id, points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
           supabase.from('quiz_categories').select('id, quiz_id, category_id, quiz_part_id').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
           filteredLeagueIds.length > 0
             ? supabase.from('leagues').select('id, name, season, is_active').in('id', filteredLeagueIds).eq('organization_id', currentOrg.id)
             : Promise.resolve({ data: [], error: null } as any),
           supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
-          supabase.from('help_types').select('id, effect').eq('organization_id', currentOrg.id),
-          supabase.from('help_usages').select('quiz_id, quiz_team_id, quiz_category_id, help_type_id').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
-          supabase.from('category_bonuses').select('quiz_id, quiz_team_id, quiz_category_id').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
         ]);
 
         const qtForRange = qtRes.data || [];
@@ -361,11 +358,6 @@ export default function StatsPage() {
         const qcForRange = qcRes.data || [];
         const leaguesForRange = leaguesRes.data || [];
         const partScoresForRange = partScoresRes.data || [];
-        const helpUsagesForRange = helpUsagesRes.data || [];
-        const categoryBonusesForRange = categoryBonusesRes.data || [];
-        const jokerHelpTypeIds = (helpTypesRes.data || [])
-          .filter((helpType: any) => helpType.effect === 'double')
-          .map((helpType: any) => helpType.id);
         const finishedQuizIds = new Set(allQuizzes.filter(q => q.status === 'finished').map(q => q.id));
         const qtFinished = qtForRange.filter(qt => finishedQuizIds.has(qt.quiz_id));
         const quizMap = new Map(allQuizzes.map(q => [q.id, q]));
