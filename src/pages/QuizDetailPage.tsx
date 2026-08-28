@@ -487,10 +487,17 @@ export default function QuizDetailPage() {
       // Optimistic remove
       setHelpUsages((prev) => prev.filter((h) => h.id !== existing.id));
       if (isOnline) {
-        const { error } = await supabase.from("help_usages").delete().eq("id", existing.id);
-        if (error) {
-          setHelpUsages((prev) => [...prev, existing]);
-          toast({ title: error.message, variant: "destructive" });
+        const { data: deleted, error } = await supabase
+          .from("help_usages")
+          .delete()
+          .eq("id", existing.id)
+          .select("id");
+        if (error || !deleted || deleted.length === 0) {
+          setHelpUsages((prev) => (prev.some((h) => h.id === existing.id) ? prev : [...prev, existing]));
+          toast({
+            title: error?.message || t("scoring.helpRemoveFailed", "Nije moguće ukloniti pomoć"),
+            variant: "destructive",
+          });
         }
       } else {
         enqueueHelpToggle({ action: "remove", helpUsageId: existing.id });
