@@ -107,7 +107,7 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
   const createAndAddCategory = async () => {
     if (!catSearch.trim()) return;
     setCreatingCat(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("categories")
       .insert({
         name: catSearch.trim(),
@@ -115,7 +115,13 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
       })
       .select()
       .single();
-    if (data) {
+    if (error) {
+      toast({
+        title: t("common.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    } else if (data) {
       const newCat = data as Category;
       setAllCategories((prev) => [...prev, newCat]);
       setCatSearch("");
@@ -124,10 +130,11 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
     setCreatingCat(false);
   };
 
+
   const createAndAddTeam = async () => {
     if (!teamSearch.trim()) return;
     setCreatingTeam(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("teams")
       .insert({
         name: teamSearch.trim(),
@@ -135,12 +142,19 @@ export function QuizDraftManager({ quizId, organizationId, quizCategories, quizT
       })
       .select()
       .single();
-    if (data) {
+    if (error) {
+      toast({
+        title: t("common.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    } else if (data) {
       const newTeam = data as Team;
       setAllTeams((prev) => [...prev, newTeam]);
       setTeamSearch("");
       await addTeam(newTeam.id);
     }
+
     setCreatingTeam(false);
   };
 
