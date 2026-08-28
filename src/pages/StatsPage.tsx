@@ -384,16 +384,17 @@ export default function StatsPage() {
           const bonusCountByTeam: Record<string, number> = {};
           const finishedQtIdToTeam = new Map<string, string>();
           // We need quiz_team ids for finished quizzes - fetch them
-          const { data: finishedQtFull } = await supabase
+          const finishedQtFull = await fetchAllRows((from, to) => supabase
             .from('quiz_teams')
             .select('id, team_id, quiz_id')
             .in('quiz_id', [...finishedQuizIds])
-            .eq('organization_id', currentOrg.id);
+            .eq('organization_id', currentOrg.id)
+            .range(from, to));
           (finishedQtFull || []).forEach((qt: any) => finishedQtIdToTeam.set(qt.id, qt.team_id));
           const finishedQtIdSet = new Set((finishedQtFull || []).map((qt: any) => qt.id));
-          const { data: cbData } = finishedQtIdSet.size > 0
-            ? await supabase.from('category_bonuses').select('quiz_team_id').in('quiz_team_id', [...finishedQtIdSet])
-            : { data: [] as any[] };
+          const cbData = finishedQtIdSet.size > 0
+            ? await fetchAllRows((from, to) => supabase.from('category_bonuses').select('quiz_team_id').in('quiz_team_id', [...finishedQtIdSet]).range(from, to))
+            : [];
           (cbData || []).forEach((cb: any) => {
             const teamId = finishedQtIdToTeam.get(cb.quiz_team_id);
             if (teamId) bonusCountByTeam[teamId] = (bonusCountByTeam[teamId] || 0) + 1;
