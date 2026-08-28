@@ -128,11 +128,13 @@ export function ImportExcelDialog({
         catMap.set(c.name.toLowerCase(), c.id);
       }
       for (const catName of newCats) {
-        const { data } = await supabase.from('categories').insert({
+        const { data, error } = await supabase.from('categories').insert({
           name: catName, organization_id: organizationId,
         }).select('id').single();
+        if (error) throw error;
         if (data) catMap.set(catName.toLowerCase(), data.id);
       }
+
 
       // 2. Resolve teams
       const teamMap = new Map<string, string>(); // name (lower) -> id
