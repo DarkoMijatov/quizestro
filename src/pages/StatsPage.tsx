@@ -34,6 +34,24 @@ type StatsSectionKey = 'teams' | 'categories' | 'quizzes' | 'leagues';
 
 const SECTION_PAGE_SIZE = 8;
 
+// Supabase caps a single select at 1000 rows; fetch everything in pages so
+// averages are computed on the full dataset.
+async function fetchAllRows<T = any>(
+  build: (from: number, to: number) => any,
+  pageSize = 1000
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let page = 0; ; page++) {
+    const from = page * pageSize;
+    const { data, error } = await build(from, from + pageSize - 1);
+    if (error) throw error;
+    const rows = (data || []) as T[];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
+}
+
 function getRangeFromPreset(preset: StatsRangePreset) {
   const today = new Date();
   switch (preset) {
@@ -343,21 +361,17 @@ export default function StatsPage() {
         }
 
         const filteredLeagueIds = [...new Set(allQuizzes.map((quiz: any) => quiz.league_id).filter(Boolean))];
-        const [qtRes, scoresRes, qcRes, leaguesRes, partScoresRes] = await Promise.all([
-          supabase.from('quiz_teams').select('team_id, quiz_id, total_points, rank').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
-          supabase.from('scores').select('quiz_category_id, quiz_id, quiz_team_id, points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
-          supabase.from('quiz_categories').select('id, quiz_id, category_id, quiz_part_id').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
+        const [qtForRange, scoresForRange, qcForRange, leaguesRes, partScoresForRange] = await Promise.all([
+          fetchAllRows((from, to) => supabase.from('quiz_teams').select('team_id, quiz_id, total_points, rank').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id).range(from, to)),
+          fetchAllRows((from, to) => supabase.from('scores').select('quiz_category_id, quiz_id, quiz_team_id, points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id).range(from, to)),
+          fetchAllRows((from, to) => supabase.from('quiz_categories').select('id, quiz_id, category_id, quiz_part_id').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id).range(from, to)),
           filteredLeagueIds.length > 0
             ? supabase.from('leagues').select('id, name, season, is_active').in('id', filteredLeagueIds).eq('organization_id', currentOrg.id)
             : Promise.resolve({ data: [], error: null } as any),
-          supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id),
+          fetchAllRows((from, to) => supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', filteredQuizIds).eq('organization_id', currentOrg.id).range(from, to)),
         ]);
 
-        const qtForRange = qtRes.data || [];
-        const scoresForRange = scoresRes.data || [];
-        const qcForRange = qcRes.data || [];
         const leaguesForRange = leaguesRes.data || [];
-        const partScoresForRange = partScoresRes.data || [];
         const finishedQuizIds = new Set(allQuizzes.filter(q => q.status === 'finished').map(q => q.id));
         const qtFinished = qtForRange.filter(qt => finishedQuizIds.has(qt.quiz_id));
         const quizMap = new Map(allQuizzes.map(q => [q.id, q]));
@@ -370,16 +384,17 @@ export default function StatsPage() {
           const bonusCountByTeam: Record<string, number> = {};
           const finishedQtIdToTeam = new Map<string, string>();
           // We need quiz_team ids for finished quizzes - fetch them
-          const { data: finishedQtFull } = await supabase
+          const finishedQtFull = await fetchAllRows((from, to) => supabase
             .from('quiz_teams')
             .select('id, team_id, quiz_id')
             .in('quiz_id', [...finishedQuizIds])
-            .eq('organization_id', currentOrg.id);
+            .eq('organization_id', currentOrg.id)
+            .range(from, to));
           (finishedQtFull || []).forEach((qt: any) => finishedQtIdToTeam.set(qt.id, qt.team_id));
           const finishedQtIdSet = new Set((finishedQtFull || []).map((qt: any) => qt.id));
-          const { data: cbData } = finishedQtIdSet.size > 0
-            ? await supabase.from('category_bonuses').select('quiz_team_id').in('quiz_team_id', [...finishedQtIdSet])
-            : { data: [] as any[] };
+          const cbData = finishedQtIdSet.size > 0
+            ? await fetchAllRows((from, to) => supabase.from('category_bonuses').select('quiz_team_id').in('quiz_team_id', [...finishedQtIdSet]).range(from, to))
+            : [];
           (cbData || []).forEach((cb: any) => {
             const teamId = finishedQtIdToTeam.get(cb.quiz_team_id);
             if (teamId) bonusCountByTeam[teamId] = (bonusCountByTeam[teamId] || 0) + 1;
