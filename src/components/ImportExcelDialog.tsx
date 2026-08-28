@@ -153,10 +153,12 @@ export function ImportExcelDialog({
           teamMap.set(ut.importedName.toLowerCase(), ut.aliasOfTeamId);
         } else {
           // Create new team
-          const { data } = await supabase.from('teams').insert({
+          const { data, error } = await supabase.from('teams').insert({
             name: ut.importedName, organization_id: organizationId,
           }).select('id').single();
+          if (error) throw error;
           if (data) teamMap.set(ut.importedName.toLowerCase(), data.id);
+
         }
       }
 
