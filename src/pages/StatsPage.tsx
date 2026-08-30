@@ -482,16 +482,18 @@ export default function StatsPage() {
           if (catIds.length === 0) {
             setBestCategories([]);
           } else {
-            const { data: catNames } = await supabase.from('categories').select('id, name').in('id', catIds);
-            const catNameMap = new Map((catNames || []).map(c => [c.id, c.name]));
+            const { data: catNames } = await supabase.from('categories').select('id, name, is_default').in('id', catIds);
+            const catNameMap = new Map((catNames || []).map(c => [c.id, c]));
             setBestCategories(
               Object.entries(catStats)
                 .map(([id, s]) => ({
-                  name: catNameMap.get(id) || '?',
+                  name: catNameMap.get(id)?.name || '?',
+                  isDefault: !!catNameMap.get(id)?.is_default,
                   avgPoints: s.count > 0 ? s.total / s.count : 0,
                 }))
                 .sort((a, b) => b.avgPoints - a.avgPoints)
             );
+
           }
         }
 
