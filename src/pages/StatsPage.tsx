@@ -700,8 +700,27 @@ export default function StatsPage() {
 
         <div className="grid lg:grid-cols-2 gap-6">
           <StatsSection title={t('stats.bestCategories')} sectionKey="categories" expandedSection={expandedSection} onExpand={setExpandedSection}>
-            {catsLoading ? <SectionSkeleton /> : <SortableTable data={bestCategories} columns={catColumns} defaultSortKey="avgPoints" />}
+            {expandedSection === 'categories' && (
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                {([
+                  { value: 'all' as const, label: t('categories.allCategories') },
+                  { value: 'default' as const, label: t('categories.defaultType') },
+                  { value: 'special' as const, label: t('categories.customType') },
+                ]).map((opt) => (
+                  <Button
+                    key={opt.value}
+                    size="sm"
+                    variant={categoryTypeFilter === opt.value ? 'default' : 'outline'}
+                    onClick={() => setCategoryTypeFilter(opt.value)}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+            {catsLoading ? <SectionSkeleton /> : <SortableTable data={filteredCategories} columns={catColumns} defaultSortKey="avgPoints" />}
           </StatsSection>
+
 
           <StatsSection title={t('stats.bestQuizzes')} sectionKey="quizzes" expandedSection={expandedSection} onExpand={setExpandedSection}>
             {quizzesLoading ? <SectionSkeleton /> : <SortableTable data={bestQuizzes} columns={quizColumns} defaultSortKey="avgPoints" />}
