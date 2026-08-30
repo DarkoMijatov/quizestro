@@ -591,9 +591,17 @@ export default function StatsPage() {
     { key: 'bonusPoints', label: t('teamsTable.bonusPoints', 'Bonus'), getValue: (r: TopTeam) => r.bonusPoints, align: 'right' as const },
   ];
 
+  const filteredCategories = useMemo(() => {
+    if (categoryTypeFilter === 'default') return bestCategories.filter((c) => c.isDefault);
+    if (categoryTypeFilter === 'special') return bestCategories.filter((c) => !c.isDefault);
+    return bestCategories;
+  }, [bestCategories, categoryTypeFilter]);
+
   const catColumns = [
     { key: 'name', label: t('categories.categoryName'), getValue: (r: BestCategory) => r.name },
+    { key: 'isDefault', label: t('filters.type'), getValue: (r: BestCategory) => (r.isDefault ? t('categories.defaultType') : t('categories.customType')) },
     { key: 'avgPoints', label: t('stats.avgPoints'), getValue: (r: BestCategory) => r.avgPoints, align: 'right' as const },
+
   ];
 
   const quizColumns = [
