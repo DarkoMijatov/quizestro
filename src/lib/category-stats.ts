@@ -66,15 +66,24 @@ export function getCompleteCategoryStatsQuizIds({
 
     if (allTeamIds.size === 0) continue;
 
+    // part_scores are stored as *display* points (raw + bonus_points, doubled by
+    // Joker, +1 for category bonus), while category averages use raw points.
+    // So the raw category total can never exceed the part total; it may legitimately
+    // be lower whenever a Joker/bonus was used. Treat the quiz as complete when
+    // category-level scores were actually entered and never exceed the part totals.
+    let hasCategoryScores = false;
     const isConsistent = Array.from(allTeamIds).every((quizTeamId) => {
       const categoryTotal = categoryTotalsByTeam.get(quizTeamId) || 0;
       const partTotal = partTotalsByTeam.get(quizTeamId) || 0;
-      return Math.abs(categoryTotal - partTotal) < 0.0001;
+      if (categoryTotal > 0) hasCategoryScores = true;
+      if (partTotal === 0 && categoryTotal === 0) return true;
+      return categoryTotal <= partTotal + 0.0001;
     });
 
-    if (isConsistent) {
+    if (isConsistent && hasCategoryScores) {
       validQuizIds.add(quiz.id);
     }
+
   }
 
   return validQuizIds;
