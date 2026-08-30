@@ -246,6 +246,8 @@ export default function StatsPage() {
   const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>(undefined);
   const [customDateTo, setCustomDateTo] = useState<Date | undefined>(undefined);
   const [expandedSection, setExpandedSection] = useState<StatsSectionKey | null>(null);
+  const [categoryTypeFilter, setCategoryTypeFilter] = useState<'all' | 'default' | 'special'>('all');
+
 
   const activeRange = useMemo(() => {
     if (rangePreset === 'custom') {
