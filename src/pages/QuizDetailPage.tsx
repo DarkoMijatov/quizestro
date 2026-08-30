@@ -826,9 +826,9 @@ export default function QuizDetailPage() {
   };
 
   // Keyboard navigation: arrow keys move between score inputs
-  const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>, rowIdx: number, colIdx: number) => {
-    const cellKey = `${rowIdx}-${colIdx}`;
+  const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>, rowIdx: number, colIdx: number, cellKey: string) => {
     if (handleDecimalSeparatorKey(e, cellKey)) return;
+
 
     let targetRow = rowIdx;
     let targetCol = colIdx;
