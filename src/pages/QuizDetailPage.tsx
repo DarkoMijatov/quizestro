@@ -1209,7 +1209,7 @@ export default function QuizDetailPage() {
                                       const next = e.relatedTarget as HTMLElement | null;
                                       if (!next || !next.closest("[data-row]")) applyHighlight(null, null);
                                     }}
-                                    onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx)}
+                                    onKeyDown={(e) => handleInputKeyDown(e, rowIdx, colIdx, cellKey)}
                                     tabIndex={rowIdx * colCount + colIdx + 1}
                                     className={cn(
                                       "flex-1 min-w-0 text-center font-black bg-transparent border-2 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors",
