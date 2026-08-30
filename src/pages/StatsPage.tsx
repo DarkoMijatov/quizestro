@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface TopTeam { name: string; quizzes: number; wins: number; avgPoints: number; bestQuizPoints: number; bonusPoints: number }
-interface BestCategory { name: string; avgPoints: number }
+interface BestCategory { name: string; avgPoints: number; isDefault: boolean }
 interface BestQuiz { name: string; date: string; teamCount: number; avgPoints: number }
 interface TopLeague { name: string; season: string; quizCount: number; leaderName: string; is_active: boolean }
 
@@ -246,6 +246,8 @@ export default function StatsPage() {
   const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>(undefined);
   const [customDateTo, setCustomDateTo] = useState<Date | undefined>(undefined);
   const [expandedSection, setExpandedSection] = useState<StatsSectionKey | null>(null);
+  const [categoryTypeFilter, setCategoryTypeFilter] = useState<'all' | 'default' | 'special'>('all');
+
 
   const activeRange = useMemo(() => {
     if (rangePreset === 'custom') {
@@ -482,16 +484,18 @@ export default function StatsPage() {
           if (catIds.length === 0) {
             setBestCategories([]);
           } else {
-            const { data: catNames } = await supabase.from('categories').select('id, name').in('id', catIds);
-            const catNameMap = new Map((catNames || []).map(c => [c.id, c.name]));
+            const { data: catNames } = await supabase.from('categories').select('id, name, is_default').in('id', catIds);
+            const catNameMap = new Map((catNames || []).map(c => [c.id, c]));
             setBestCategories(
               Object.entries(catStats)
                 .map(([id, s]) => ({
-                  name: catNameMap.get(id) || '?',
+                  name: catNameMap.get(id)?.name || '?',
+                  isDefault: !!catNameMap.get(id)?.is_default,
                   avgPoints: s.count > 0 ? s.total / s.count : 0,
                 }))
                 .sort((a, b) => b.avgPoints - a.avgPoints)
             );
+
           }
         }
 
@@ -587,9 +591,17 @@ export default function StatsPage() {
     { key: 'bonusPoints', label: t('teamsTable.bonusPoints', 'Bonus'), getValue: (r: TopTeam) => r.bonusPoints, align: 'right' as const },
   ];
 
+  const filteredCategories = useMemo(() => {
+    if (categoryTypeFilter === 'default') return bestCategories.filter((c) => c.isDefault);
+    if (categoryTypeFilter === 'special') return bestCategories.filter((c) => !c.isDefault);
+    return bestCategories;
+  }, [bestCategories, categoryTypeFilter]);
+
   const catColumns = [
     { key: 'name', label: t('categories.categoryName'), getValue: (r: BestCategory) => r.name },
+    { key: 'isDefault', label: t('filters.type'), getValue: (r: BestCategory) => (r.isDefault ? t('categories.defaultType') : t('categories.customType')) },
     { key: 'avgPoints', label: t('stats.avgPoints'), getValue: (r: BestCategory) => r.avgPoints, align: 'right' as const },
+
   ];
 
   const quizColumns = [
@@ -696,8 +708,27 @@ export default function StatsPage() {
 
         <div className="grid lg:grid-cols-2 gap-6">
           <StatsSection title={t('stats.bestCategories')} sectionKey="categories" expandedSection={expandedSection} onExpand={setExpandedSection}>
-            {catsLoading ? <SectionSkeleton /> : <SortableTable data={bestCategories} columns={catColumns} defaultSortKey="avgPoints" />}
+            {expandedSection === 'categories' && (
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                {([
+                  { value: 'all' as const, label: t('categories.allCategories') },
+                  { value: 'default' as const, label: t('categories.defaultType') },
+                  { value: 'special' as const, label: t('categories.customType') },
+                ]).map((opt) => (
+                  <Button
+                    key={opt.value}
+                    size="sm"
+                    variant={categoryTypeFilter === opt.value ? 'default' : 'outline'}
+                    onClick={() => setCategoryTypeFilter(opt.value)}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+            {catsLoading ? <SectionSkeleton /> : <SortableTable data={filteredCategories} columns={catColumns} defaultSortKey="avgPoints" />}
           </StatsSection>
+
 
           <StatsSection title={t('stats.bestQuizzes')} sectionKey="quizzes" expandedSection={expandedSection} onExpand={setExpandedSection}>
             {quizzesLoading ? <SectionSkeleton /> : <SortableTable data={bestQuizzes} columns={quizColumns} defaultSortKey="avgPoints" />}
