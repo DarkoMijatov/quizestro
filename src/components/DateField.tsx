@@ -165,20 +165,16 @@ export function DateField({ value, onChange, className, fromYear, toYear, disabl
               }
             }}
             onMonthChange={setMonth}
-            captionLayout="dropdown-buttons"
             fromYear={fromYear ?? currentYear - 10}
             toYear={toYear ?? currentYear + 5}
             locale={locale}
             initialFocus
             className="p-3 pointer-events-auto"
             classNames={{
-              caption: "flex justify-center pt-1 relative items-center gap-1",
-              caption_dropdowns: "flex gap-1",
-              dropdown:
-                "rounded-md border border-border bg-popover text-foreground text-sm px-2 py-1 focus:outline-none focus:ring-1 focus:ring-ring",
-              dropdown_month: "relative",
-              dropdown_year: "relative",
-              vhidden: "hidden",
+              caption: "flex justify-center pt-1 relative items-center",
+            }}
+            components={{
+              Caption: CalendarCaption,
             }}
           />
         </PopoverContent>
