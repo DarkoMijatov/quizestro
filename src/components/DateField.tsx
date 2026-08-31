@@ -4,7 +4,7 @@ import { srLatn } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { CalendarIcon } from "lucide-react";
 import type { CaptionProps } from "react-day-picker";
-import { useDayPicker } from "react-day-picker";
+import { useDayPicker, useNavigation } from "react-day-picker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
