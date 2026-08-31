@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { parseQuizExcel, generateImportTemplate } from "@/lib/excelUtils";
 import { ImportExcelDialog } from "@/components/ImportExcelDialog";
+import { DateField } from "@/components/DateField";
 
 interface Category {
   id: string;
@@ -700,23 +701,8 @@ export default function CreateQuizPage() {
             </div>
             <div className="space-y-2">
               <Label>{t("quiz.date")}</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formatDateLocale(quizDate)}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={quizDate}
-                    onSelect={(d) => d && setQuizDate(d)}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <DateField value={quizDate} onChange={(d) => setQuizDate(d)} />
+              <p className="text-xs text-muted-foreground">{formatDateLocale(quizDate)}</p>
             </div>
             <div className="space-y-2">
               <Label>{t("quiz.location")}</Label>
@@ -870,23 +856,8 @@ export default function CreateQuizPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>{t("quiz.date")}</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formatDateLocale(quizDate)}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={quizDate}
-                          onSelect={(d) => d && setQuizDate(d)}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <DateField value={quizDate} onChange={(d) => setQuizDate(d)} />
+                    <p className="text-xs text-muted-foreground">{formatDateLocale(quizDate)}</p>
                   </div>
                   <div className="space-y-2">
                     <Label>{t("quiz.location")}</Label>
