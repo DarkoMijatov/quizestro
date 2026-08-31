@@ -1,12 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { format, isValid, parse } from "date-fns";
 import { srLatn } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { CalendarIcon } from "lucide-react";
+import type { CaptionProps } from "react-day-picker";
+import { useDayPicker, useNavigation } from "react-day-picker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const INPUT_FORMATS = ["dd.MM.yyyy", "d.M.yyyy", "dd/MM/yyyy", "d/M/yyyy", "dd-MM-yyyy", "yyyy-MM-dd"];
@@ -28,6 +38,73 @@ interface DateFieldProps {
   fromYear?: number;
   toYear?: number;
   disabled?: boolean;
+}
+
+function CalendarCaption({ displayMonth }: CaptionProps) {
+  const { goToMonth } = useNavigation();
+  const { fromYear: ctxFromYear, toYear: ctxToYear } = useDayPicker();
+  const { i18n } = useTranslation();
+
+  const currentYear = new Date().getFullYear();
+  const fromYear = ctxFromYear ?? currentYear - 10;
+  const toYear = ctxToYear ?? currentYear + 5;
+
+  const months = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => ({
+        value: i,
+        label: format(new Date(2024, i, 1), "MMMM", { locale: i18n.language === "sr" ? srLatn : undefined }),
+      })),
+    [i18n.language]
+  );
+
+  const years = useMemo(() => {
+    return Array.from({ length: toYear - fromYear + 1 }, (_, i) => fromYear + i);
+  }, [fromYear, toYear]);
+
+  const handleMonthChange = (monthValue: string) => {
+    const newDate = new Date(displayMonth);
+    newDate.setMonth(Number(monthValue));
+    goToMonth(newDate);
+  };
+
+  const handleYearChange = (yearValue: string) => {
+    const newDate = new Date(displayMonth);
+    newDate.setFullYear(Number(yearValue));
+    goToMonth(newDate);
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-2 px-8">
+      <Select value={displayMonth.getMonth().toString()} onValueChange={handleMonthChange}>
+        <SelectTrigger className="h-8 w-[7.5rem] border-border bg-popover text-sm font-medium hover:bg-accent focus:ring-ring">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="max-h-60">
+          {months.map((m) => (
+            <SelectItem key={m.value} value={m.value.toString()} className="text-sm capitalize">
+              {m.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={displayMonth.getFullYear().toString()} onValueChange={handleYearChange}>
+        <SelectTrigger className="h-8 w-[5.5rem] border-border bg-popover text-sm font-medium hover:bg-accent focus:ring-ring">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="max-h-60">
+          <ScrollArea className="h-60">
+            {years.map((y) => (
+              <SelectItem key={y} value={y.toString()} className="text-sm">
+                {y}
+              </SelectItem>
+            ))}
+          </ScrollArea>
+        </SelectContent>
+      </Select>
+    </div>
+  );
 }
 
 export function DateField({ value, onChange, className, fromYear, toYear, disabled }: DateFieldProps) {
@@ -89,20 +166,16 @@ export function DateField({ value, onChange, className, fromYear, toYear, disabl
               }
             }}
             onMonthChange={setMonth}
-            captionLayout="dropdown-buttons"
             fromYear={fromYear ?? currentYear - 10}
             toYear={toYear ?? currentYear + 5}
             locale={locale}
             initialFocus
             className="p-3 pointer-events-auto"
             classNames={{
-              caption: "flex justify-center pt-1 relative items-center gap-1",
-              caption_dropdowns: "flex gap-1",
-              dropdown:
-                "rounded-md border border-border bg-popover text-foreground text-sm px-2 py-1 focus:outline-none focus:ring-1 focus:ring-ring",
-              dropdown_month: "relative",
-              dropdown_year: "relative",
-              vhidden: "hidden",
+              caption: "flex justify-center pt-1 relative items-center",
+            }}
+            components={{
+              Caption: CalendarCaption,
             }}
           />
         </PopoverContent>
