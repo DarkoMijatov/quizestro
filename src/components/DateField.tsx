@@ -40,6 +40,74 @@ interface DateFieldProps {
   disabled?: boolean;
 }
 
+function CalendarCaption({ displayMonth }: CaptionProps) {
+  const { goToMonth } = useDayPicker();
+  const { i18n } = useTranslation();
+
+  const currentYear = new Date().getFullYear();
+  const startYear = displayMonth.getFullYear() - 10;
+  const endYear = displayMonth.getFullYear() + 5;
+
+  const months = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => ({
+        value: i,
+        label: format(new Date(2024, i, 1), "MMMM", { locale: i18n.language === "sr" ? srLatn : undefined }),
+      })),
+    [i18n.language]
+  );
+
+  const years = useMemo(() => {
+    const from = startYear;
+    const to = endYear;
+    return Array.from({ length: to - from + 1 }, (_, i) => from + i);
+  }, [startYear, endYear]);
+
+  const handleMonthChange = (monthValue: string) => {
+    const newDate = new Date(displayMonth);
+    newDate.setMonth(Number(monthValue));
+    goToMonth(newDate);
+  };
+
+  const handleYearChange = (yearValue: string) => {
+    const newDate = new Date(displayMonth);
+    newDate.setFullYear(Number(yearValue));
+    goToMonth(newDate);
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-2 px-8">
+      <Select value={displayMonth.getMonth().toString()} onValueChange={handleMonthChange}>
+        <SelectTrigger className="h-8 w-[7.5rem] border-border bg-popover text-sm font-medium hover:bg-accent focus:ring-ring">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="max-h-60">
+          {months.map((m) => (
+            <SelectItem key={m.value} value={m.value.toString()} className="text-sm capitalize">
+              {m.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={displayMonth.getFullYear().toString()} onValueChange={handleYearChange}>
+        <SelectTrigger className="h-8 w-[5.5rem] border-border bg-popover text-sm font-medium hover:bg-accent focus:ring-ring">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="max-h-60">
+          <ScrollArea className="h-60">
+            {years.map((y) => (
+              <SelectItem key={y} value={y.toString()} className="text-sm">
+                {y}
+              </SelectItem>
+            ))}
+          </ScrollArea>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 export function DateField({ value, onChange, className, fromYear, toYear, disabled }: DateFieldProps) {
   const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
