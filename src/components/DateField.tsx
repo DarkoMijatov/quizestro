@@ -41,12 +41,12 @@ interface DateFieldProps {
 }
 
 function CalendarCaption({ displayMonth }: CaptionProps) {
-  const { goToMonth } = useDayPicker();
+  const { goToMonth, props } = useDayPicker();
   const { i18n } = useTranslation();
 
   const currentYear = new Date().getFullYear();
-  const startYear = displayMonth.getFullYear() - 10;
-  const endYear = displayMonth.getFullYear() + 5;
+  const fromYear = (props.fromYear as number | undefined) ?? currentYear - 10;
+  const toYear = (props.toYear as number | undefined) ?? currentYear + 5;
 
   const months = useMemo(
     () =>
@@ -58,10 +58,8 @@ function CalendarCaption({ displayMonth }: CaptionProps) {
   );
 
   const years = useMemo(() => {
-    const from = startYear;
-    const to = endYear;
-    return Array.from({ length: to - from + 1 }, (_, i) => from + i);
-  }, [startYear, endYear]);
+    return Array.from({ length: toYear - fromYear + 1 }, (_, i) => fromYear + i);
+  }, [fromYear, toYear]);
 
   const handleMonthChange = (monthValue: string) => {
     const newDate = new Date(displayMonth);
