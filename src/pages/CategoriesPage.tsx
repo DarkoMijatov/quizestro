@@ -35,6 +35,22 @@ interface CategoryRow {
 
 const PAGE_SIZE = 8;
 
+async function fetchAllRows<T = any>(
+  build: (from: number, to: number) => any,
+  pageSize = 1000
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let page = 0; ; page++) {
+    const from = page * pageSize;
+    const { data, error } = await build(from, from + pageSize - 1);
+    if (error) throw error;
+    const rows = (data || []) as T[];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
+}
+
 export default function CategoriesPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -58,28 +74,26 @@ export default function CategoriesPage() {
 
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
 
-  const fetchQuizzesWithCategoryStatus = useCallback(async (quizIds: string[]) => {
-    if (quizIds.length === 0) return [];
+  const fetchQuizzesWithCategoryStatus = useCallback(async () => {
+    if (!currentOrg) return [] as any[];
 
-    const withFlag = await supabase
+    const build = (withFlag: boolean) => (from: number, to: number) => supabase
       .from('quizzes')
-      .select('id, scoring_mode, status, categories_filled')
-      .in('id', quizIds);
+      .select(withFlag ? 'id, scoring_mode, status, categories_filled' : 'id, scoring_mode, status')
+      .eq('organization_id', currentOrg.id)
+      .range(from, to);
 
-    if (!withFlag.error) {
-      return (withFlag.data || []) as any[];
+    try {
+      return await fetchAllRows(build(true));
+    } catch {
+      const fallback = await fetchAllRows(build(false));
+      return fallback.map((quiz: any) => ({
+        ...quiz,
+        categories_filled: quiz.scoring_mode !== 'per_part',
+      }));
     }
+  }, [currentOrg?.id]);
 
-    const fallback = await supabase
-      .from('quizzes')
-      .select('id, scoring_mode, status')
-      .in('id', quizIds);
-
-    return (fallback.data || []).map((quiz: any) => ({
-      ...quiz,
-      categories_filled: quiz.scoring_mode !== 'per_part',
-    })) as any[];
-  }, []);
 
   const fetchCategories = useCallback(async (params: ServerParams) => {
     if (!currentOrg) return;
@@ -120,34 +134,41 @@ export default function CategoriesPage() {
         return;
       }
 
-      const catIds = cats.map((c) => c.id);
-      const { data: qcData } = await supabase
+      const catIdSet = new Set(cats.map((c) => c.id));
+
+      const allQc = await fetchAllRows((from, to) => supabase
         .from('quiz_categories')
         .select('id, category_id, quiz_id')
-        .in('category_id', catIds);
+        .eq('organization_id', currentOrg.id)
+        .range(from, to));
 
-      const qcList = (qcData || []) as any[];
-      const quizMeta = await fetchQuizzesWithCategoryStatus([...new Set(qcList.map((qc: any) => qc.quiz_id))]);
+      const qcList = allQc.filter((qc: any) => catIdSet.has(qc.category_id));
+      const quizMeta = await fetchQuizzesWithCategoryStatus();
       const quizMetaMap = new Map(quizMeta.map((q: any) => [q.id, q]));
 
-      const validQuizIds = [...new Set(qcList.map((qc: any) => qc.quiz_id).filter((quizId: string) => {
-        const quiz = quizMetaMap.get(quizId);
-        return quiz?.status === 'finished';
-      }))];
+      const validQuizIdSet = new Set(qcList
+        .map((qc: any) => qc.quiz_id)
+        .filter((quizId: string) => quizMetaMap.get(quizId)?.status === 'finished'));
 
-      const [allScoresRes, partScoresRes] = await Promise.all([
-        validQuizIds.length > 0
-          ? supabase.from('scores').select('quiz_id, quiz_team_id, quiz_category_id, points').in('quiz_id', validQuizIds)
-          : Promise.resolve({ data: [] as any[] }),
-        validQuizIds.length > 0
-          ? supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', validQuizIds)
-          : Promise.resolve({ data: [] as any[] }),
-      ]);
+      const [allScores, allPartScores] = validQuizIdSet.size > 0
+        ? await Promise.all([
+            fetchAllRows((from, to) => supabase.from('scores')
+              .select('quiz_id, quiz_team_id, quiz_category_id, points')
+              .eq('organization_id', currentOrg.id).range(from, to)),
+            fetchAllRows((from, to) => supabase.from('part_scores')
+              .select('quiz_id, quiz_team_id, points')
+              .eq('organization_id', currentOrg.id).range(from, to)),
+          ])
+        : [[] as any[], [] as any[]];
+
+      const scoreRows = allScores.filter((s: any) => validQuizIdSet.has(s.quiz_id));
+      const partScoreRows = allPartScores.filter((s: any) => validQuizIdSet.has(s.quiz_id));
+
 
       const completeQuizIds = getCompleteCategoryStatsQuizIds({
-        quizzes: quizMeta,
-        scores: allScoresRes.data || [],
-        partScores: partScoresRes.data || [],
+        quizzes: quizMeta.filter((q: any) => validQuizIdSet.has(q.id)),
+        scores: scoreRows,
+        partScores: partScoreRows,
       });
 
       const scoreSourceQuizIds = qcList
@@ -165,7 +186,8 @@ export default function CategoriesPage() {
       qcList.forEach((qc: any) => qcToCat.set(qc.id, qc.category_id));
 
       const scoreMap = new Map<string, { total: number; count: number }>();
-      (allScoresRes.data || []).forEach((score: any) => {
+      scoreRows.forEach((score: any) => {
+
         const qc = qcById.get(score.quiz_category_id);
         if (!qc || !validQcIdSet.has(qc.id)) return;
         const categoryId = qcToCat.get(score.quiz_category_id);
