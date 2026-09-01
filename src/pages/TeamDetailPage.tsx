@@ -42,6 +42,22 @@ interface TeamCategoryAverage {
   appearances: number;
 }
 
+async function fetchAllRows<T = any>(
+  build: (from: number, to: number) => any,
+  pageSize = 1000
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let page = 0; ; page++) {
+    const from = page * pageSize;
+    const { data, error } = await build(from, from + pageSize - 1);
+    if (error) throw error;
+    const rows = (data || []) as T[];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
+}
+
 export default function TeamDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -127,19 +143,31 @@ export default function TeamDetailPage() {
 
         const finishedQtIds = finishedParticipations.map((p) => p.quiz_team_id);
         const finishedQuizIds = [...new Set(finishedParticipations.map((p) => p.quiz_id))];
-        const [{ data: scores }, { data: categoryBonuses }, { data: partScores }] = await Promise.all([
-          supabase
+        const [scores, categoryBonuses, partScores] = await Promise.all([
+          fetchAllRows((from, to) => supabase
             .from('scores')
             .select('quiz_id, quiz_team_id, quiz_category_id, points')
-            .in('quiz_team_id', finishedQtIds),
-          supabase.from('category_bonuses').select('quiz_id, quiz_team_id, quiz_category_id').in('quiz_id', finishedQuizIds),
-          supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', finishedQuizIds),
+            .in('quiz_team_id', finishedQtIds)
+            .eq('organization_id', currentOrg.id)
+            .range(from, to)),
+          fetchAllRows((from, to) => supabase
+            .from('category_bonuses')
+            .select('quiz_id, quiz_team_id, quiz_category_id')
+            .in('quiz_id', finishedQuizIds)
+            .eq('organization_id', currentOrg.id)
+            .range(from, to)),
+          fetchAllRows((from, to) => supabase
+            .from('part_scores')
+            .select('quiz_id, quiz_team_id, points')
+            .in('quiz_id', finishedQuizIds)
+            .eq('organization_id', currentOrg.id)
+            .range(from, to)),
         ]);
 
         const completeQuizIds = getCompleteCategoryStatsQuizIds({
           quizzes: (quizzes || []).filter((quiz: any) => finishedQuizIds.includes(quiz.id)) as any[],
-          scores: (scores || []) as any[],
-          partScores: (partScores || []) as any[],
+          scores: scores as any[],
+          partScores: partScores as any[],
         });
 
         const completeFinishedQtIdSet = new Set(
@@ -147,7 +175,7 @@ export default function TeamDetailPage() {
             .filter((p) => completeQuizIds.has(p.quiz_id))
             .map((p) => p.quiz_team_id)
         );
-        const filteredScores = (scores || []).filter((score: any) => completeFinishedQtIdSet.has(score.quiz_team_id));
+        const filteredScores = scores.filter((score: any) => completeFinishedQtIdSet.has(score.quiz_team_id));
         const quizCategoryIds = [...new Set(filteredScores.map((score: any) => score.quiz_category_id))];
         if (quizCategoryIds.length === 0) {
           setCategoryAverages([]);
@@ -155,17 +183,26 @@ export default function TeamDetailPage() {
           return;
         }
 
-        const { data: quizCategories } = await supabase
+        const quizCategories = await fetchAllRows((from, to) => supabase
           .from('quiz_categories')
           .select('id, category_id')
-          .in('id', quizCategoryIds);
-        const categoryIds = [...new Set((quizCategories || []).map((qc: any) => qc.category_id))];
-        const { data: categories } = categoryIds.length > 0
-          ? await supabase.from('categories').select('id, name').in('id', categoryIds)
-          : { data: [] as any[] };
+          .in('quiz_id', finishedQuizIds)
+          .eq('organization_id', currentOrg.id)
+          .range(from, to));
+        const relevantQuizCategoryIds = new Set(quizCategoryIds);
+        const relevantQuizCategories = quizCategories.filter((qc: any) => relevantQuizCategoryIds.has(qc.id));
+        const categoryIds = [...new Set(relevantQuizCategories.map((qc: any) => qc.category_id))];
+        const categories = categoryIds.length > 0
+          ? await fetchAllRows((from, to) => supabase
+              .from('categories')
+              .select('id, name')
+              .in('id', categoryIds)
+              .eq('organization_id', currentOrg.id)
+              .range(from, to))
+          : [];
 
-        const qcToCategory = new Map((quizCategories || []).map((qc: any) => [qc.id, qc.category_id]));
-        const categoryNames = new Map((categories || []).map((c: any) => [c.id, c.name]));
+        const qcToCategory = new Map(relevantQuizCategories.map((qc: any) => [qc.id, qc.category_id]));
+        const categoryNames = new Map(categories.map((c: any) => [c.id, c.name]));
         const categoryStats = new Map<string, { total: number; count: number }>();
         filteredScores.forEach((score: any) => {
           const categoryId = qcToCategory.get(score.quiz_category_id);
@@ -187,7 +224,7 @@ export default function TeamDetailPage() {
             .sort((a, b) => b.avg_score - a.avg_score)
         );
         setBonusPoints(
-          (categoryBonuses || []).filter((cb: any) => completeFinishedQtIdSet.has(cb.quiz_team_id)).length
+          categoryBonuses.filter((cb: any) => completeFinishedQtIdSet.has(cb.quiz_team_id)).length
         );
       } finally {
         setLoading(false);

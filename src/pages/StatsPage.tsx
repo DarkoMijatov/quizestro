@@ -393,9 +393,13 @@ export default function StatsPage() {
             .eq('organization_id', currentOrg.id)
             .range(from, to));
           (finishedQtFull || []).forEach((qt: any) => finishedQtIdToTeam.set(qt.id, qt.team_id));
-          const finishedQtIdSet = new Set((finishedQtFull || []).map((qt: any) => qt.id));
-          const cbData = finishedQtIdSet.size > 0
-            ? await fetchAllRows((from, to) => supabase.from('category_bonuses').select('quiz_team_id').in('quiz_team_id', [...finishedQtIdSet]).range(from, to))
+          const cbData = finishedQuizIds.size > 0
+            ? await fetchAllRows((from, to) => supabase
+                .from('category_bonuses')
+                .select('quiz_team_id')
+                .in('quiz_id', [...finishedQuizIds])
+                .eq('organization_id', currentOrg.id)
+                .range(from, to))
             : [];
           (cbData || []).forEach((cb: any) => {
             const teamId = finishedQtIdToTeam.get(cb.quiz_team_id);
