@@ -58,28 +58,26 @@ export default function CategoriesPage() {
 
   const canEdit = currentRole === 'owner' || currentRole === 'admin';
 
-  const fetchQuizzesWithCategoryStatus = useCallback(async (quizIds: string[]) => {
-    if (quizIds.length === 0) return [];
+  const fetchQuizzesWithCategoryStatus = useCallback(async () => {
+    if (!currentOrg) return [] as any[];
 
-    const withFlag = await supabase
+    const build = (withFlag: boolean) => (from: number, to: number) => supabase
       .from('quizzes')
-      .select('id, scoring_mode, status, categories_filled')
-      .in('id', quizIds);
+      .select(withFlag ? 'id, scoring_mode, status, categories_filled' : 'id, scoring_mode, status')
+      .eq('organization_id', currentOrg.id)
+      .range(from, to);
 
-    if (!withFlag.error) {
-      return (withFlag.data || []) as any[];
+    try {
+      return await fetchAllRows(build(true));
+    } catch {
+      const fallback = await fetchAllRows(build(false));
+      return fallback.map((quiz: any) => ({
+        ...quiz,
+        categories_filled: quiz.scoring_mode !== 'per_part',
+      }));
     }
+  }, [currentOrg?.id]);
 
-    const fallback = await supabase
-      .from('quizzes')
-      .select('id, scoring_mode, status')
-      .in('id', quizIds);
-
-    return (fallback.data || []).map((quiz: any) => ({
-      ...quiz,
-      categories_filled: quiz.scoring_mode !== 'per_part',
-    })) as any[];
-  }, []);
 
   const fetchCategories = useCallback(async (params: ServerParams) => {
     if (!currentOrg) return;
