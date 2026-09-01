@@ -35,6 +35,22 @@ interface CategoryRow {
 
 const PAGE_SIZE = 8;
 
+async function fetchAllRows<T = any>(
+  build: (from: number, to: number) => any,
+  pageSize = 1000
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let page = 0; ; page++) {
+    const from = page * pageSize;
+    const { data, error } = await build(from, from + pageSize - 1);
+    if (error) throw error;
+    const rows = (data || []) as T[];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
+}
+
 export default function CategoriesPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
