@@ -152,9 +152,9 @@ export default function CategoriesPage() {
 
 
       const completeQuizIds = getCompleteCategoryStatsQuizIds({
-        quizzes: quizMeta,
-        scores: allScoresRes.data || [],
-        partScores: partScoresRes.data || [],
+        quizzes: quizMeta.filter((q: any) => validQuizIdSet.has(q.id)),
+        scores: scoreRows,
+        partScores: partScoreRows,
       });
 
       const scoreSourceQuizIds = qcList
@@ -172,7 +172,8 @@ export default function CategoriesPage() {
       qcList.forEach((qc: any) => qcToCat.set(qc.id, qc.category_id));
 
       const scoreMap = new Map<string, { total: number; count: number }>();
-      (allScoresRes.data || []).forEach((score: any) => {
+      scoreRows.forEach((score: any) => {
+
         const qc = qcById.get(score.quiz_category_id);
         if (!qc || !validQcIdSet.has(qc.id)) return;
         const categoryId = qcToCat.get(score.quiz_category_id);
