@@ -97,24 +97,28 @@ export default function TeamDetailPage() {
           return;
         }
 
-        const quizzesWithFlag = await supabase
-          .from('quizzes')
-          .select('id, name, date, location, status, scoring_mode, categories_filled')
-          .in('id', quizIds)
-          .order('date', { ascending: false });
-        const quizzesFallback = quizzesWithFlag.error
-          ? await supabase
-              .from('quizzes')
-              .select('id, name, date, location, status, scoring_mode')
-              .in('id', quizIds)
-              .order('date', { ascending: false })
-          : null;
-        const quizzes = quizzesWithFlag.error
-          ? (quizzesFallback?.data || []).map((quiz: any) => ({
+        const quizIdSet = new Set(quizIds);
+        let quizzes: any[];
+        try {
+          const allQuizzes = await fetchAllRows((from, to) => supabase
+            .from('quizzes')
+            .select('id, name, date, location, status, scoring_mode, categories_filled')
+            .eq('organization_id', currentOrg.id)
+            .order('date', { ascending: false })
+            .range(from, to));
+          quizzes = allQuizzes.filter((quiz: any) => quizIdSet.has(quiz.id));
+        } catch {
+          const allQuizzes = await fetchAllRows((from, to) => supabase
+            .from('quizzes')
+            .select('id, name, date, location, status, scoring_mode')
+            .eq('organization_id', currentOrg.id)
+            .order('date', { ascending: false })
+            .range(from, to));
+          quizzes = allQuizzes.filter((quiz: any) => quizIdSet.has(quiz.id)).map((quiz: any) => ({
               ...quiz,
               categories_filled: quiz.scoring_mode !== 'per_part',
-            }))
-          : (quizzesWithFlag.data || []);
+            }));
+        }
 
         const quizMap = new Map((quizzes || []).map((q: any) => [q.id, q]));
         const merged: QuizParticipation[] = (qtData || []).map((qt: any) => {
@@ -143,26 +147,28 @@ export default function TeamDetailPage() {
 
         const finishedQtIds = finishedParticipations.map((p) => p.quiz_team_id);
         const finishedQuizIds = [...new Set(finishedParticipations.map((p) => p.quiz_id))];
-        const [scores, categoryBonuses, partScores] = await Promise.all([
+        const finishedQtIdSet = new Set(finishedQtIds);
+        const finishedQuizIdSet = new Set(finishedQuizIds);
+        const [allScores, allCategoryBonuses, allPartScores] = await Promise.all([
           fetchAllRows((from, to) => supabase
             .from('scores')
             .select('quiz_id, quiz_team_id, quiz_category_id, points')
-            .in('quiz_team_id', finishedQtIds)
             .eq('organization_id', currentOrg.id)
             .range(from, to)),
           fetchAllRows((from, to) => supabase
             .from('category_bonuses')
             .select('quiz_id, quiz_team_id, quiz_category_id')
-            .in('quiz_id', finishedQuizIds)
             .eq('organization_id', currentOrg.id)
             .range(from, to)),
           fetchAllRows((from, to) => supabase
             .from('part_scores')
             .select('quiz_id, quiz_team_id, points')
-            .in('quiz_id', finishedQuizIds)
             .eq('organization_id', currentOrg.id)
             .range(from, to)),
         ]);
+        const scores = allScores.filter((row: any) => finishedQtIdSet.has(row.quiz_team_id));
+        const categoryBonuses = allCategoryBonuses.filter((row: any) => finishedQuizIdSet.has(row.quiz_id));
+        const partScores = allPartScores.filter((row: any) => finishedQuizIdSet.has(row.quiz_id));
 
         const completeQuizIds = getCompleteCategoryStatsQuizIds({
           quizzes: (quizzes || []).filter((quiz: any) => finishedQuizIds.includes(quiz.id)) as any[],
@@ -186,19 +192,18 @@ export default function TeamDetailPage() {
         const quizCategories = await fetchAllRows((from, to) => supabase
           .from('quiz_categories')
           .select('id, category_id')
-          .in('quiz_id', finishedQuizIds)
           .eq('organization_id', currentOrg.id)
           .range(from, to));
         const relevantQuizCategoryIds = new Set(quizCategoryIds);
         const relevantQuizCategories = quizCategories.filter((qc: any) => relevantQuizCategoryIds.has(qc.id));
         const categoryIds = [...new Set(relevantQuizCategories.map((qc: any) => qc.category_id))];
+        const categoryIdSet = new Set(categoryIds);
         const categories = categoryIds.length > 0
           ? await fetchAllRows((from, to) => supabase
               .from('categories')
               .select('id, name')
-              .in('id', categoryIds)
               .eq('organization_id', currentOrg.id)
-              .range(from, to))
+              .range(from, to)).then(rows => rows.filter((row: any) => categoryIdSet.has(row.id)))
           : [];
 
         const qcToCategory = new Map(relevantQuizCategories.map((qc: any) => [qc.id, qc.category_id]));
