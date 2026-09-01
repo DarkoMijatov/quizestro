@@ -120,29 +120,36 @@ export default function CategoriesPage() {
         return;
       }
 
-      const catIds = cats.map((c) => c.id);
-      const { data: qcData } = await supabase
+      const catIdSet = new Set(cats.map((c) => c.id));
+
+      const allQc = await fetchAllRows((from, to) => supabase
         .from('quiz_categories')
         .select('id, category_id, quiz_id')
-        .in('category_id', catIds);
+        .eq('organization_id', currentOrg.id)
+        .range(from, to));
 
-      const qcList = (qcData || []) as any[];
-      const quizMeta = await fetchQuizzesWithCategoryStatus([...new Set(qcList.map((qc: any) => qc.quiz_id))]);
+      const qcList = allQc.filter((qc: any) => catIdSet.has(qc.category_id));
+      const quizMeta = await fetchQuizzesWithCategoryStatus();
       const quizMetaMap = new Map(quizMeta.map((q: any) => [q.id, q]));
 
-      const validQuizIds = [...new Set(qcList.map((qc: any) => qc.quiz_id).filter((quizId: string) => {
-        const quiz = quizMetaMap.get(quizId);
-        return quiz?.status === 'finished';
-      }))];
+      const validQuizIdSet = new Set(qcList
+        .map((qc: any) => qc.quiz_id)
+        .filter((quizId: string) => quizMetaMap.get(quizId)?.status === 'finished'));
 
-      const [allScoresRes, partScoresRes] = await Promise.all([
-        validQuizIds.length > 0
-          ? supabase.from('scores').select('quiz_id, quiz_team_id, quiz_category_id, points').in('quiz_id', validQuizIds)
-          : Promise.resolve({ data: [] as any[] }),
-        validQuizIds.length > 0
-          ? supabase.from('part_scores').select('quiz_id, quiz_team_id, points').in('quiz_id', validQuizIds)
-          : Promise.resolve({ data: [] as any[] }),
-      ]);
+      const [allScores, allPartScores] = validQuizIdSet.size > 0
+        ? await Promise.all([
+            fetchAllRows((from, to) => supabase.from('scores')
+              .select('quiz_id, quiz_team_id, quiz_category_id, points')
+              .eq('organization_id', currentOrg.id).range(from, to)),
+            fetchAllRows((from, to) => supabase.from('part_scores')
+              .select('quiz_id, quiz_team_id, points')
+              .eq('organization_id', currentOrg.id).range(from, to)),
+          ])
+        : [[] as any[], [] as any[]];
+
+      const scoreRows = allScores.filter((s: any) => validQuizIdSet.has(s.quiz_id));
+      const partScoreRows = allPartScores.filter((s: any) => validQuizIdSet.has(s.quiz_id));
+
 
       const completeQuizIds = getCompleteCategoryStatsQuizIds({
         quizzes: quizMeta,
