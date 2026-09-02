@@ -1,13 +1,35 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  extractOrganizationId,
+  extractSubscriptionId,
+  isOlderEvent,
+  isWebhookTimestampFresh,
+  timingSafeEqualHex,
+} from "./webhook-utils.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+const handledEvents = [
+  "subscription.created",
+  "subscription.updated",
+  "subscription.canceled",
+  "subscription.past_due",
+  "subscription.activated",
+  "transaction.completed",
+];
 
 async function verifyPaddleSignature(
   rawBody: string,
   signature: string | null,
-  secret: string
+  secret: string,
+  toleranceSeconds: number
 ): Promise<boolean> {
   if (!signature) return false;
 
-  // Paddle Billing webhook signature format: ts=TIMESTAMP;h1=HASH
   const parts: Record<string, string> = {};
   for (const part of signature.split(";")) {
     const [key, value] = part.split("=");
@@ -18,8 +40,12 @@ async function verifyPaddleSignature(
   const h1 = parts["h1"];
   if (!ts || !h1) return false;
 
-  const signedPayload = `${ts}:${rawBody}`;
+  if (!isWebhookTimestampFresh(ts, Date.now(), toleranceSeconds)) {
+    console.error("Rejected stale Paddle webhook timestamp");
+    return false;
+  }
 
+  const signedPayload = `${ts}:${rawBody}`;
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
@@ -33,14 +59,8 @@ async function verifyPaddleSignature(
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  return hex === h1;
+  return timingSafeEqualHex(hex, h1);
 }
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
 
 function addDaysIso(dateIso: string, days: number): string {
   const d = new Date(dateIso);
@@ -57,6 +77,9 @@ Deno.serve(async (req) => {
     const rawBody = await req.text();
     const signature = req.headers.get("paddle-signature");
     const webhookSecret = Deno.env.get("PADDLE_WEBHOOK_SECRET");
+    const toleranceSeconds = Number(
+      Deno.env.get("PADDLE_WEBHOOK_TOLERANCE_SECONDS") || "300"
+    );
 
     if (!signature || !webhookSecret) {
       console.error("Missing signature or webhook secret");
@@ -66,7 +89,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    const isValid = await verifyPaddleSignature(rawBody, signature, webhookSecret);
+    const isValid = await verifyPaddleSignature(
+      rawBody,
+      signature,
+      webhookSecret,
+      Number.isFinite(toleranceSeconds) && toleranceSeconds > 0
+        ? toleranceSeconds
+        : 300
+    );
     if (!isValid) {
       console.error("Invalid webhook signature");
       return new Response(JSON.stringify({ error: "Invalid signature" }), {
@@ -76,8 +106,16 @@ Deno.serve(async (req) => {
     }
 
     const payload = JSON.parse(rawBody);
-    const eventType = payload.event_type;
-    const eventId = payload.event_id || `${eventType}_${Date.now()}`;
+    const eventType = payload.event_type as string | undefined;
+    const eventId = payload.event_id as string | undefined;
+    const occurredAt = (payload.occurred_at as string | undefined) || new Date().toISOString();
+
+    if (!eventType || !eventId) {
+      return new Response(JSON.stringify({ error: "Invalid Paddle event envelope" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     console.log(`Paddle webhook received: ${eventType}`, eventId);
 
@@ -86,111 +124,211 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Idempotency check
-    const { data: existingEvent } = await serviceClient
+    const data = payload.data;
+    const organizationId = extractOrganizationId(data);
+
+    const { data: existingEvent, error: existingEventError } = await serviceClient
       .from("webhook_events")
-      .select("id")
+      .select("id, processing_status")
       .eq("event_id", eventId)
       .maybeSingle();
 
-    if (existingEvent) {
+    if (existingEventError) {
+      console.error("Failed to check webhook idempotency:", existingEventError);
+      return new Response(JSON.stringify({ error: "Webhook storage unavailable" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (existingEvent?.processing_status === "processed") {
       console.log(`Event ${eventId} already processed, skipping`);
       return new Response(JSON.stringify({ ok: true, skipped: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Log the event
-    await serviceClient.from("webhook_events").insert({
-      event_id: eventId,
-      event_type: eventType,
-      payload,
-    });
+    if (existingEvent) {
+      const { error: retryStateError } = await serviceClient
+        .from("webhook_events")
+        .update({
+          processing_status: "processing",
+          error_message: null,
+          payload,
+          occurred_at: occurredAt,
+          organization_id: organizationId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("event_id", eventId);
 
-    // Extract organization_id from custom_data (support multiple payload shapes)
-    const subscriptionData = payload.data;
-    const organizationId =
-      subscriptionData?.custom_data?.organization_id ||
-      subscriptionData?.custom_data?.organizationId ||
-      subscriptionData?.subscription?.custom_data?.organization_id ||
-      subscriptionData?.items?.[0]?.price?.custom_data?.organization_id ||
-      subscriptionData?.transaction?.custom_data?.organization_id;
-    const subscriptionId =
-      subscriptionData?.id ||
-      subscriptionData?.subscription_id ||
-      subscriptionData?.subscription?.id ||
-      "";
-    const transactionAt =
-      payload?.occurred_at ||
-      subscriptionData?.billed_at ||
-      subscriptionData?.created_at ||
-      new Date().toISOString();
-    const trialEndsAt = addDaysIso(transactionAt, 14);
-    const currentPeriodEnd =
-      subscriptionData?.current_billing_period?.ends_at ||
-      subscriptionData?.scheduled_change?.effective_at;
+      if (retryStateError) {
+        console.error("Failed to claim webhook retry:", retryStateError);
+        return new Response(JSON.stringify({ error: "Webhook storage unavailable" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      const { error: insertEventError } = await serviceClient.from("webhook_events").insert({
+        event_id: eventId,
+        event_type: eventType,
+        payload,
+        processing_status: "processing",
+        processed_at: null,
+        occurred_at: occurredAt,
+        organization_id: organizationId,
+      });
 
-    const handledEvents = [
-      "subscription.created",
-      "subscription.updated",
-      "subscription.canceled",
-      "subscription.past_due",
-      "subscription.activated",
-      "transaction.completed",
-    ];
+      if (insertEventError) {
+        if (insertEventError.code === "23505") {
+          // Another invocation claimed the same Paddle event concurrently.
+          return new Response(JSON.stringify({ ok: true, skipped: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        console.error("Failed to store webhook event:", insertEventError);
+        return new Response(JSON.stringify({ error: "Webhook storage unavailable" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    const markProcessed = async (extra: Record<string, unknown> = {}) => {
+      const { error } = await serviceClient
+        .from("webhook_events")
+        .update({
+          processing_status: "processed",
+          processed_at: new Date().toISOString(),
+          error_message: null,
+          updated_at: new Date().toISOString(),
+          ...extra,
+        })
+        .eq("event_id", eventId);
+      if (error) console.error("Failed to mark webhook processed:", error);
+    };
+
+    const markFailed = async (message: string) => {
+      const { error } = await serviceClient
+        .from("webhook_events")
+        .update({
+          processing_status: "failed",
+          error_message: message.slice(0, 1000),
+          processed_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("event_id", eventId);
+      if (error) console.error("Failed to mark webhook failed:", error);
+    };
 
     if (!handledEvents.includes(eventType)) {
       console.log(`Unhandled event type: ${eventType}`);
-      return new Response(JSON.stringify({ ok: true }), {
+      await markProcessed();
+      return new Response(JSON.stringify({ ok: true, skipped: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (!organizationId) {
       console.error("No organization_id in webhook payload custom_data");
+      await markProcessed();
       return new Response(JSON.stringify({ ok: true, skipped: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    let updates: Record<string, unknown> = {};
-    const status = subscriptionData?.status;
+    const { data: org, error: orgError } = await serviceClient
+      .from("organizations")
+      .select("billing_last_event_at")
+      .eq("id", organizationId)
+      .single();
+
+    if (orgError) {
+      console.error("Failed to load organization billing state:", orgError);
+      await markFailed("Failed to load organization billing state");
+      return new Response(JSON.stringify({ error: "Failed to load organization" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (isOlderEvent(occurredAt, org?.billing_last_event_at)) {
+      console.log(`Ignoring stale Paddle event ${eventId} for organization ${organizationId}`);
+      await markProcessed();
+      return new Response(JSON.stringify({ ok: true, skipped: true, stale: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const subscriptionId = extractSubscriptionId(eventType, data);
+    const transactionAt =
+      occurredAt ||
+      data?.billed_at ||
+      data?.created_at ||
+      new Date().toISOString();
+    const trialEndsAt = addDaysIso(transactionAt, 14);
+    const currentPeriodEnd =
+      data?.current_billing_period?.ends_at ||
+      data?.scheduled_change?.effective_at;
+    const status = data?.status;
+
+    let updates: Record<string, unknown> = {
+      billing_last_event_at: occurredAt,
+    };
 
     if (
       eventType === "subscription.created" ||
       eventType === "subscription.activated" ||
       eventType === "subscription.updated"
     ) {
+      if (!subscriptionId) {
+        await markFailed("Subscription event did not contain a valid sub_ identifier");
+        return new Response(JSON.stringify({ error: "Invalid subscription identifier" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (status === "active" || status === "trialing") {
         updates = {
+          ...updates,
           subscription_tier: "premium",
           subscription_status: "active",
           subscription_id: subscriptionId,
           current_period_end: currentPeriodEnd,
-          trial_ends_at: trialEndsAt,
+          ...(status === "trialing" ? { trial_ends_at: trialEndsAt } : {}),
         };
       } else if (status === "canceled") {
         updates = {
+          ...updates,
           subscription_status: "canceled",
           subscription_tier: "free",
+          subscription_id: subscriptionId,
         };
       } else {
         updates = {
+          ...updates,
           subscription_status: status,
           subscription_id: subscriptionId,
         };
       }
     } else if (eventType === "subscription.canceled") {
       updates = {
+        ...updates,
         subscription_status: "canceled",
         subscription_tier: "free",
+        ...(subscriptionId ? { subscription_id: subscriptionId } : {}),
       };
     } else if (eventType === "subscription.past_due") {
       updates = {
+        ...updates,
         subscription_status: "past_due",
+        ...(subscriptionId ? { subscription_id: subscriptionId } : {}),
       };
     } else if (eventType === "transaction.completed") {
       updates = {
+        ...updates,
         subscription_tier: "premium",
         subscription_status: "active",
         trial_ends_at: trialEndsAt,
@@ -205,17 +343,17 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       console.error("Failed to update organization:", updateError);
-      return new Response(
-        JSON.stringify({ error: "Failed to update organization" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      await markFailed("Failed to update organization");
+      return new Response(JSON.stringify({ error: "Failed to update organization" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
+    await markProcessed();
+
     console.log(
-      `Organization ${organizationId} updated: ${JSON.stringify(updates)}`
+      `Organization ${organizationId} updated from ${eventType}: ${JSON.stringify(updates)}`
     );
 
     return new Response(JSON.stringify({ ok: true }), {
