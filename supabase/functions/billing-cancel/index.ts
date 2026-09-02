@@ -1,4 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  findOrganizationSubscription,
+  isPaddleSubscriptionId,
+  subscriptionBelongsToOrganization,
+} from "../_shared/billing-validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,7 +55,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Verify owner
     const { data: membership } = await serviceClient
       .from("memberships")
       .select("role")
@@ -65,14 +69,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get org billing state
     const { data: org } = await serviceClient
       .from("organizations")
       .select("subscription_id, subscription_status, subscription_tier, premium_override")
       .eq("id", organization_id)
       .single();
 
-    // If already free with no subscription and no override, nothing to cancel
     if (
       (!org?.subscription_id) &&
       (!org?.premium_override) &&
@@ -83,9 +85,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // If premium via gift code / override (no Paddle subscription), just reset to free
     if (org?.premium_override && !org?.subscription_id) {
-      await serviceClient
+      const { error: resetError } = await serviceClient
         .from("organizations")
         .update({
           subscription_tier: "free",
@@ -96,13 +97,20 @@ Deno.serve(async (req) => {
         })
         .eq("id", organization_id);
 
+      if (resetError) {
+        console.error("Failed to reset premium override:", resetError);
+        return new Response(JSON.stringify({ error: "Failed to update billing state" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const apiKey = Deno.env.get("PADDLE_API_KEY");
-    console.log("PADDLE_API_KEY available:", !!apiKey, "length:", apiKey?.length ?? 0);
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "Billing not configured" }),
@@ -110,17 +118,47 @@ Deno.serve(async (req) => {
       );
     }
 
-    const paddleEnv = Deno.env.get("PADDLE_ENVIRONMENT");
-    console.log("PADDLE_ENVIRONMENT:", paddleEnv);
-    const paddleBaseUrl = paddleEnv === "sandbox"
+    const paddleBaseUrl = Deno.env.get("PADDLE_ENVIRONMENT") === "sandbox"
       ? "https://sandbox-api.paddle.com"
       : "https://api.paddle.com";
 
-    let subscriptionId = org?.subscription_id || null;
+    const discoverSubscription = async (): Promise<any | null> => {
+      let url = `${paddleBaseUrl}/subscriptions?per_page=200`;
 
-    // Fallback: find active subscription by custom_data.organization_id
-    if (!subscriptionId) {
-      const listRes = await fetch(`${paddleBaseUrl}/subscriptions`, {
+      for (let page = 0; page < 10 && url; page++) {
+        const listRes = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+        });
+
+        if (!listRes.ok) {
+          const errText = await listRes.text();
+          console.error("Paddle subscription discovery error:", errText);
+          return null;
+        }
+
+        const listJson = await listRes.json();
+        const subscriptions = Array.isArray(listJson?.data) ? listJson.data : [];
+        const match = findOrganizationSubscription(subscriptions, organization_id);
+        if (match) return match;
+
+        const next = listJson?.meta?.pagination?.next;
+        url = typeof next === "string" && next.length > 0 ? next : "";
+      }
+
+      return null;
+    };
+
+    let subscriptionId = isPaddleSubscriptionId(org?.subscription_id)
+      ? org.subscription_id
+      : null;
+    let subscription: any | null = null;
+
+    if (subscriptionId) {
+      const subRes = await fetch(`${paddleBaseUrl}/subscriptions/${subscriptionId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -128,75 +166,56 @@ Deno.serve(async (req) => {
         },
       });
 
-      if (listRes.ok) {
-        const listJson = await listRes.json();
-        const subs = Array.isArray(listJson?.data) ? listJson.data : [];
-        const match = subs.find((s: any) => {
-          const subOrgId =
-            s?.custom_data?.organization_id ||
-            s?.custom_data?.organizationId;
-          const status = (s?.status || "").toLowerCase();
-          return (
-            subOrgId === organization_id &&
-            (status === "active" || status === "trialing" || status === "past_due")
-          );
-        });
+      if (subRes.ok) {
+        const subJson = await subRes.json();
+        const candidate = subJson?.data;
+        if (subscriptionBelongsToOrganization(candidate, organization_id)) {
+          subscription = candidate;
+        } else {
+          console.error("Stored Paddle subscription does not belong to organization", organization_id);
+          subscriptionId = null;
+        }
+      } else if (subRes.status === 404) {
+        console.warn("Stored Paddle subscription not found; attempting recovery", subscriptionId);
+        subscriptionId = null;
+      } else {
+        const errText = await subRes.text();
+        console.error("Paddle fetch subscription error:", errText);
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch subscription details" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
-        if (match?.id) {
-          subscriptionId = match.id as string;
-          await serviceClient
-            .from("organizations")
-            .update({ subscription_id: subscriptionId })
-            .eq("id", organization_id);
+    if (!subscription) {
+      subscription = await discoverSubscription();
+      subscriptionId = isPaddleSubscriptionId(subscription?.id) ? subscription.id : null;
+
+      if (subscriptionId) {
+        const { error: persistError } = await serviceClient
+          .from("organizations")
+          .update({ subscription_id: subscriptionId })
+          .eq("id", organization_id);
+        if (persistError) {
+          console.error("Failed to persist recovered subscription id:", persistError);
         }
       }
     }
 
-    if (!subscriptionId) {
-      // No Paddle subscription found — just reset to free
-      await serviceClient
-        .from("organizations")
-        .update({
-          subscription_tier: "free",
-          subscription_status: "none",
-        })
-        .eq("id", organization_id);
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Fetch subscription from Paddle to get management_urls
-    console.log("Fetching subscription:", subscriptionId);
-    const subRes = await fetch(
-      `${paddleBaseUrl}/subscriptions/${subscriptionId}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-      }
-    );
-
-    if (!subRes.ok) {
-      const errText = await subRes.text();
-      console.error("Paddle fetch subscription error:", errText);
+    if (!subscription || !subscriptionId) {
       return new Response(
-        JSON.stringify({ error: "Failed to fetch subscription details", details: errText }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "No active Paddle subscription found for this organization" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const subJson = await subRes.json();
-    const cancelUrl = subJson?.data?.management_urls?.cancel;
-
+    const cancelUrl = subscription?.management_urls?.cancel;
     if (!cancelUrl) {
-      console.error("No cancel URL in subscription data:", JSON.stringify(subJson?.data?.management_urls));
+      console.error("No cancel URL in subscription management URLs");
       return new Response(
         JSON.stringify({ error: "Cancel URL not available for this subscription" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
