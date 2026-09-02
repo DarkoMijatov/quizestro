@@ -1,4 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  getOrganizationId,
+  isPaddleSubscriptionId,
+  isPaddleTransactionId,
+  transactionUsesAllowedPrice,
+} from "../_shared/billing-validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +60,13 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (!isPaddleTransactionId(transaction_id)) {
+      return new Response(JSON.stringify({ error: "Invalid transaction_id" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -77,7 +90,13 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = Deno.env.get("PADDLE_API_KEY");
-    if (!apiKey) {
+    const monthlyPriceId = Deno.env.get("PADDLE_PRICE_ID_MONTHLY");
+    const annualPriceId = Deno.env.get("PADDLE_PRICE_ID_ANNUAL");
+    const allowedPriceIds = new Set(
+      [monthlyPriceId, annualPriceId].filter((value): value is string => !!value)
+    );
+
+    if (!apiKey || allowedPriceIds.size === 0) {
       return new Response(
         JSON.stringify({ error: "Billing not configured" }),
         {
@@ -105,7 +124,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Failed to verify transaction" }),
         {
-          status: 500,
+          status: txRes.status === 404 ? 404 : 502,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -114,11 +133,22 @@ Deno.serve(async (req) => {
     const txJson = await txRes.json();
     const tx = txJson?.data || {};
     const txStatus = tx?.status;
-    const txOrgId = tx?.custom_data?.organization_id || tx?.custom_data?.organizationId;
+    const txOrgId = getOrganizationId(tx?.custom_data);
 
-    if (txOrgId && txOrgId !== organization_id) {
+    if (txOrgId !== organization_id) {
       return new Response(
         JSON.stringify({ error: "Transaction organization mismatch" }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (!transactionUsesAllowedPrice(tx, allowedPriceIds)) {
+      console.error("Transaction does not contain a configured Quizestro price", transaction_id);
+      return new Response(
+        JSON.stringify({ error: "Transaction product mismatch" }),
         {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -142,7 +172,10 @@ Deno.serve(async (req) => {
       tx?.created_at ||
       new Date().toISOString();
     const trialEndsAt = addDaysIso(txAt, 14);
-    const subscriptionId = tx?.subscription_id || tx?.subscription?.id || null;
+    const candidateSubscriptionId = tx?.subscription_id || tx?.subscription?.id || null;
+    const subscriptionId = isPaddleSubscriptionId(candidateSubscriptionId)
+      ? candidateSubscriptionId
+      : null;
 
     const updates: Record<string, unknown> = {
       subscription_tier: "premium",
